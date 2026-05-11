@@ -21,16 +21,30 @@ _histories: dict[str, list] = {}
 
 
 def _load_config() -> dict:
+    """Load borge config from Hermes config.yaml (if running inside Hermes)
+    or from BORGE_HOME/config.yaml for standalone use."""
+    import yaml
+    candidates = []
+    # 1. Hermes config (when running as Hermes plugin)
     try:
         from hermes_constants import get_hermes_home
-        import yaml
-        config_path = get_hermes_home() / "config.yaml"
-        if config_path.exists():
-            with open(config_path) as f:
-                all_config = yaml.safe_load(f) or {}
-            return all_config.get("borge", {}) or {}
-    except Exception:
+        candidates.append(get_hermes_home() / "config.yaml")
+    except ImportError:
         pass
+    # 2. Standalone Borge home
+    borge_home = os.path.expanduser(os.environ.get("BORGE_HOME", "~/.borge"))
+    candidates.append(__import__("pathlib").Path(borge_home) / "config.yaml")
+
+    for config_path in candidates:
+        try:
+            if config_path.exists():
+                with open(config_path) as f:
+                    all_config = yaml.safe_load(f) or {}
+                cfg = all_config.get("borge", {}) or {}
+                if cfg:
+                    return cfg
+        except Exception:
+            pass
     return {}
 
 
@@ -39,7 +53,7 @@ def _get_or_create(session_id: str) -> Any:
         try:
             from borge.agent import BorgeAgent
             config = _load_config()
-            _sessions[session_id] = BorgeAgent(hermes_agent=None, config=config)
+            _sessions[session_id] = BorgeAgent(agent_backend=None, config=config)
         except Exception as exc:
             logger.warning("[Borge] Failed to create BorgeAgent: %s", exc)
             return None
