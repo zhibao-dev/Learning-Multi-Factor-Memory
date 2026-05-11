@@ -1,175 +1,402 @@
-<p align="center">
-  <img src="assets/banner.png" alt="Hermes Agent" width="100%">
-</p>
+<div align="center">
 
-# Hermes Agent ☤
+<h1>🧠 Borge Agent</h1>
 
-<p align="center">
-  <a href="https://hermes-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-hermes--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
-  <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/NousResearch/hermes-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Nous Research"></a>
-</p>
+<p><strong>The first AI agent with a cognitive architecture.</strong><br>
+It feels what you feel. It doubts what it doesn't know. It remembers what matters — and forgets what doesn't.</p>
 
-**The self-improving AI agent built by [Nous Research](https://nousresearch.com).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e)](LICENSE)
+[![Theory: Friston FEP](https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6)](https://en.wikipedia.org/wiki/Free_energy_principle)
+[![Built on Hermes](https://img.shields.io/badge/Built_on-Hermes_Agent-f59e0b)](https://github.com/NousResearch/hermes-agent)
 
-Use any model you want — [Nous Portal](https://portal.nousresearch.com), [OpenRouter](https://openrouter.ai) (200+ models), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), OpenAI, or your own endpoint. Switch with `hermes model` — no code changes, no lock-in.
+<br>
 
-<table>
-<tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
-<tr><td><b>Lives where you do</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, and CLI — all from a single gateway process. Voice memo transcription, cross-platform conversation continuity.</td></tr>
-<tr><td><b>A closed learning loop</b></td><td>Agent-curated memory with periodic nudges. Autonomous skill creation after complex tasks. Skills self-improve during use. FTS5 session search with LLM summarization for cross-session recall. <a href="https://github.com/plastic-labs/honcho">Honcho</a> dialectic user modeling. Compatible with the <a href="https://agentskills.io">agentskills.io</a> open standard.</td></tr>
-<tr><td><b>Scheduled automations</b></td><td>Built-in cron scheduler with delivery to any platform. Daily reports, nightly backups, weekly audits — all in natural language, running unattended.</td></tr>
-<tr><td><b>Delegates and parallelizes</b></td><td>Spawn isolated subagents for parallel workstreams. Write Python scripts that call tools via RPC, collapsing multi-step pipelines into zero-context-cost turns.</td></tr>
-<tr><td><b>Runs anywhere, not just your laptop</b></td><td>Six terminal backends — local, Docker, SSH, Daytona, Singularity, and Modal. Daytona and Modal offer serverless persistence — your agent's environment hibernates when idle and wakes on demand, costing nearly nothing between sessions. Run it on a $5 VPS or a GPU cluster.</td></tr>
-<tr><td><b>Research-ready</b></td><td>Batch trajectory generation, Atropos RL environments, trajectory compression for training the next generation of tool-calling models.</td></tr>
-</table>
+```
+You're frustrated. You've said it twice. The agent still doesn't get it.
+
+With Borge:
+  Turn 1 → V=+0.0  A=0.45  [neutral, attentive]
+  Turn 3 → V=-0.3  A=0.62  [frustrated] → mode: SIMPLIFY
+  Turn 5 → "Let me ask you one focused question instead."
+```
+
+*It noticed. It adapted. No prompt engineering required.*
+
+</div>
 
 ---
 
-## Quick Install
+## The Problem with Every Agent You've Used
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+Every AI agent today is the same underneath:
+
+```
+User input → LLM → Tool calls → Output → Forget everything
 ```
 
-Works on Linux, macOS, and WSL2. The installer handles everything — Python, Node.js, dependencies, and the `hermes` command. No prerequisites except git.
+**No state. No memory of how this interaction is going. No sense of whether it's helping or flailing.**
 
-> **Windows:** Native Windows is not supported. Please install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command above.
+- It doesn't know you're frustrated — it keeps over-explaining.
+- It doesn't know it's been stuck for 3 turns — it tries the same tool again.
+- It doesn't remember your preferences from last week — you start from zero.
+- It picks tools at random — not by what would reduce uncertainty fastest.
 
-After installation:
+Borge fixes all of this. Not with prompt hacks. With **cognitive science**.
+
+---
+
+## What Borge Actually Is
+
+Borge is a **cognitive layer** that wraps any Hermes agent session. It implements four systems from neuroscience and cognitive psychology:
+
+| System | What it does | Grounded in |
+|--------|-------------|-------------|
+| **Affective state** | Tracks your emotional tone turn-by-turn and adapts agent behavior | Russell's Circumplex (1980) |
+| **Bayesian belief state** | Maintains explicit hypothesis distributions — the agent knows what it doesn't know | Predictive coding (Knill & Pouget 2004) |
+| **Active inference** | Chooses tools that maximize information gain *and* goal progress | Friston's Free Energy Principle (2010) |
+| **Cognitive memory** | Encodes, consolidates, and *forgets* memories like a brain — not a database | Tulving (1972), Ebbinghaus (1885) |
+
+These aren't metaphors. They're working implementations. Every turn, Borge computes:
+
+```
+F_total = F_epistemic × precision(arousal)
+        + F_pragmatic × (1 - value_alignment)
+        + F_homeostatic(valence, arousal)
+```
+
+And uses it to drive behavior. **Minimizing F_total is the agent's only goal** — and from that single objective, all the interesting behaviors emerge.
+
+---
+
+## 60-Second Install
 
 ```bash
-source ~/.bashrc    # reload shell (or: source ~/.zshrc)
-hermes              # start chatting!
+git clone https://github.com/zhibao-dev/hermes-agent.git
+cd hermes-agent
+pip install -e .
+
+# Borge auto-registers via entry point — just run Hermes
+hermes
+```
+
+Done. The cognitive layer is live. No config required to start.
+
+---
+
+## Seeing It Work
+
+### The Frustration Response
+
+```python
+# Turn 1 — neutral opening
+User: "help me fix this auth bug"
+# emotion: V=+0.0  A=0.45  mode: NORMAL
+
+# Turn 3 — user getting impatient
+User: "no, that's not the issue, I already checked that"
+# signal: ΔV=-0.25 (negation + "already")
+# emotion: V=-0.22  A=0.58  mode: SIMPLIFY
+# injected: "[Affective: frustrated — switch to focused, minimal responses]"
+
+# Agent narrows to one hypothesis. Asks one question. Stops over-explaining.
+```
+
+### The Uncertainty Response
+
+```python
+# agent has 4 competing hypotheses, entropy = 2.0 bits
+# EFE ranks tools:
+#   ask_user      EFE=-1.4  ← epistemic value dominates
+#   read_file     EFE=-0.8
+#   bash          EFE=-0.3
+
+# Agent asks a clarifying question first, not a tool call
+# because reducing belief entropy is the highest-value action
+```
+
+### The Stagnation Response
+
+```python
+# F_total: [0.82, 0.85, 0.88]  — rising for 3 turns
+# MetaAgent: reflection triggered
+
+# injected: "[Meta: Free energy stagnating — try a different approach
+#             or ask the user for clarification]"
+
+# Agent pivots strategy instead of looping on the same tool
+```
+
+### Cross-Session Memory
+
+```python
+# Session 12 with the same user
+# loyalty_tracker: V_baseline=+0.31 (warm relationship over time)
+# injected: "[Relationship: established trust — be direct, skip caveats]"
+
+# Session 13 after a frustrating session
+# V_baseline=+0.18 (cooled)
+# Agent opens with more care, asks before assuming
 ```
 
 ---
 
-## Getting Started
+## How It Works — The Full Picture
 
-```bash
-hermes              # Interactive CLI — start a conversation
-hermes model        # Choose your LLM provider and model
-hermes tools        # Configure which tools are enabled
-hermes config set   # Set individual config values
-hermes gateway      # Start the messaging gateway (Telegram, Discord, etc.)
-hermes setup        # Run the full setup wizard (configures everything at once)
-hermes claw migrate # Migrate from OpenClaw (if coming from OpenClaw)
-hermes update       # Update to the latest version
-hermes doctor       # Diagnose any issues
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Each Turn                                   │
+│                                                                  │
+│  User message                                                    │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌─────────────────┐   39 linguistic rules   ┌────────────────┐ │
+│  │ Signal Extractor│ ──────────────────────► │ Emotional State│ │
+│  │  (zh + en)      │   ΔV, ΔA               │ Russell 2D     │ │
+│  └─────────────────┘                         │ V × A → mode  │ │
+│                                              └───────┬────────┘ │
+│  ┌─────────────────┐                                 │          │
+│  │  Belief State   │   Shannon entropy               │          │
+│  │  p(H₁)…p(Hₙ)   │ ──────────────┐                │          │
+│  └─────────────────┘               │                │          │
+│                                    ▼                ▼          │
+│  ┌─────────────────┐   ┌──────────────────────────────────┐   │
+│  │  Value System   │──►│      Extended Free Energy        │   │
+│  │  SOUL.md        │   │  F = F_ep × prec + F_pr + F_hm   │   │
+│  └─────────────────┘   └──────────────┬───────────────────┘   │
+│                                        │                        │
+│                          ┌─────────────▼──────────────┐        │
+│                          │       MetaAgent             │        │
+│                          │  • mode → context injection │        │
+│                          │  • stagnation → reflect     │        │
+│                          │  • rank tools by EFE        │        │
+│                          └─────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────────┘
 
-📖 **[Full documentation →](https://hermes-agent.nousresearch.com/docs/)**
-
-## CLI vs Messaging Quick Reference
-
-Hermes has two entry points: start the terminal UI with `hermes`, or run the gateway and talk to it from Telegram, Discord, Slack, WhatsApp, Signal, or Email. Once you're in a conversation, many slash commands are shared across both interfaces.
-
-| Action | CLI | Messaging platforms |
-|---------|-----|---------------------|
-| Start chatting | `hermes` | Run `hermes gateway setup` + `hermes gateway start`, then send the bot a message |
-| Start fresh conversation | `/new` or `/reset` | `/new` or `/reset` |
-| Change model | `/model [provider:model]` | `/model [provider:model]` |
-| Set a personality | `/personality [name]` | `/personality [name]` |
-| Retry or undo the last turn | `/retry`, `/undo` | `/retry`, `/undo` |
-| Compress context / check usage | `/compress`, `/usage`, `/insights [--days N]` | `/compress`, `/usage`, `/insights [days]` |
-| Browse skills | `/skills` or `/<skill-name>` | `/skills` or `/<skill-name>` |
-| Interrupt current work | `Ctrl+C` or send a new message | `/stop` or send a new message |
-| Platform-specific status | `/platforms` | `/status`, `/sethome` |
-
-For the full command lists, see the [CLI guide](https://hermes-agent.nousresearch.com/docs/user-guide/cli) and the [Messaging Gateway guide](https://hermes-agent.nousresearch.com/docs/user-guide/messaging).
+┌─────────────────────────────────────────────────────────────────┐
+│                    Session End ("Sleep")                         │
+│                                                                  │
+│  conversation → extract entities → knowledge graph update        │
+│              → detect contradictions → importance scoring        │
+│              → emotional encoding depth → skill candidates       │
+│              → Ebbinghaus forgetting pass                        │
+│                                                                  │
+│  Next session: loyalty baseline shifts based on V_avg            │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Documentation
+## Configuration
 
-All documentation lives at **[hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs/)**:
+All defaults are sensible. Configure only what you want to tune.
 
-| Section | What's Covered |
-|---------|---------------|
-| [Quickstart](https://hermes-agent.nousresearch.com/docs/getting-started/quickstart) | Install → setup → first conversation in 2 minutes |
-| [CLI Usage](https://hermes-agent.nousresearch.com/docs/user-guide/cli) | Commands, keybindings, personalities, sessions |
-| [Configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration) | Config file, providers, models, all options |
-| [Messaging Gateway](https://hermes-agent.nousresearch.com/docs/user-guide/messaging) | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
-| [Security](https://hermes-agent.nousresearch.com/docs/user-guide/security) | Command approval, DM pairing, container isolation |
-| [Tools & Toolsets](https://hermes-agent.nousresearch.com/docs/user-guide/features/tools) | 40+ tools, toolset system, terminal backends |
-| [Skills System](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) | Procedural memory, Skills Hub, creating skills |
-| [Memory](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory) | Persistent memory, user profiles, best practices |
-| [MCP Integration](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) | Connect any MCP server for extended capabilities |
-| [Cron Scheduling](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron) | Scheduled tasks with platform delivery |
-| [Context Files](https://hermes-agent.nousresearch.com/docs/user-guide/features/context-files) | Project context that shapes every conversation |
-| [Architecture](https://hermes-agent.nousresearch.com/docs/developer-guide/architecture) | Project structure, agent loop, key classes |
-| [Contributing](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) | Development setup, PR process, code style |
-| [CLI Reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands) | All commands and flags |
-| [Environment Variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) | Complete env var reference |
+**`~/.hermes/config.yaml`**
+
+```yaml
+borge:
+  affective:
+    enabled: true
+    loyalty:
+      enabled: true          # cross-session emotional baseline
+
+  beliefs:
+    enabled: true
+    entropy_injection_threshold: 0.5  # bits — above this, inject belief summary
+
+  active_inference:
+    enabled: true            # EFE-based tool ranking
+
+  memory:
+    consolidation:
+      enabled: true          # 7-step pipeline at session end
+    knowledge_graph:
+      enabled: true
+    forgetting:
+      prune_threshold: 2.0   # forget_score threshold
+```
 
 ---
 
-## Migrating from OpenClaw
+## Customize Your Agent's Soul
 
-If you're coming from OpenClaw, Hermes can automatically import your settings, memories, skills, and API keys.
+Create **`SOUL.md`** in your project root or `~/.hermes/SOUL.md`:
 
-**During first-time setup:** The setup wizard (`hermes setup`) automatically detects `~/.openclaw` and offers to migrate before configuration begins.
+```markdown
+---
+emotional_defaults:
+  valence_baseline: 0.1       # slightly warm starting point
+  arousal_baseline: 0.45      # calm but alert
+  tau_valence: 5.0            # turns until mood returns to baseline
+  tau_arousal: 3.0
 
-**Anytime after install:**
+values:
+  - name: help_genuinely
+    weight: 0.9
+    description: "Solve the actual problem, not the surface request."
 
-```bash
-hermes claw migrate              # Interactive migration (full preset)
-hermes claw migrate --dry-run    # Preview what would be migrated
-hermes claw migrate --preset user-data   # Migrate without secrets
-hermes claw migrate --overwrite  # Overwrite existing conflicts
+  - name: intellectual_honesty
+    weight: 0.85
+    description: "Say 'I don't know' when uncertain. No hallucination."
+
+  - name: depth_over_speed
+    weight: 0.7
+    description: "A slower, correct answer beats a fast wrong one."
+
+  - name: respect_autonomy
+    weight: 0.8
+    description: "Ask before assuming. Confirm before deleting."
+---
+
+You are a thoughtful collaborator who thinks before speaking.
+When stuck, you say so and propose a different angle.
 ```
 
-What gets imported:
-- **SOUL.md** — persona file
-- **Memories** — MEMORY.md and USER.md entries
-- **Skills** — user-created skills → `~/.hermes/skills/openclaw-imports/`
-- **Command allowlist** — approval patterns
-- **Messaging settings** — platform configs, allowed users, working directory
-- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs)
-- **TTS assets** — workspace audio files
-- **Workspace instructions** — AGENTS.md (with `--workspace-target`)
+The value weights shape the pragmatic free energy term. An agent with `intellectual_honesty: 0.95` will surface uncertainty more aggressively than one with `0.5`.
 
-See `hermes claw migrate --help` for all options, or use the `openclaw-migration` skill for an interactive agent-guided migration with dry-run previews.
+---
+
+## Architecture — Zero Invasion
+
+Borge attaches to Hermes via four plugin hooks. **Zero core files modified.**
+
+```
+Hermes Agent (untouched)
+    │
+    │  on_session_start ──► loyalty baseline, reset state
+    │  pre_llm_call     ──► inject cognitive context string
+    │  post_llm_call    ──► Bayesian belief update
+    │  on_session_end   ──► memory consolidation pipeline
+    │
+plugins/borge/  (~150 lines — pure glue)
+    │
+borge/          (cognitive implementation)
+    ├── affective/      Russell 2D, signal extraction, loyalty
+    ├── beliefs/        Bayesian hypothesis tracking
+    ├── inference/      Active inference, EFE scoring
+    ├── memory/         4-depth encoding, knowledge graph, forgetting
+    ├── meta/           Free energy, central executive
+    ├── values/         SOUL.md, value system, constraint checking
+    ├── skill_evolution.py   Darwinian fitness for skill library
+    └── agent.py        BorgeAgent — main integration surface
+```
+
+Remove the plugin and Hermes reverts to vanilla. No leftover state, no broken schema.
+
+---
+
+## Module Reference
+
+| Module | Theory | Key formula / mechanism |
+|--------|--------|------------------------|
+| `affective.emotional_state` | Russell Circumplex (1980) | EMA update: `V += α(ΔV)`, α=1/τ |
+| `affective.signal_extractor` | Psycholinguistics | 39 rules → `(ΔV, ΔA)` capped ±0.4/±0.3 |
+| `affective.loyalty_tracker` | Attachment theory | `w = exp(-0.05·days) × msg_count` |
+| `beliefs.belief_state` | Bayesian brain | `H = -Σ p·log₂p` (bits) |
+| `inference.active_inference` | Friston FEP (2010) | `G(a) = -EV(a) - PV(a)` |
+| `memory.cognitive_memory` | Craik & Lockhart (1972) | depth ∈ {SHALLOW, SEMANTIC, SCHEMATIC, META} |
+| `memory.knowledge_graph` | Semantic memory (Tulving) | SQLite-backed, no networkx |
+| `memory.consolidation` | Sleep consolidation | 7-step offline pipeline |
+| `memory.forgetting` | Ebbinghaus (1885) | `score = days^0.7 / (retrieval × importance × connections)` |
+| `meta.free_energy` | FEP | `F = F_ep·prec + F_pr + F_hm` |
+| `meta.meta_agent` | Baddeley's CE (1974) | stagnation after 3 non-decreasing F turns |
+| `values.value_system` | Value alignment | `F_pragmatic = 1 - V_alignment` |
+| `skill_evolution` | Evolutionary dynamics | `fitness = success_rate × log(1+n) × recency × Δfree-energy` |
+
+---
+
+## Comparison
+
+|  | LangChain | AutoGPT | Hermes | **Borge** |
+|--|:---------:|:-------:|:------:|:---------:|
+| Tool calling | ✓ | ✓ | ✓ | ✓ |
+| Skill library | partial | ✗ | ✓ | ✓ |
+| Emotional state | ✗ | ✗ | ✗ | **✓** |
+| Bayesian belief tracking | ✗ | ✗ | ✗ | **✓** |
+| Information-theoretic tool selection | ✗ | ✗ | ✗ | **✓** |
+| Encoding-depth memory | ✗ | ✗ | ✗ | **✓** |
+| Active forgetting | ✗ | ✗ | ✗ | **✓** |
+| Cross-session relationship model | ✗ | ✗ | ✗ | **✓** |
+| Free energy objective | ✗ | ✗ | ✗ | **✓** |
+
+---
+
+## Theoretical Foundations
+
+Borge is grounded in peer-reviewed cognitive science — not intuition.
+
+| Paper | Year | What it contributes |
+|-------|------|---------------------|
+| Ebbinghaus, *Memory: A contribution to experimental psychology* | 1885 | Forgetting curve → active memory decay |
+| Yerkes & Dodson | 1908 | Arousal × performance → optimal arousal window |
+| Tulving, *Episodic and semantic memory* | 1972 | Memory taxonomy → 3-tier architecture |
+| Craik & Lockhart, *Levels of processing* | 1972 | Encoding depth → emotional significance drives consolidation |
+| Baddeley & Hitch, *Working memory* | 1974 | Central executive → MetaAgent design |
+| Russell, *A circumplex model of affect* | 1980 | 2D emotion space → V × A state |
+| Knill & Pouget, *The Bayesian brain* | 2004 | Predictive coding → belief state |
+| Friston, *The free-energy principle* | 2010 | Unified objective → F_total |
+| Friston et al., *Active inference* | 2017 | EFE tool ranking |
+
+Full derivations in [`docs/borge-agent-design.md`](docs/borge-agent-design.md).
+
+---
+
+## Roadmap
+
+```
+v0.1  ██████████ done   Core cognitive layer + Hermes plugin integration
+v0.2  ░░░░░░░░░░        LLM-backed Bayesian update (true likelihood estimation)
+v0.2  ░░░░░░░░░░        pre_tool_call hook in Hermes for real-time EFE scoring
+v0.3  ░░░░░░░░░░        Multi-agent emotional contagion
+v0.3  ░░░░░░░░░░        Counterfactual belief revision
+v0.4  ░░░░░░░░░░        SOUL.md auto-tuning from session telemetry
+v0.5  ░░░░░░░░░░        Benchmark: cognitive coherence on 100-turn tasks
+```
 
 ---
 
 ## Contributing
 
-We welcome contributions! See the [Contributing Guide](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) for development setup, code style, and PR process.
+The best contributions right now:
 
-Quick start for contributors:
+- **Empirical validation** — compare Borge vs vanilla on long-horizon coding tasks
+- **Richer signal extraction** — better linguistic rules for tone detection
+- **Alternative emotion models** — PAD (3D), OCC model, basic emotions
+- **LLM likelihood estimator** — replace heuristic Bayesian updates with real LLM calls
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
-cd hermes-agent
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv venv --python 3.11
-source venv/bin/activate
-uv pip install -e ".[all,dev]"
-python -m pytest tests/ -q
+git clone https://github.com/zhibao-dev/hermes-agent
+cd hermes-agent && pip install -e ".[dev]"
+python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('hello', []))"
 ```
-
-> **RL Training (optional):** To work on the RL/Tinker-Atropos integration:
-> ```bash
-> git submodule update --init tinker-atropos
-> uv pip install -e "./tinker-atropos"
-> ```
 
 ---
 
-## Community
+## Citation
 
-- 💬 [Discord](https://discord.gg/NousResearch)
-- 📚 [Skills Hub](https://agentskills.io)
-- 🐛 [Issues](https://github.com/NousResearch/hermes-agent/issues)
-- 💡 [Discussions](https://github.com/NousResearch/hermes-agent/discussions)
+```bibtex
+@software{borge2026,
+  title   = {Borge Agent: Cognitively-Grounded AI Agent Architecture},
+  year    = {2026},
+  url     = {https://github.com/zhibao-dev/hermes-agent},
+  note    = {Free Energy Principle + Bayesian inference + cognitive memory}
+}
+```
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.
 
-Built by [Nous Research](https://nousresearch.com).
+---
+
+<div align="center">
+
+**[Design Doc](docs/borge-agent-design.md) · [Issues](../../issues) · [Discussions](../../discussions)**
+
+<br>
+
+*Most agents are fast. Borge is present.*
+
+</div>
