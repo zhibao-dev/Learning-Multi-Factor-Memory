@@ -513,23 +513,65 @@ Remove the plugin → Hermes reverts to vanilla. No leftover state, no broken sc
 
 ---
 
-## Module Reference
+## 📚 Module Reference
 
-| Module | Theory | Key formula / mechanism |
-|--------|--------|------------------------|
-| `affective.emotional_state` | Russell Circumplex (1980) | EMA update: `V += α(ΔV)`, α=1/τ |
-| `affective.signal_extractor` | Psycholinguistics | 39 rules → `(ΔV, ΔA)` capped ±0.4/±0.3 |
-| `affective.loyalty_tracker` | Attachment theory | `w = exp(-0.05·days) × msg_count` |
-| `beliefs.belief_state` | Bayesian brain | `H = -Σ p·log₂p` (bits) |
-| `inference.active_inference` | Friston FEP (2010) | `G(a) = -EV(a) - PV(a)` |
-| `memory.cognitive_memory` | Craik & Lockhart (1972) | depth ∈ {SHALLOW, SEMANTIC, SCHEMATIC, META} |
-| `memory.knowledge_graph` | Semantic memory (Tulving) | SQLite-backed, no networkx |
-| `memory.consolidation` | Sleep consolidation | 7-step offline pipeline |
-| `memory.forgetting` | Ebbinghaus (1885) | `score = days^0.7 / (retrieval × importance × connections)` |
-| `meta.free_energy` | FEP | `F = F_ep·prec + F_pr + F_hm` |
-| `meta.meta_agent` | Baddeley's CE (1974) | stagnation after 3 non-decreasing F turns |
-| `values.value_system` | Value alignment | `F_pragmatic = 1 - V_alignment` |
-| `skill_evolution` | Evolutionary dynamics | `fitness = success_rate × log(1+n) × recency × Δfree-energy` |
+<table>
+<tr>
+<td width="50%" valign="top">
+
+#### 🎭 `affective/` &nbsp;<sub><i>Russell Circumplex · 1980</i></sub>
+
+- **`emotional_state`**<br/><sub>EMA update: `V += α(ΔV)`, α=1/τ</sub>
+- **`signal_extractor`**<br/><sub>39 zh+en linguistic rules → `(ΔV, ΔA)`, capped ±0.4/±0.3</sub>
+- **`loyalty_tracker`**<br/><sub>`w = exp(-0.05·days) × msg_count` — cross-session emotional baseline</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### 🎯 `beliefs/` &nbsp;<sub><i>Bayesian brain · Knill & Pouget 2004</i></sub>
+
+- **`belief_state`**<br/><sub>Shannon entropy `H = -Σ p·log₂p` (bits)<br/>Explicit hypothesis distribution, optional LLM-driven likelihood updates</sub>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+#### 🧮 `inference/` &nbsp;<sub><i>Friston FEP · 2010</i></sub>
+
+- **`active_inference`**<br/><sub>`G(a) = -EV(a) - PV(a)`<br/>EFE-based tool re-ranking, arousal-modulated exploration weight</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### 🧬 `memory/` &nbsp;<sub><i>Tulving · Ebbinghaus · Craik & Lockhart</i></sub>
+
+- **`cognitive_memory`**<br/><sub>Depth ∈ {SHALLOW, SEMANTIC, SCHEMATIC, META}</sub>
+- **`knowledge_graph`**<br/><sub>SQLite-backed entity/relation store, no networkx</sub>
+- **`consolidation`**<br/><sub>7-step offline pipeline at session end</sub>
+- **`forgetting`**<br/><sub>`score = days^0.7 / (retrieval × importance × connections)`</sub>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+#### 🧠 `meta/` &nbsp;<sub><i>Baddeley CE · Friston FEP</i></sub>
+
+- **`free_energy`**<br/><sub>`F = F_ep·prec + F_pr + F_hm`</sub>
+- **`meta_agent`**<br/><sub>Central executive — reflection triggered after 3 non-decreasing F turns</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### ⚖️ `values/` &nbsp;+&nbsp; 🌱 `skill_evolution`
+
+- **`value_system`** &nbsp;<sub><i>Value alignment</i></sub><br/><sub>`F_pragmatic = 1 - V_alignment` — SOUL.md priors as typed values</sub>
+- **`skill_evolution`** &nbsp;<sub><i>Darwinian fitness</i></sub><br/><sub>`fitness = success_rate × log(1+n) × recency × Δfree_energy`</sub>
+
+</td>
+</tr>
+</table>
 
 ---
 

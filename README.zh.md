@@ -513,23 +513,65 @@ borge/                                   (认知层实现)
 
 ---
 
-## 模块速查
+## 📚 模块速查
 
-| 模块 | 理论 | 核心公式 / 机制 |
-|------|------|---------------|
-| `affective.emotional_state` | Russell Circumplex (1980) | EMA 更新: `V += α(ΔV)`, α=1/τ |
-| `affective.signal_extractor` | 心理语言学 | 39 条规则 → `(ΔV, ΔA)`，上限 ±0.4/±0.3 |
-| `affective.loyalty_tracker` | 依恋理论 | `w = exp(-0.05·days) × msg_count` |
-| `beliefs.belief_state` | 贝叶斯大脑 | `H = -Σ p·log₂p` (bits) |
-| `inference.active_inference` | Friston FEP (2010) | `G(a) = -EV(a) - PV(a)` |
-| `memory.cognitive_memory` | Craik & Lockhart (1972) | 深度 ∈ {SHALLOW, SEMANTIC, SCHEMATIC, META} |
-| `memory.knowledge_graph` | 语义记忆 (Tulving) | 纯 SQLite，不依赖 networkx |
-| `memory.consolidation` | 睡眠巩固 | 7 步离线管道 |
-| `memory.forgetting` | Ebbinghaus (1885) | `score = days^0.7 / (retrieval × importance × connections)` |
-| `meta.free_energy` | FEP | `F = F_ep·prec + F_pr + F_hm` |
-| `meta.meta_agent` | Baddeley 中央执行系统 (1974) | 连续 3 轮 F 不下降即触发反思 |
-| `values.value_system` | 价值对齐 | `F_pragmatic = 1 - V_alignment` |
-| `skill_evolution` | 进化动力学 | `fitness = success_rate × log(1+n) × recency × Δfree-energy` |
+<table>
+<tr>
+<td width="50%" valign="top">
+
+#### 🎭 `affective/` &nbsp;<sub><i>Russell Circumplex · 1980</i></sub>
+
+- **`emotional_state`**<br/><sub>EMA 更新: `V += α(ΔV)`, α=1/τ</sub>
+- **`signal_extractor`**<br/><sub>39 条中英语言规则 → `(ΔV, ΔA)`，上限 ±0.4/±0.3</sub>
+- **`loyalty_tracker`**<br/><sub>`w = exp(-0.05·days) × msg_count` —— 跨会话情绪基线</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### 🎯 `beliefs/` &nbsp;<sub><i>贝叶斯大脑 · Knill & Pouget 2004</i></sub>
+
+- **`belief_state`**<br/><sub>香农熵 `H = -Σ p·log₂p` (bits)<br/>显式假设分布，可选 LLM 驱动的似然更新</sub>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+#### 🧮 `inference/` &nbsp;<sub><i>Friston FEP · 2010</i></sub>
+
+- **`active_inference`**<br/><sub>`G(a) = -EV(a) - PV(a)`<br/>基于 EFE 的工具重排序，唤醒度调制探索权重</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### 🧬 `memory/` &nbsp;<sub><i>Tulving · Ebbinghaus · Craik & Lockhart</i></sub>
+
+- **`cognitive_memory`**<br/><sub>深度 ∈ {SHALLOW, SEMANTIC, SCHEMATIC, META}</sub>
+- **`knowledge_graph`**<br/><sub>纯 SQLite 实体/关系存储，不依赖 networkx</sub>
+- **`consolidation`**<br/><sub>会话结束时的 7 步离线管道</sub>
+- **`forgetting`**<br/><sub>`score = days^0.7 / (retrieval × importance × connections)`</sub>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+#### 🧠 `meta/` &nbsp;<sub><i>Baddeley 中央执行系统 · Friston FEP</i></sub>
+
+- **`free_energy`**<br/><sub>`F = F_ep·prec + F_pr + F_hm`</sub>
+- **`meta_agent`**<br/><sub>中央执行系统 —— 连续 3 轮 F 不下降即触发反思</sub>
+
+</td>
+<td width="50%" valign="top">
+
+#### ⚖️ `values/` &nbsp;+&nbsp; 🌱 `skill_evolution`
+
+- **`value_system`** &nbsp;<sub><i>价值对齐</i></sub><br/><sub>`F_pragmatic = 1 - V_alignment` —— SOUL.md 先验作为类型化价值</sub>
+- **`skill_evolution`** &nbsp;<sub><i>达尔文式适应度</i></sub><br/><sub>`fitness = success_rate × log(1+n) × recency × Δfree_energy`</sub>
+
+</td>
+</tr>
+</table>
 
 ---
 
