@@ -35,6 +35,8 @@ from .inference.active_inference import ActiveInferenceEngine
 from .memory.consolidation import MemoryConsolidationPipeline
 from .memory.forgetting import ForgettingEngine
 from .memory.knowledge_graph import KnowledgeGraph
+from .memory.retrieval import MemoryRetrieval
+from .memory.store import MemoryStore
 from .meta.free_energy import ExtendedFreeEnergy
 from .meta.meta_agent import MetaAgent
 from .skill_evolution import SkillEvolutionEngine
@@ -92,16 +94,20 @@ class BorgeAgent:
         self._forgetting = ForgettingEngine(
             prune_threshold=self._cfg("memory.forgetting.prune_threshold", 2.0),
         )
+        self._memory_store = MemoryStore(self._db_path)
         self._consolidation = MemoryConsolidationPipeline(
             db_path=self._db_path,
             knowledge_graph=self._kg,
             llm_caller=None,
             forgetting_engine=self._forgetting,
+            memory_store=self._memory_store,
         )
+        self._retrieval = MemoryRetrieval(self._db_path, store=self._memory_store)
         self._skill_evolution = SkillEvolutionEngine(self._db_path)
 
         # ── Session state ─────────────────────────────────────────────────
         self._emotional_history: list[tuple[float, float]] = []
+        self._session_f_history: list[float] = []
         self._turn_count: int = 0
 
         log.info("[BorgeAgent] Initialised")
@@ -117,6 +123,7 @@ class BorgeAgent:
             log.info(f"[BorgeAgent] Loyalty: {tier.value} (V_base={v_base:.2f})")
 
         self._emotional_history.clear()
+        self._session_f_history.clear()
         self._turn_count = 0
         self.beliefs = BeliefState()
         self._meta.reset()
@@ -149,6 +156,10 @@ class BorgeAgent:
             self.beliefs, self.emotion, self.values,
             loyalty_hint=loyalty_hint,
         )
+        # Track F_total per user turn so that consolidation can stamp each
+        # memory with f_total_at_encoding and compute delta_f vs. the
+        # previous turn (positive Δ = the agent made progress).
+        self._session_f_history.append(signal.f_total)
 
         mode = signal.suggested_mode
         if mode != AgentMode.NORMAL:
@@ -206,6 +217,7 @@ class BorgeAgent:
             session_id=session_id,
             messages=messages,
             emotional_history=self._emotional_history,
+            f_history=self._session_f_history,
         )
         log.info(
             f"[Consolidation] entities={report.entities_extracted} "
@@ -225,6 +237,37 @@ class BorgeAgent:
             "prune_candidates": self._skill_evolution.prune_candidates(),
             "generalise_candidates": self._skill_evolution.generalise_candidates(),
         }
+
+    # ── Memory retrieval ──────────────────────────────────────────────────
+
+    def recall(self, query: str = "", k: int = 5) -> list[dict]:
+        """
+        Mood-congruent recall against persisted memories.
+
+        Ranks every row in `borge_memories` by a weighted combination of:
+          • Gaussian similarity between (V, A) at encoding vs. the agent's
+            current emotional state
+          • recency (~weekly soft half-life)
+          • token-overlap relevance to `query`
+          • positive delta_f bonus (memories formed during progress)
+
+        Each returned memory's `retrieval_count` is bumped, so frequent
+        recall makes a memory harder to forget (closes the retrieval ↔
+        forgetting loop).
+
+        Returns the top-k rows as dicts (empty list if retrieval is
+        disabled via `config.memory.retrieval.enabled: false`).
+        """
+        if not self._cfg("memory.retrieval.enabled", True):
+            return []
+        cur_f = self._session_f_history[-1] if self._session_f_history else None
+        return self._retrieval.recall(
+            query=query,
+            current_valence=self.emotion.valence,
+            current_arousal=self.emotion.arousal,
+            current_f_total=cur_f,
+            k=k,
+        )
 
     def build_system_prompt_suffix(self) -> str:
         signal = self._meta.tick(self.beliefs, self.emotion, self.values)
