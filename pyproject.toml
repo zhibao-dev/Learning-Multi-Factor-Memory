@@ -45,9 +45,10 @@ dev = [
 borge = "borge.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/zhibao-dev/hermes-agent/tree/borge-agent"
-Repository = "https://github.com/zhibao-dev/hermes-agent"
-"Design Doc" = "https://github.com/zhibao-dev/hermes-agent/blob/borge-agent/docs/borge-agent-design.md"
+Homepage = "https://github.com/zhibao-dev/BorgeAgent"
+Repository = "https://github.com/zhibao-dev/BorgeAgent"
+"Design Doc" = "https://github.com/zhibao-dev/BorgeAgent/blob/main/docs/borge-agent-design.md"
+Issues = "https://github.com/zhibao-dev/BorgeAgent/issues"
 
 [tool.setuptools.packages.find]
 include = ["borge", "borge.*"]

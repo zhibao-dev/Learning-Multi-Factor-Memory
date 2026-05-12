@@ -1,14 +1,20 @@
 <div align="center">
 
-<h1>🧠 Borge Agent</h1>
+```
+████   ███  ████   ████ █████    ███   ████ █████ █   █ █████
+█   █ █   █ █   █ █     █       █   █ █     █     ██  █   █  
+████  █   █ ████  █  ██ ████    █████ █  ██ ████  █ █ █   █  
+█   █ █   █ █  █  █   █ █       █   █ █   █ █     █  ██   █  
+████   ███  █   █  ████ █████   █   █  ████ █████ █   █   █  
+```
 
-<p><strong>The first AI agent with a cognitive architecture.</strong><br>
+<p><strong>🧠 The first AI agent with a cognitive architecture.</strong><br>
 It feels what you feel. It doubts what it doesn't know. It remembers what matters — and forgets what doesn't.</p>
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e)](LICENSE)
 [![Theory: Friston FEP](https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6)](https://en.wikipedia.org/wiki/Free_energy_principle)
-[![Built on Hermes](https://img.shields.io/badge/Built_on-Hermes_Agent-f59e0b)](https://github.com/NousResearch/hermes-agent)
+[![Standalone + Plugin](https://img.shields.io/badge/Mode-Standalone_%2B_Hermes_Plugin-f59e0b)](https://github.com/zhibao-dev/BorgeAgent)
 
 <br>
 
@@ -48,7 +54,7 @@ Borge fixes all of this. Not with prompt hacks. With **cognitive science**.
 
 ## What Borge Actually Is
 
-Borge is a **cognitive layer** that wraps any Hermes agent session. It implements four systems from neuroscience and cognitive psychology:
+Borge is a **framework-agnostic cognitive layer**. It runs standalone (paired with the Anthropic SDK) or attaches to any agent — Hermes, OpenClaw, or your own — as a non-invasive plugin. It implements four systems from neuroscience and cognitive psychology:
 
 | System | What it does | Grounded in |
 |--------|-------------|-------------|
@@ -71,12 +77,23 @@ And uses it to drive behavior. **Minimizing F_total is the agent's only goal** �
 
 ## 60-Second Install
 
-```bash
-git clone https://github.com/zhibao-dev/hermes-agent.git
-cd hermes-agent
-pip install -e .
+**Standalone (recommended)** — minimal agent loop, Anthropic SDK only:
 
-# Borge auto-registers via entry point — just run Hermes
+```bash
+git clone https://github.com/zhibao-dev/BorgeAgent.git
+cd BorgeAgent
+pip install -e ".[anthropic]"
+
+export ANTHROPIC_API_KEY=sk-...
+borge                    # interactive REPL
+borge "fix the auth bug" # single turn
+```
+
+**As a Hermes plugin** — drop the `plugins/hermes/` directory into your Hermes plugin path:
+
+```bash
+pip install -e ".[hermes]"
+# plugins/hermes/ auto-registers four lifecycle hooks; run Hermes as usual
 hermes
 ```
 
@@ -191,7 +208,7 @@ User: "no, that's not the issue, I already checked that"
 
 All defaults are sensible. Configure only what you want to tune.
 
-**`~/.hermes/config.yaml`**
+**`~/.borge/config.yaml`** (standalone) or **`~/.hermes/config.yaml`** (Hermes plugin)
 
 ```yaml
 borge:
@@ -220,7 +237,7 @@ borge:
 
 ## Customize Your Agent's Soul
 
-Create **`SOUL.md`** in your project root or `~/.hermes/SOUL.md`:
+Create **`SOUL.md`** in your project root or `~/.borge/SOUL.md` (`~/.hermes/SOUL.md` is also picked up by the Hermes plugin):
 
 ```markdown
 ---
@@ -258,18 +275,19 @@ The value weights shape the pragmatic free energy term. An agent with `intellect
 
 ## Architecture — Zero Invasion
 
-Borge attaches to Hermes via four plugin hooks. **Zero core files modified.**
+A single `BorgeAgent` cognitive core powers two deployment modes via four lifecycle hooks. **Zero host-agent files modified.**
 
 ```
-Hermes Agent (untouched)
-    │
-    │  on_session_start ──► loyalty baseline, reset state
-    │  pre_llm_call     ──► inject cognitive context string
-    │  post_llm_call    ──► Bayesian belief update
-    │  on_session_end   ──► memory consolidation pipeline
-    │
-plugins/borge/  (~150 lines — pure glue)
-    │
+                    on_session_start ──► loyalty baseline, reset state
+                    pre_turn         ──► inject cognitive context string
+                    post_tool        ──► Bayesian belief update
+                    on_session_end   ──► memory consolidation pipeline
+                          ▲
+        ┌─────────────────┴─────────────────┐
+        │                                   │
+BorgeRunner (standalone)            plugins/hermes/  (~150 lines — pure glue)
+   Anthropic SDK loop                   Hermes Agent (untouched)
+
 borge/          (cognitive implementation)
     ├── affective/      Russell 2D, signal extraction, loyalty
     ├── beliefs/        Bayesian hypothesis tracking
@@ -281,7 +299,7 @@ borge/          (cognitive implementation)
     └── agent.py        BorgeAgent — main integration surface
 ```
 
-Remove the plugin and Hermes reverts to vanilla. No leftover state, no broken schema.
+Remove the plugin and Hermes reverts to vanilla. No leftover state, no broken schema. Standalone mode owns its own SQLite store at `$BORGE_HOME/borge.db` (default `~/.borge/borge.db`).
 
 ---
 
@@ -365,9 +383,10 @@ The best contributions right now:
 - **LLM likelihood estimator** — replace heuristic Bayesian updates with real LLM calls
 
 ```bash
-git clone https://github.com/zhibao-dev/hermes-agent
-cd hermes-agent && pip install -e ".[dev]"
+git clone https://github.com/zhibao-dev/BorgeAgent
+cd BorgeAgent && pip install -e ".[dev]"
 python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('hello', []))"
+pytest  # 11/11 should pass
 ```
 
 ---
@@ -378,7 +397,7 @@ python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre
 @software{borge2026,
   title   = {Borge Agent: Cognitively-Grounded AI Agent Architecture},
   year    = {2026},
-  url     = {https://github.com/zhibao-dev/hermes-agent},
+  url     = {https://github.com/zhibao-dev/BorgeAgent},
   note    = {Free Energy Principle + Bayesian inference + cognitive memory}
 }
 ```
@@ -387,7 +406,7 @@ python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre
 
 ## License
 
-MIT. Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.
+MIT. Originally developed as a plugin for [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) — now a standalone framework that can also run as a Hermes plugin.
 
 ---
 
