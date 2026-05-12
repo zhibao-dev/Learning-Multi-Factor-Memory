@@ -54,3 +54,4 @@ include = ["borge", "borge.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,12 +1,7 @@
 """Integration tests for the Borge cognitive layer plugin."""
 from __future__ import annotations
 
-import sys
-import os
-
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def test_borge_agent_init():
@@ -90,7 +85,7 @@ def test_plugin_register_hooks():
         def register_hook(self, name, cb):
             registered.append(name)
 
-    from plugins.borge import register
+    from plugins.hermes import register
     register(FakeCtx())
 
     assert "on_session_start" in registered
@@ -100,7 +95,7 @@ def test_plugin_register_hooks():
 
 
 def test_plugin_pre_llm_call_returns_string():
-    from plugins.borge import _pre_llm_call, _sessions
+    from plugins.hermes import _pre_llm_call, _sessions
     _sessions.clear()
     result = _pre_llm_call(
         session_id="test-123",
@@ -112,7 +107,7 @@ def test_plugin_pre_llm_call_returns_string():
 
 
 def test_plugin_full_lifecycle():
-    from plugins.borge import (
+    from plugins.hermes import (
         _on_session_start, _pre_llm_call, _post_llm_call, _on_session_end,
         _sessions, _histories,
     )
