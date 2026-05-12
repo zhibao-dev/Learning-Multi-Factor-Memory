@@ -60,7 +60,7 @@ Each directory is mostly self-contained; `BorgeAgent` is the only place where th
 | `borge/affective/` | `EmotionalState` (Russell V/A, EMA update with separate `tau_valence` / `tau_arousal`), `EmotionalSignalExtractor` (39 linguistic + structural rules → ΔV, ΔA), `LoyaltyTracker` (cross-session baseline) |
 | `borge/beliefs/` | `BeliefState` (explicit hypothesis distribution, Shannon entropy, optional LLM-driven likelihood update), `Hypothesis` |
 | `borge/inference/` | `ActiveInferenceEngine` — re-ranks candidate tool calls by expected free energy `G = -(epistemic + pragmatic)` |
-| `borge/memory/` | `CognitiveMemory` (4-level encoding depth), `KnowledgeGraph` (**pure SQLite**, no networkx), `MemoryConsolidationPipeline`, `ForgettingEngine` (Ebbinghaus-style forget score) |
+| `borge/memory/` | `CognitiveMemory` (4-level encoding depth), `KnowledgeGraph` (**pure SQLite**, no networkx), `MemoryConsolidationPipeline`, `ForgettingEngine` (emotion-aware Ebbinghaus score), `MemoryStore` (owns `borge_memories` table), `MemoryRetrieval` (mood-congruent + ΔF ranking) |
 | `borge/meta/` | `ExtendedFreeEnergy` (`F = F_ep × precision + F_pr × V_alignment + F_hm`), `MetaAgent` (Baddeley central executive — monitors F-trajectory, triggers reflection after 3 non-decreasing turns, builds the context-injection string) |
 | `borge/values/` | `parse_soul_frontmatter` (YAML frontmatter parser), `ValueSystem` (typed prior preferences + hard constraints derived from SOUL.md) |
 | `borge/skill_evolution.py` | `SkillEvolutionEngine` — fitness = `success_rate × log(1+n) × recency × (1 + avg_f_reduction)`; surfaces prune/generalise candidates |
@@ -78,6 +78,7 @@ Each directory is mostly self-contained; `BorgeAgent` is the only place where th
 - **`BorgeAgent(agent_backend=None)` is valid.** The constructor parameter was renamed from `hermes_agent` to `agent_backend` (commit `f2e51e0`). Pass `None` when there's no external backend to call back into.
 - **`pre_turn` returns a context-injection string, not a side effect.** `BorgeRunner._turn` prepends it to the user message; the Hermes plugin returns it from `pre_llm_call`. Empty string means "inject nothing" — preserve this contract.
 - **Aux LLM is optional.** `post_tool(tool_name, result, llm_caller=...)` and `score_tool_candidates(candidates, llm_caller=...)` accept an optional callable for likelihood / scoring calls. Code must work when it's `None` (falls back to deterministic heuristics).
+- **Emotion ↔ free-energy ↔ memory loop is wired.** `BorgeAgent` tracks `_emotional_history` and `_session_f_history` per turn; `on_session_end` feeds both into `MemoryConsolidationPipeline.run(..., f_history=...)`. Step 5 persists each message to `borge_memories` with `(V, A, significance, depth, f_total_at_encoding, delta_f_total)`. `ForgettingEngine._compute_score` multiplies in `emotion_resistance = 1/(1 + α·|V|·A)`, and `apply_importance_from_delta_f` boosts `importance_score` for progress-bearing turns. `BorgeAgent.recall(query)` exposes mood-congruent retrieval through `MemoryRetrieval`. **When adding new memory subsystems, preserve this end-to-end loop** — emotion shapes encoding depth, F shapes importance, both shape forgetting, mood + F shape retrieval.
 
 ## Plugin naming note
 
