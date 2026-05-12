@@ -163,7 +163,7 @@ Return JSON:
         for path in re.findall(r'[\w/\-]+\.\w{2,4}', text):
             entities.append({"type": "File", "label": path, "properties": {}})
         # Quoted concepts
-        for concept in re.findall(r'"([^"){3,40}"', text):
+        for concept in re.findall(r'"([^"]{3,40})"', text):
             entities.append({"type": "Concept", "label": concept, "properties": {}})
         # Deduplicate
         seen = set()
