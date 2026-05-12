@@ -8,28 +8,39 @@
 ████   ███  █   █  ████ █████   █   █  ████ █████ █   █   █  
 ```
 
-<p><strong>🧠 The first AI agent with a cognitive architecture.</strong><br>
-It feels what you feel. It doubts what it doesn't know. It remembers what matters — and forgets what doesn't.</p>
+<h3>🧠 The first AI agent with a cognitive architecture</h3>
 
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e)](LICENSE)
-[![Theory: Friston FEP](https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6)](https://en.wikipedia.org/wiki/Free_energy_principle)
-[![Standalone + Plugin](https://img.shields.io/badge/Mode-Standalone_%2B_Hermes_Plugin-f59e0b)](https://github.com/zhibao-dev/BorgeAgent)
-
-**English** · [简体中文](README.zh.md)
+<p><sub><em>It feels what you feel. It doubts what it doesn't know.<br>It remembers what matters — and forgets what doesn't.</em></sub></p>
 
 <br>
 
-```
-You're frustrated. You've said it twice. The agent still doesn't get it.
+<p>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License: MIT"></a>
+  <a href="#-production-ready-engineering"><img src="https://img.shields.io/badge/tests-11%2F11_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
+  <a href="https://en.wikipedia.org/wiki/Free_energy_principle"><img src="https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6" alt="Theory: Friston FEP"></a>
+  <br>
+  <a href="#-bring-your-own-model"><img src="https://img.shields.io/badge/Models-Anthropic_%7C_OpenAI_%7C_Kimi_%7C_MiniMax_%7C_DeepSeek_%7C_Zhipu_%7C_Ollama_%7C_vLLM-f59e0b" alt="Multi-model"></a>
+  <a href="https://github.com/zhibao-dev/BorgeAgent"><img src="https://img.shields.io/badge/Mode-Standalone_%2B_Hermes_Plugin-3b82f6" alt="Modes"></a>
+</p>
 
-With Borge:
-  Turn 1 → V=+0.0  A=0.45  [neutral, attentive]
-  Turn 3 → V=-0.3  A=0.62  [frustrated] → mode: SIMPLIFY
-  Turn 5 → "Let me ask you one focused question instead."
+<p><strong>English</strong> · <a href="README.zh.md">简体中文</a></p>
+
+<br>
+
+<table>
+<tr><td align="left">
+
+```diff
+  Turn 1   V=+0.0   A=0.45   [neutral, attentive]
+- Turn 3   V=-0.3   A=0.62   [frustrated] → mode: SIMPLIFY
++ Turn 5   "Let me ask you one focused question instead."
 ```
 
-*It noticed. It adapted. No prompt engineering required.*
+</td></tr>
+</table>
+
+<p><sub><em>It noticed. It adapted. <strong>No prompt engineering required.</strong></em></sub></p>
 
 </div>
 
@@ -105,6 +116,63 @@ hermes
 ```
 
 Done. The cognitive layer is live. No config required to start.
+
+> [!TIP]
+> **No API key?** Smoke-test the cognitive layer without any LLM call:
+> ```bash
+> python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('hello', []))"
+> ```
+
+---
+
+## ✨ Why Borge?
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🧠 State that persists between turns
+
+Vanilla agents reset every turn. Borge tracks **emotional state**, **belief distribution**, and **free energy** continuously — and uses them to drive behavior.
+
+When you're frustrated, the agent switches to terse mode. When uncertainty is high, it asks before acting. When it's stuck for 3 turns, it reflects and pivots.
+
+</td>
+<td width="50%" valign="top">
+
+### 🎯 Information-theoretic decisions
+
+Tool selection ranked by **expected free energy** (EFE), not LLM intuition.
+
+```
+G(tool) = -(Epistemic Value + Pragmatic Value)
+```
+
+`ask_user` wins when belief entropy is high. `bash`/`read_file` win when entropy is low. Result: fewer wasted tool calls, no loop-on-the-same-tool failure mode.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🧬 Memory that behaves like memory
+
+Ebbinghaus-style **active forgetting**. Craik & Lockhart **encoding depth**. Tulving **knowledge graph**. Cross-session **loyalty tracking**.
+
+Your agent doesn't degrade as the database grows. It surfaces what matters and lets the trivial decay — like a brain, not a log.
+
+</td>
+<td width="50%" valign="top">
+
+### 🔌 Model & framework agnostic
+
+Anthropic · OpenAI · Kimi · MiniMax · DeepSeek · Zhipu · Ollama · vLLM · LM Studio — anything with an HTTP API.
+
+Standalone CLI, Hermes plugin, or wrap your own loop. The cognitive layer doesn't care.
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -239,46 +307,60 @@ User: "no, that's not the issue, I already checked that"
 
 ## How It Works — The Full Picture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Each Turn                                   │
-│                                                                  │
-│  User message                                                    │
-│       │                                                          │
-│       ▼                                                          │
-│  ┌─────────────────┐   39 linguistic rules   ┌────────────────┐ │
-│  │ Signal Extractor│ ──────────────────────► │ Emotional State│ │
-│  │  (zh + en)      │   ΔV, ΔA               │ Russell 2D     │ │
-│  └─────────────────┘                         │ V × A → mode  │ │
-│                                              └───────┬────────┘ │
-│  ┌─────────────────┐                                 │          │
-│  │  Belief State   │   Shannon entropy               │          │
-│  │  p(H₁)…p(Hₙ)   │ ──────────────┐                │          │
-│  └─────────────────┘               │                │          │
-│                                    ▼                ▼          │
-│  ┌─────────────────┐   ┌──────────────────────────────────┐   │
-│  │  Value System   │──►│      Extended Free Energy        │   │
-│  │  SOUL.md        │   │  F = F_ep × prec + F_pr + F_hm   │   │
-│  └─────────────────┘   └──────────────┬───────────────────┘   │
-│                                        │                        │
-│                          ┌─────────────▼──────────────┐        │
-│                          │       MetaAgent             │        │
-│                          │  • mode → context injection │        │
-│                          │  • stagnation → reflect     │        │
-│                          │  • rank tools by EFE        │        │
-│                          └─────────────────────────────┘        │
-└─────────────────────────────────────────────────────────────────┘
+**Per-turn flow:**
 
-┌─────────────────────────────────────────────────────────────────┐
-│                    Session End ("Sleep")                         │
-│                                                                  │
-│  conversation → extract entities → knowledge graph update        │
-│              → detect contradictions → importance scoring        │
-│              → emotional encoding depth → skill candidates       │
-│              → Ebbinghaus forgetting pass                        │
-│                                                                  │
-│  Next session: loyalty baseline shifts based on V_avg            │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    U([User message])
+
+    subgraph Perception["🎭 Perception"]
+        SE["Signal Extractor<br/><sub>39 linguistic rules · zh+en</sub>"]
+        ES["Emotional State<br/><sub>Russell V × A → mode</sub>"]
+        SE -- "ΔV, ΔA" --> ES
+    end
+
+    subgraph Cognition["🧮 Cognition"]
+        BS["Belief State<br/><sub>p(H₁)…p(Hₙ) · Shannon entropy</sub>"]
+        VS["Value System<br/><sub>SOUL.md priors</sub>"]
+        FE["Extended Free Energy<br/><sub>F = F_ep × prec + F_pr + F_hm</sub>"]
+        BS --> FE
+        VS --> FE
+        ES -- "precision" --> FE
+    end
+
+    subgraph Control["🎯 Control"]
+        MA["MetaAgent<br/><sub>Baddeley central executive</sub>"]
+        OUT["• mode → context injection<br/>• stagnation → reflection<br/>• rank tools by EFE"]
+        MA --> OUT
+    end
+
+    U --> SE
+    U --> BS
+    FE --> MA
+
+    classDef perceptionCls fill:#fef3c7,stroke:#f59e0b,color:#000
+    classDef cognitionCls fill:#dbeafe,stroke:#3b82f6,color:#000
+    classDef controlCls fill:#ede9fe,stroke:#8b5cf6,color:#000
+    class SE,ES perceptionCls
+    class BS,VS,FE cognitionCls
+    class MA,OUT controlCls
+```
+
+**Session-end consolidation (the "sleep" pass):**
+
+```mermaid
+flowchart LR
+    C([Conversation]) --> E[Extract entities<br/>and relations]
+    E --> KG[Update knowledge<br/>graph]
+    KG --> CD[Detect<br/>contradictions]
+    CD --> IS[Importance<br/>rescoring]
+    IS --> ED[Emotional<br/>encoding depth]
+    ED --> SK[Skill candidates]
+    SK --> F[Ebbinghaus<br/>forgetting pass]
+    F --> N([Next session:<br/>loyalty baseline shifts])
+
+    classDef stage fill:#f0fdf4,stroke:#22c55e,color:#000
+    class E,KG,CD,IS,ED,SK,F stage
 ```
 
 ---
@@ -320,7 +402,10 @@ You are a thoughtful collaborator who thinks before speaking.
 When stuck, you say so and propose a different angle.
 ```
 
-The `values` block shapes the **pragmatic free energy** term — an agent with `intellectual_honesty: 0.95` mathematically prefers actions that surface uncertainty over actions that fake confidence. `emotional_defaults` shapes your agent's resting state and reactivity (e.g. lower `tau_valence` → mood swings faster).
+> [!TIP]
+> The `values` block shapes the **pragmatic free energy** term — an agent with `intellectual_honesty: 0.95` mathematically prefers actions that surface uncertainty over actions that fake confidence. Tuning the weight from `0.5` → `0.95` produces a measurably different agent — no prompt rewriting required.
+
+`emotional_defaults` shapes your agent's resting state and reactivity (e.g. lower `tau_valence` → mood swings faster).
 
 ### Layer 2 — `config.yaml` (subsystem tuning)
 
@@ -387,29 +472,44 @@ class MyBorge(BorgeAgent):
 
 A single `BorgeAgent` cognitive core powers two deployment modes via four lifecycle hooks. **Zero host-agent files modified.**
 
-```
-                    on_session_start ──► loyalty baseline, reset state
-                    pre_turn         ──► inject cognitive context string
-                    post_tool        ──► Bayesian belief update
-                    on_session_end   ──► memory consolidation pipeline
-                          ▲
-        ┌─────────────────┴─────────────────┐
-        │                                   │
-BorgeRunner (standalone)            plugins/hermes/  (~150 lines — pure glue)
-   Anthropic SDK loop                   Hermes Agent (untouched)
+```mermaid
+flowchart TB
+    classDef core fill:#fef3c7,stroke:#f59e0b,color:#000,stroke-width:2px
+    classDef adapter fill:#dbeafe,stroke:#3b82f6,color:#000
+    classDef host fill:#f3f4f6,stroke:#6b7280,color:#000
 
-borge/          (cognitive implementation)
-    ├── affective/      Russell 2D, signal extraction, loyalty
-    ├── beliefs/        Bayesian hypothesis tracking
-    ├── inference/      Active inference, EFE scoring
-    ├── memory/         4-depth encoding, knowledge graph, forgetting
-    ├── meta/           Free energy, central executive
-    ├── values/         SOUL.md, value system, constraint checking
-    ├── skill_evolution.py   Darwinian fitness for skill library
+    BA["<b>BorgeAgent</b><br/><sub>Cognitive core · 4 lifecycle hooks</sub><br/>on_session_start · pre_turn · post_tool · on_session_end"]:::core
+
+    BR["<b>BorgeRunner</b><br/><sub>standalone</sub><br/>Anthropic SDK loop"]:::adapter
+    PH["<b>plugins/hermes/</b><br/><sub>~150 lines, pure glue</sub><br/>4 lifecycle hooks"]:::adapter
+    BYO["<b>Bring Your Own</b><br/><sub>OpenAI-compat · Gemini · Bedrock · ...</sub>"]:::adapter
+
+    CLI(["<b>borge</b> CLI<br/><sub>console_script</sub>"]):::host
+    H["Hermes Agent<br/><sub>(untouched)</sub>"]:::host
+    APP["Your application"]:::host
+
+    BA --- BR
+    BA --- PH
+    BA --- BYO
+
+    BR --- CLI
+    PH --- H
+    BYO --- APP
+```
+
+```
+borge/                                   (cognitive implementation)
+    ├── affective/      Russell 2D, signal extraction, loyalty tracker
+    ├── beliefs/        Bayesian hypothesis tracking, Shannon entropy
+    ├── inference/      Active inference, EFE-based tool scoring
+    ├── memory/         4-depth encoding, KG, forgetting, consolidation
+    ├── meta/           Free energy, central executive (MetaAgent)
+    ├── values/         SOUL.md parser, ValueSystem, constraint checking
+    ├── skill_evolution.py   Darwinian fitness for the skill library
     └── agent.py        BorgeAgent — main integration surface
 ```
 
-Remove the plugin and Hermes reverts to vanilla. No leftover state, no broken schema. Standalone mode owns its own SQLite store at `$BORGE_HOME/borge.db` (default `~/.borge/borge.db`).
+Remove the plugin → Hermes reverts to vanilla. No leftover state, no broken schema. Standalone mode owns its own SQLite store at `$BORGE_HOME/borge.db` (default `~/.borge/borge.db`).
 
 ---
 
@@ -484,6 +584,169 @@ G(tool) = -(Epistemic Value + Pragmatic Value)
 | Cross-session relationship model | ✗ | ✗ | ✗ | **✓** |
 | Free energy objective | ✗ | ✗ | ✗ | **✓** |
 | Stagnation detection + reflection | ✗ | ✗ | ✗ | **✓** |
+
+---
+
+## 💎 Production-Ready Engineering
+
+Borge is not a research toy — it's been engineered to drop into real systems with minimal friction.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🔒 Zero invasion**
+Plugin model touches **zero** host-agent files. Remove the plugin → Hermes reverts to vanilla. No leftover state, no broken schema.
+
+**🪶 Minimal core dependency**
+Only `pyyaml` required for the cognitive layer. LLM SDKs are optional extras (`[anthropic]`, `[hermes]`, or BYO).
+
+**🧪 Tested**
+11/11 unit + integration tests passing on every push. End-to-end session lifecycle verified against tmp SQLite.
+
+**🏠 Local-first state**
+All cognitive state lives in `~/.borge/borge.db` (SQLite). No cloud dependency. No user data exfiltration.
+
+</td>
+<td width="50%" valign="top">
+
+**🛡️ Graceful degradation**
+Every plugin hook wraps in `try/except`. A cognitive-layer bug **never** crashes the host. Failures log and return empty context.
+
+**🎛️ Composable subsystems**
+Every module has an `enabled` toggle. Want pure affective without belief tracking? Set `beliefs.enabled: false`. Done.
+
+**📐 Type-safe data models**
+`@dataclass` throughout. `EmotionalState`, `BeliefState`, `MemoryEntry`, `SkillFitness` — all explicit, all introspectable.
+
+**📚 No magic**
+Every formula traces to a peer-reviewed paper (see [Theoretical Foundations](#theoretical-foundations)). No "we trained a model on this" hand-waving.
+
+</td>
+</tr>
+</table>
+
+> [!NOTE]
+> **Cost & latency profile.** The default path is pure Python with **no extra LLM calls**:
+> - Signal extraction: regex-based, ~1 ms per message
+> - Belief & value updates: deterministic when no LLM updater is configured
+> - EFE scoring: deterministic when no LLM scorer is configured
+> - Consolidation: runs once at session end (offline)
+>
+> Optional LLM-backed updaters add ~1 small model call per turn for richer Bayesian belief revision.
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><b>Does Borge replace my existing agent framework?</b></summary>
+
+<br>
+
+No. Borge is a **cognitive layer** that augments any existing agent. Three deployment modes:
+
+1. **Standalone** — `borge` CLI uses the Anthropic SDK directly
+2. **Hermes plugin** — drop `plugins/hermes/` into your Hermes plugin path
+3. **BYO loop** — instantiate `BorgeAgent` and call the four hooks around your own LLM loop
+
+The cognitive state and memory live independently of the LLM I/O layer.
+
+</details>
+
+<details>
+<summary><b>Will it work with my LLM provider?</b></summary>
+
+<br>
+
+Almost certainly yes. The cognitive layer is **model-agnostic**. If your provider speaks OpenAI-compatible API (most do — Kimi, MiniMax, DeepSeek, Zhipu, Ollama, vLLM, LM Studio, llama.cpp), see [`examples/multi_provider.py`](examples/multi_provider.py). For native SDKs (Anthropic, Google Gemini, AWS Bedrock, Azure), the recipe is the same 4-hook pattern — see [Bring Your Own Model](#bring-your-own-model).
+
+</details>
+
+<details>
+<summary><b>What does the cognitive layer cost in latency and tokens?</b></summary>
+
+<br>
+
+By default: **zero extra LLM calls**. The cognitive layer is pure Python.
+
+- Signal extraction → regex (~1 ms / message)
+- Belief / value updates → deterministic
+- EFE scoring → deterministic
+- Consolidation → offline at session end
+
+Optional: enable LLM-backed Bayesian updates by passing an `llm_caller` to `post_tool()`. This adds ~1 small model call per turn for richer hypothesis revision.
+
+</details>
+
+<details>
+<summary><b>Is my user data sent anywhere?</b></summary>
+
+<br>
+
+No. All cognitive state — emotional history, belief distributions, knowledge graph, skill fitness — lives in a **local SQLite file** at `~/.borge/borge.db`. Only the LLM calls *you* make hit your chosen provider's API. Borge itself has no telemetry, no cloud, no analytics.
+
+</details>
+
+<details>
+<summary><b>Why is this called "Borge"? Is it tied to Hermes?</b></summary>
+
+<br>
+
+Named after Jorge Luis **Borges** — explorer of infinite memory and knowledge ("Library of Babel", "Book of Sand").
+
+Originally developed as a Hermes plugin and inherits Hermes's tool registry / IoC design. After the standalone extraction, it can run completely independently — `pip install borge-agent`, `borge --help`. Hermes is now just one of several deployment options.
+
+</details>
+
+<details>
+<summary><b>How is this different from "agent memory" libraries like Mem0, MemGPT, Letta?</b></summary>
+
+<br>
+
+Memory libraries answer **"what should the agent remember?"** Borge answers **"how should the agent feel, decide, and behave?"** Memory is one of four subsystems in Borge — alongside affective state, Bayesian beliefs, and active inference. The cognitive layer is the integration surface, not just storage.
+
+In practice: Borge's memory subsystem (knowledge graph + active forgetting + encoding depth) is comparable to dedicated memory libraries, but the killer feature is the surrounding cognitive context that decides *what to do* with that memory.
+
+</details>
+
+<details>
+<summary><b>Can I disable subsystems I don't need?</b></summary>
+
+<br>
+
+Yes. Every subsystem has an `enabled` flag in `config.yaml`:
+
+```yaml
+borge:
+  affective: { enabled: true }       # turn off → no emotional state
+  beliefs: { enabled: false }        # turn off → no belief tracking
+  active_inference: { enabled: true }
+  memory:
+    consolidation: { enabled: true }
+    knowledge_graph: { enabled: true }
+    forgetting: { enabled: true }
+```
+
+A pure affective agent with no belief tracking? Three lines of config away.
+
+</details>
+
+<details>
+<summary><b>Is this production-ready?</b></summary>
+
+<br>
+
+The cognitive core, plugin lifecycle, and standalone CLI are stable. We run pytest on every push (11/11 passing), the plugin layer swallows all exceptions, and the entire state is in versioned SQLite.
+
+What's still maturing:
+- LLM-backed Bayesian updates (heuristic-only by default in v0.1)
+- Pre-tool-call EFE scoring hook (Hermes doesn't expose it yet)
+- Multi-agent emotional contagion (v0.3 roadmap)
+
+See the [Roadmap](#roadmap) for what's coming.
+
+</details>
 
 ---
 

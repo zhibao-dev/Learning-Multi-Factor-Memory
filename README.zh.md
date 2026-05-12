@@ -8,28 +8,39 @@
 ████   ███  █   █  ████ █████   █   █  ████ █████ █   █   █  
 ```
 
-<p><strong>🧠 第一个拥有认知架构的 AI Agent。</strong><br>
-它能感受你的情绪，会承认自己不知道的事，记住重要的——并主动遗忘琐碎的。</p>
+<h3>🧠 第一个拥有认知架构的 AI Agent</h3>
 
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e)](LICENSE)
-[![Theory: Friston FEP](https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6)](https://en.wikipedia.org/wiki/Free_energy_principle)
-[![Standalone + Plugin](https://img.shields.io/badge/Mode-Standalone_%2B_Hermes_Plugin-f59e0b)](https://github.com/zhibao-dev/BorgeAgent)
-
-[English](README.md) · **简体中文**
+<p><sub><em>它能感受你的情绪，会承认自己不知道的事，<br>记住重要的——并主动遗忘琐碎的。</em></sub></p>
 
 <br>
 
-```
-你已经说了两遍。Agent 还是不明白。
+<p>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License: MIT"></a>
+  <a href="#-生产级工程"><img src="https://img.shields.io/badge/tests-11%2F11_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
+  <a href="https://en.wikipedia.org/wiki/Free_energy_principle"><img src="https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6" alt="Theory: Friston FEP"></a>
+  <br>
+  <a href="#接入任意模型"><img src="https://img.shields.io/badge/Models-Anthropic_%7C_OpenAI_%7C_Kimi_%7C_MiniMax_%7C_DeepSeek_%7C_Zhipu_%7C_Ollama_%7C_vLLM-f59e0b" alt="Multi-model"></a>
+  <a href="https://github.com/zhibao-dev/BorgeAgent"><img src="https://img.shields.io/badge/Mode-Standalone_%2B_Hermes_Plugin-3b82f6" alt="Modes"></a>
+</p>
 
-用 Borge：
-  第 1 轮 → V=+0.0  A=0.45  [中性, 专注]
-  第 3 轮 → V=-0.3  A=0.62  [挫败] → 切换模式: SIMPLIFY
-  第 5 轮 → "我换一种方式问一个具体的问题。"
+<p><a href="README.md">English</a> · <strong>简体中文</strong></p>
+
+<br>
+
+<table>
+<tr><td align="left">
+
+```diff
+  第 1 轮   V=+0.0   A=0.45   [中性, 专注]
+- 第 3 轮   V=-0.3   A=0.62   [挫败] → 切换模式: SIMPLIFY
++ 第 5 轮   "我换一种方式问一个具体的问题。"
 ```
 
-*它察觉到了，它适应了。不需要任何 prompt 工程。*
+</td></tr>
+</table>
+
+<p><sub><em>它察觉到了，它适应了。<strong>不需要任何 prompt 工程。</strong></em></sub></p>
 
 </div>
 
@@ -105,6 +116,63 @@ hermes
 ```
 
 完成。认知层已经在工作。无需任何配置就能用。
+
+> [!TIP]
+> **没有 API key？** 不调任何 LLM 也能对认知层做烟雾测试：
+> ```bash
+> python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('你好', []))"
+> ```
+
+---
+
+## ✨ 为什么选 Borge？
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🧠 跨轮持续的状态
+
+普通 agent 每轮重置。Borge 持续追踪**情感状态**、**信念分布**、**自由能** —— 并用它们驱动行为。
+
+你烦躁时，agent 切到简短模式；不确定性高时，先问再做；连续 3 轮卡住，触发反思与转向。
+
+</td>
+<td width="50%" valign="top">
+
+### 🎯 用信息论选工具
+
+工具选择按**期望自由能** (EFE) 排序，而非 LLM 直觉。
+
+```
+G(tool) = -(认知价值 + 实用价值)
+```
+
+信念熵高时 `ask_user` 胜出；熵低时 `bash` / `read_file` 主导。结果：少做无用功，再也不会在同一个出错工具上撞三次。
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🧬 真正像记忆的记忆
+
+Ebbinghaus 式**主动遗忘**。Craik & Lockhart **编码深度**。Tulving **知识图谱**。跨会话**忠诚度追踪**。
+
+数据库再大，agent 也不会退化。重要的浮上来，琐碎的自然衰退 —— 像大脑，不像日志。
+
+</td>
+<td width="50%" valign="top">
+
+### 🔌 模型 & 框架无关
+
+Anthropic · OpenAI · Kimi · MiniMax · DeepSeek · 智谱 · Ollama · vLLM · LM Studio —— 任何有 HTTP 接口的模型都行。
+
+独立 CLI、Hermes 插件、自己写循环都可以。认知层不关心你跑在哪。
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -239,46 +307,60 @@ User: "不是这个问题，我已经检查过了"
 
 ## 完整工作流
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                       每一轮                                     │
-│                                                                  │
-│  用户消息                                                        │
-│       │                                                          │
-│       ▼                                                          │
-│  ┌─────────────────┐   39 条语言规则       ┌────────────────┐ │
-│  │ 信号提取器       │ ──────────────────────► │ 情感状态       │ │
-│  │ (中文 + 英文)    │   ΔV, ΔA              │ Russell 2D     │ │
-│  └─────────────────┘                         │ V × A → 模式  │ │
-│                                              └───────┬────────┘ │
-│  ┌─────────────────┐                                 │          │
-│  │  信念状态        │   香农熵                       │          │
-│  │  p(H₁)…p(Hₙ)   │ ──────────────┐                │          │
-│  └─────────────────┘               │                │          │
-│                                    ▼                ▼          │
-│  ┌─────────────────┐   ┌──────────────────────────────────┐   │
-│  │  价值系统        │──►│      扩展自由能 F_total          │   │
-│  │  SOUL.md        │   │  F = F_ep × prec + F_pr + F_hm   │   │
-│  └─────────────────┘   └──────────────┬───────────────────┘   │
-│                                        │                        │
-│                          ┌─────────────▼──────────────┐        │
-│                          │       MetaAgent             │        │
-│                          │  • 模式 → 上下文注入        │        │
-│                          │  • 停滞 → 触发反思          │        │
-│                          │  • 按 EFE 排序工具          │        │
-│                          └─────────────────────────────┘        │
-└─────────────────────────────────────────────────────────────────┘
+**每一轮的流程：**
 
-┌─────────────────────────────────────────────────────────────────┐
-│                    会话结束 ("睡眠")                              │
-│                                                                  │
-│  对话 → 抽取实体 → 知识图谱更新                                  │
-│       → 检测矛盾 → 重要性打分                                   │
-│       → 情感编码深度 → 技能候选                                │
-│       → Ebbinghaus 遗忘扫描                                      │
-│                                                                  │
-│  下一次会话：忠诚度基线根据 V_avg 漂移                           │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    U([用户消息])
+
+    subgraph Perception["🎭 感知"]
+        SE["信号提取器<br/><sub>39 条语言规则 · 中文+英文</sub>"]
+        ES["情感状态<br/><sub>Russell V × A → 模式</sub>"]
+        SE -- "ΔV, ΔA" --> ES
+    end
+
+    subgraph Cognition["🧮 认知"]
+        BS["信念状态<br/><sub>p(H₁)…p(Hₙ) · 香农熵</sub>"]
+        VS["价值系统<br/><sub>SOUL.md 先验</sub>"]
+        FE["扩展自由能<br/><sub>F = F_ep × prec + F_pr + F_hm</sub>"]
+        BS --> FE
+        VS --> FE
+        ES -- "precision" --> FE
+    end
+
+    subgraph Control["🎯 控制"]
+        MA["MetaAgent<br/><sub>Baddeley 中央执行系统</sub>"]
+        OUT["• 模式 → 上下文注入<br/>• 停滞 → 触发反思<br/>• 按 EFE 排序工具"]
+        MA --> OUT
+    end
+
+    U --> SE
+    U --> BS
+    FE --> MA
+
+    classDef perceptionCls fill:#fef3c7,stroke:#f59e0b,color:#000
+    classDef cognitionCls fill:#dbeafe,stroke:#3b82f6,color:#000
+    classDef controlCls fill:#ede9fe,stroke:#8b5cf6,color:#000
+    class SE,ES perceptionCls
+    class BS,VS,FE cognitionCls
+    class MA,OUT controlCls
+```
+
+**会话结束的"睡眠"巩固：**
+
+```mermaid
+flowchart LR
+    C([对话]) --> E[抽取实体<br/>与关系]
+    E --> KG[更新知识<br/>图谱]
+    KG --> CD[检测矛盾]
+    CD --> IS[重要性<br/>重新打分]
+    IS --> ED[情感<br/>编码深度]
+    ED --> SK[技能候选]
+    SK --> F[Ebbinghaus<br/>遗忘扫描]
+    F --> N([下一次会话:<br/>忠诚度基线漂移])
+
+    classDef stage fill:#f0fdf4,stroke:#22c55e,color:#000
+    class E,KG,CD,IS,ED,SK,F stage
 ```
 
 ---
@@ -320,7 +402,10 @@ values:
 卡住的时候你会直接说，并提出另一个角度。
 ```
 
-`values` 段塑造**实用自由能**项 —— `intellectual_honesty: 0.95` 的 agent 在数学上偏好那些"暴露不确定性"的行动，而非"假装自信"。`emotional_defaults` 决定 agent 的静息状态和反应灵敏度（例如更小的 `tau_valence` → 情绪波动更快）。
+> [!TIP]
+> `values` 段塑造**实用自由能**项 —— `intellectual_honesty: 0.95` 的 agent 在数学上偏好那些"暴露不确定性"的行动，而非"假装自信"。把权重从 `0.5` 调到 `0.95` 会得到一个 **可测量地不同** 的 agent —— 无需改任何 prompt。
+
+`emotional_defaults` 决定 agent 的静息状态和反应灵敏度（例如更小的 `tau_valence` → 情绪波动更快）。
 
 ### 第 2 层 —— `config.yaml`（子系统调参）
 
@@ -387,29 +472,44 @@ class MyBorge(BorgeAgent):
 
 一个 `BorgeAgent` 认知核心，通过 4 个生命周期 hook 同时支持两种部署形态。**宿主 agent 零文件改动。**
 
-```
-                    on_session_start ──► 忠诚度基线 / 重置状态
-                    pre_turn         ──► 注入认知上下文字符串
-                    post_tool        ──► 贝叶斯信念更新
-                    on_session_end   ──► 记忆巩固管道
-                          ▲
-        ┌─────────────────┴─────────────────┐
-        │                                   │
-BorgeRunner（独立运行）              plugins/hermes/  (~150 行 —— 纯胶水代码)
-   Anthropic SDK 循环                     Hermes Agent（未改动）
+```mermaid
+flowchart TB
+    classDef core fill:#fef3c7,stroke:#f59e0b,color:#000,stroke-width:2px
+    classDef adapter fill:#dbeafe,stroke:#3b82f6,color:#000
+    classDef host fill:#f3f4f6,stroke:#6b7280,color:#000
 
-borge/          (认知层实现)
+    BA["<b>BorgeAgent</b><br/><sub>认知核心 · 4 个生命周期 hook</sub><br/>on_session_start · pre_turn · post_tool · on_session_end"]:::core
+
+    BR["<b>BorgeRunner</b><br/><sub>独立运行</sub><br/>Anthropic SDK 循环"]:::adapter
+    PH["<b>plugins/hermes/</b><br/><sub>~150 行纯胶水代码</sub><br/>4 个生命周期 hook"]:::adapter
+    BYO["<b>Bring Your Own</b><br/><sub>OpenAI 协议 · Gemini · Bedrock · ...</sub>"]:::adapter
+
+    CLI(["<b>borge</b> CLI<br/><sub>console_script</sub>"]):::host
+    H["Hermes Agent<br/><sub>(未改动)</sub>"]:::host
+    APP["你的应用"]:::host
+
+    BA --- BR
+    BA --- PH
+    BA --- BYO
+
+    BR --- CLI
+    PH --- H
+    BYO --- APP
+```
+
+```
+borge/                                   (认知层实现)
     ├── affective/      Russell 2D, 信号提取, 忠诚度
-    ├── beliefs/        贝叶斯假设追踪
+    ├── beliefs/        贝叶斯假设追踪, 香农熵
     ├── inference/      主动推断, EFE 评分
-    ├── memory/         4 级编码深度, 知识图谱, 遗忘
-    ├── meta/           自由能, 中央执行系统
-    ├── values/         SOUL.md, 价值系统, 约束检查
+    ├── memory/         4 级编码深度, 知识图谱, 遗忘, 巩固
+    ├── meta/           自由能, 中央执行系统 (MetaAgent)
+    ├── values/         SOUL.md 解析, ValueSystem, 约束检查
     ├── skill_evolution.py   技能库的达尔文式适应度
     └── agent.py        BorgeAgent —— 主集成接口
 ```
 
-移除插件，Hermes 恢复到 vanilla 状态。没有遗留状态，没有破损 schema。独立模式拥有自己的 SQLite 存储 `$BORGE_HOME/borge.db`（默认 `~/.borge/borge.db`）。
+移除插件 → Hermes 恢复到 vanilla 状态。没有遗留状态，没有破损 schema。独立模式拥有自己的 SQLite 存储 `$BORGE_HOME/borge.db`（默认 `~/.borge/borge.db`）。
 
 ---
 
@@ -484,6 +584,169 @@ G(tool) = -(认知价值 + 实用价值)
 | 跨会话关系模型 | ✗ | ✗ | ✗ | **✓** |
 | 自由能目标函数 | ✗ | ✗ | ✗ | **✓** |
 | 停滞检测 + 反思 | ✗ | ✗ | ✗ | **✓** |
+
+---
+
+## 💎 生产级工程
+
+Borge 不是研究玩具 —— 它的工程目标是以最小代价接入真实系统。
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🔒 零侵入**
+插件模式 **零** 改动宿主 agent 文件。移除插件 → Hermes 恢复 vanilla。没有遗留状态、没有破损 schema。
+
+**🪶 极简核心依赖**
+认知层仅依赖 `pyyaml`。LLM SDK 是可选 extras（`[anthropic]`、`[hermes]` 或自带）。
+
+**🧪 有测试**
+每次 push 跑 11/11 单元 + 集成测试。整个会话生命周期在临时 SQLite 上端到端验证过。
+
+**🏠 本地优先**
+所有认知状态存在 `~/.borge/borge.db`（SQLite）。无云依赖。无用户数据外发。
+
+</td>
+<td width="50%" valign="top">
+
+**🛡️ 优雅降级**
+所有插件 hook 都包 `try/except`。认知层 bug **永远** 不会让宿主崩溃。失败只会 log 并返回空 context。
+
+**🎛️ 子系统可组合**
+每个模块都有 `enabled` 开关。只想要情感不想要信念追踪？`beliefs.enabled: false` 即可。
+
+**📐 类型化数据模型**
+全程 `@dataclass`。`EmotionalState`、`BeliefState`、`MemoryEntry`、`SkillFitness` —— 全部显式、全部可内省。
+
+**📚 无魔法**
+每条公式都能追溯到同行评议的论文（见 [理论基础](#理论基础)）。没有"我们训了个模型"的玄学。
+
+</td>
+</tr>
+</table>
+
+> [!NOTE]
+> **成本与延迟。** 默认路径是纯 Python，**不增加任何 LLM 调用**：
+> - 信号提取：正则匹配，每条消息 ~1 ms
+> - 信念与价值更新：未配置 LLM updater 时为确定性
+> - EFE 评分：未配置 LLM scorer 时为确定性
+> - 巩固：仅在会话结束时离线运行
+>
+> 可选项：配置 LLM 驱动的 updater，每轮额外一次小模型调用以获得更丰富的贝叶斯信念更新。
+
+---
+
+## ❓ 常见问题
+
+<details>
+<summary><b>Borge 会取代我现有的 agent 框架吗？</b></summary>
+
+<br>
+
+不会。Borge 是**认知层**，用来增强任何已有 agent。三种部署形态：
+
+1. **独立运行** —— `borge` CLI 直接用 Anthropic SDK
+2. **Hermes 插件** —— 把 `plugins/hermes/` 放到 Hermes 插件路径下
+3. **自带循环** —— 实例化 `BorgeAgent`，在你自己的 LLM 循环里调用 4 个 hook
+
+认知状态和记忆与 LLM I/O 层是解耦的。
+
+</details>
+
+<details>
+<summary><b>能用我的 LLM provider 吗？</b></summary>
+
+<br>
+
+大概率可以。认知层是**模型无关**的。如果你的 provider 提供 OpenAI 协议兼容的接口（绝大多数都有 —— Kimi、MiniMax、DeepSeek、Zhipu、Ollama、vLLM、LM Studio、llama.cpp），直接看 [`examples/multi_provider.py`](examples/multi_provider.py)。原生 SDK（Anthropic、Google Gemini、AWS Bedrock、Azure）也是同样的 4 hook 模式 —— 见 [接入任意模型](#接入任意模型)。
+
+</details>
+
+<details>
+<summary><b>认知层在延迟和 token 上的开销？</b></summary>
+
+<br>
+
+默认：**零额外 LLM 调用**。认知层是纯 Python。
+
+- 信号提取 → 正则（每条 ~1 ms）
+- 信念 / 价值更新 → 确定性
+- EFE 评分 → 确定性
+- 巩固 → 会话结束时离线运行
+
+可选：给 `post_tool()` 传 `llm_caller` 以启用 LLM 驱动的贝叶斯更新。这会每轮多一次小模型调用，换取更丰富的假设修正。
+
+</details>
+
+<details>
+<summary><b>我的用户数据会被发送到哪里吗？</b></summary>
+
+<br>
+
+不会。所有认知状态 —— 情感历史、信念分布、知识图谱、技能 fitness —— 都存在**本地 SQLite 文件** `~/.borge/borge.db`。只有你自己发起的 LLM 调用会打到你选择的 provider。Borge 本身没有遥测、没有云、没有 analytics。
+
+</details>
+
+<details>
+<summary><b>为什么叫 "Borge"？还和 Hermes 绑定吗？</b></summary>
+
+<br>
+
+名字取自 **博尔赫斯** (Jorge Luis Borges) —— 无限记忆与知识的探索者（《通天塔图书馆》、《沙之书》）。
+
+最早作为 Hermes 插件开发，继承了 Hermes 的工具注册表 / IoC 设计。独立化后已可完全独立运行 —— `pip install borge-agent`、`borge --help`。Hermes 现在只是诸多部署选项之一。
+
+</details>
+
+<details>
+<summary><b>这和 Mem0、MemGPT、Letta 这类"agent 记忆"库有什么不同？</b></summary>
+
+<br>
+
+记忆库回答**"agent 应该记住什么？"** Borge 回答**"agent 应该如何感受、决策、行动？"** 记忆只是 Borge 四个子系统之一 —— 与情感状态、贝叶斯信念、主动推断并列。认知层是集成接口，不只是存储。
+
+实际比较：Borge 的记忆子系统（知识图谱 + 主动遗忘 + 编码深度）与专用记忆库能力相当，但 Borge 的杀手特性是围绕记忆的**决策上下文** —— 用记忆做什么。
+
+</details>
+
+<details>
+<summary><b>用不到的子系统能关吗？</b></summary>
+
+<br>
+
+可以。每个子系统在 `config.yaml` 都有 `enabled` 开关：
+
+```yaml
+borge:
+  affective: { enabled: true }       # 关掉 → 无情感状态
+  beliefs: { enabled: false }        # 关掉 → 无信念追踪
+  active_inference: { enabled: true }
+  memory:
+    consolidation: { enabled: true }
+    knowledge_graph: { enabled: true }
+    forgetting: { enabled: true }
+```
+
+只要情感、不要信念追踪？三行配置搞定。
+
+</details>
+
+<details>
+<summary><b>能上生产吗？</b></summary>
+
+<br>
+
+认知核心、插件生命周期、独立 CLI 已稳定。每次 push 跑 pytest（11/11 通过），插件层吞掉所有异常，整个状态在版本化 SQLite 里。
+
+仍在成熟的部分：
+- LLM 驱动的贝叶斯更新（v0.1 默认是启发式）
+- Hermes 的 pre-tool-call EFE 评分 hook（Hermes 尚未暴露）
+- 多 agent 情绪传染（v0.3 路线图）
+
+详见 [路线图](#路线图)。
+
+</details>
 
 ---
 
