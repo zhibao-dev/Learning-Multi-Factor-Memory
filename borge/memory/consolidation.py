@@ -19,13 +19,15 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional
 
 from .cognitive_memory import EncodingDepth, MemoryEntry
-from .forgetting import ForgettingEngine
+from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
+from .store import MemoryStore
 
 log = logging.getLogger(__name__)
 
@@ -60,11 +62,13 @@ class MemoryConsolidationPipeline:
         knowledge_graph: KnowledgeGraph,
         llm_caller: Optional[Callable[[str], str]] = None,
         forgetting_engine: Optional[ForgettingEngine] = None,
+        memory_store: Optional[MemoryStore] = None,
     ):
         self.db_path = db_path
         self.kg = knowledge_graph
         self.llm = llm_caller
         self.forgetting = forgetting_engine or ForgettingEngine()
+        self.store = memory_store or MemoryStore(db_path)
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -73,10 +77,21 @@ class MemoryConsolidationPipeline:
         session_id: str,
         messages: list[dict],
         emotional_history: Optional[list[tuple[float, float]]] = None,
+        f_history: Optional[list[float]] = None,
     ) -> ConsolidationReport:
         """
         Run all 7 pipeline steps for a completed session.
         Returns a ConsolidationReport with step-by-step metrics.
+
+        Parameters
+        ----------
+        emotional_history
+            Per-user-turn (valence, arousal) snapshots. Aligned with USER
+            messages in order; assistant/tool messages inherit the latest.
+        f_history
+            Per-user-turn F_total snapshots. Same alignment as
+            emotional_history. Used to compute delta_f_total (positive =
+            progress made) and stamp encoding metadata.
         """
         report = ConsolidationReport(session_id=session_id)
         log.info(f"[Consolidation] Starting for session {session_id}")
@@ -94,8 +109,13 @@ class MemoryConsolidationPipeline:
             # Step 4: Importance re-scoring
             self._step4_rescore_importance(session_id, messages, report)
 
-            # Step 5: Emotional significance update
-            self._step5_emotional_significance(messages, emotional_history, report)
+            # Step 5: Emotional significance update — persist to borge_memories
+            self._step5_emotional_significance(
+                session_id, messages, emotional_history, f_history, report
+            )
+
+            # Step 5b: ΔF_total → importance bonus
+            apply_importance_from_delta_f(self.db_path, gain=0.3)
 
             # Step 6: Skill candidate detection
             self._step6_detect_skills(messages, report)
@@ -225,26 +245,85 @@ Return JSON:
 
     def _step5_emotional_significance(
         self,
+        session_id: str,
         messages: list[dict],
         emotional_history: Optional[list[tuple[float, float]]],
+        f_history: Optional[list[float]],
         report: ConsolidationReport,
     ) -> None:
+        """
+        For every message:
+          1. Pair with the (V, A) of the user-turn that produced it
+             (assistant/tool messages inherit the most recent user emotion).
+          2. Compute emotional significance = |V| · A.
+          3. Map significance → EncodingDepth (Craik & Lockhart).
+          4. Compute delta_f_total vs. previous turn (progress signal).
+          5. Persist row to borge_memories so Forgetting + Retrieval can see it.
+        """
         if not emotional_history:
             return
-        # Pair messages with emotional states and update encoding depths
-        for i, msg in enumerate(messages):
-            if i < len(emotional_history):
-                v, a = emotional_history[i]
-                significance = abs(v) * a
-                depth = (
-                    EncodingDepth.META       if significance >= 0.7 else
-                    EncodingDepth.SCHEMATIC  if significance >= 0.4 else
-                    EncodingDepth.SEMANTIC   if significance >= 0.2 else
-                    EncodingDepth.SHALLOW
+
+        emo_idx = -1     # advances on each USER message
+        prev_f: Optional[float] = None
+        persisted = 0
+
+        for msg in messages:
+            role = (msg.get("role") or "").lower()
+            if role == "user":
+                emo_idx += 1
+
+            if emo_idx < 0 or emo_idx >= len(emotional_history):
+                continue
+
+            v, a = emotional_history[emo_idx]
+            significance = abs(v) * a
+            depth = (
+                EncodingDepth.META       if significance >= 0.7 else
+                EncodingDepth.SCHEMATIC  if significance >= 0.4 else
+                EncodingDepth.SEMANTIC   if significance >= 0.2 else
+                EncodingDepth.SHALLOW
+            )
+
+            f_total: Optional[float] = None
+            delta_f: Optional[float] = None
+            if f_history and emo_idx < len(f_history):
+                f_total = f_history[emo_idx]
+                # Positive delta = F dropped between previous and this turn
+                # = the agent made cognitive progress on this turn.
+                if prev_f is not None:
+                    delta_f = prev_f - f_total
+                if role == "user":
+                    prev_f = f_total
+
+            content = msg.get("content")
+            if isinstance(content, list):
+                content = " ".join(
+                    c.get("text", "") for c in content if isinstance(c, dict)
                 )
-                # Store depth decision — actual DB write done by BorgeAgent hooks
-                msg["_borge_encoding_depth"] = int(depth)
-                msg["_borge_significance"] = round(significance, 4)
+            content = str(content or "")[:2000]
+
+            memory_id = msg.get("id") or msg.get("_borge_id") or str(uuid.uuid4())
+            self.store.insert({
+                "id":                     memory_id,
+                "session_id":             session_id,
+                "role":                   role,
+                "content":                content,
+                "timestamp":              msg.get("timestamp") or datetime.now().isoformat(),
+                "emotional_valence":      float(v),
+                "emotional_arousal":      float(a),
+                "emotional_significance": round(significance, 4),
+                "encoding_depth":         int(depth),
+                "f_total_at_encoding":    f_total,
+                "delta_f_total":          delta_f,
+            })
+            persisted += 1
+
+            # Keep in-memory hint for any caller that wants it
+            msg["_borge_encoding_depth"] = int(depth)
+            msg["_borge_significance"]   = round(significance, 4)
+            msg["_borge_id"]              = memory_id
+
+        log.debug(f"[Step5] persisted {persisted} memory rows")
 
     # ── Step 6: Skill Candidate Detection ────────────────────────────────
 
