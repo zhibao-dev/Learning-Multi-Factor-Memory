@@ -22,7 +22,6 @@ Plugin usage (wrapping an existing agent backend):
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from typing import Any, Callable, Optional
@@ -39,6 +38,7 @@ from .memory.retrieval import MemoryRetrieval
 from .memory.store import MemoryStore
 from .meta.free_energy import ExtendedFreeEnergy
 from .meta.meta_agent import MetaAgent
+from .values.self_model import SelfModel
 from .values.soul_parser import parse_soul_frontmatter
 from .values.value_system import ValueSystem
 
@@ -79,6 +79,17 @@ class BorgeAgent:
         )
         self.beliefs: BeliefState = BeliefState()
 
+        # ── Self model (FEP) ─────────────────────────────────────────────
+        # Bootstrap μ_self from SOUL.md value descriptors when available,
+        # else start empty (μ_self grows from first user turn).
+        seed = " ".join(
+            f"{v.id} {v.description}"
+            for v in (self.values.primary_values or [])
+        ).strip()
+        self.self_model: SelfModel = (
+            SelfModel.from_seed(seed) if seed else SelfModel.empty()
+        )
+
         # ── Engines ──────────────────────────────────────────────────────
         self._signal_extractor = EmotionalSignalExtractor()
         self._loyalty_tracker  = LoyaltyTracker()
@@ -100,8 +111,13 @@ class BorgeAgent:
             llm_caller=None,
             forgetting_engine=self._forgetting,
             memory_store=self._memory_store,
+            self_model=self.self_model,
         )
-        self._retrieval = MemoryRetrieval(self._db_path, store=self._memory_store)
+        self._retrieval = MemoryRetrieval(
+            self._db_path,
+            store=self._memory_store,
+            self_model=self.self_model,
+        )
 
         # ── Session state ─────────────────────────────────────────────────
         self._emotional_history: list[tuple[float, float]] = []

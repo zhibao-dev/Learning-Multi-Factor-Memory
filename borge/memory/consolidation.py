@@ -27,6 +27,7 @@ from .cognitive_memory import EncodingDepth, MemoryEntry
 from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
 from .store import MemoryStore
+from ..values.self_model import SelfModel, embed
 
 log = logging.getLogger(__name__)
 
@@ -60,12 +61,17 @@ class MemoryConsolidationPipeline:
         llm_caller: Optional[Callable[[str], str]] = None,
         forgetting_engine: Optional[ForgettingEngine] = None,
         memory_store: Optional[MemoryStore] = None,
+        self_model: Optional[SelfModel] = None,
     ):
         self.db_path = db_path
         self.kg = knowledge_graph
         self.llm = llm_caller
         self.forgetting = forgetting_engine or ForgettingEngine()
         self.store = memory_store or MemoryStore(db_path)
+        # Optional FEP self model — when provided, Step 3 also computes
+        # self_relevance per message and updates μ_self / π_self from the
+        # session's user content.
+        self.self_model = self_model
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -270,6 +276,23 @@ Return JSON:
                 )
             content = str(content or "")[:2000]
 
+            # FEP self-relevance: embed → query sr → then update μ_self with
+            # this turn's emotional_significance as the update weight.
+            embedding = None
+            self_relevance = 0.5
+            if self.self_model is not None:
+                embedding = embed(content, dim=self.self_model.dim)
+                self_relevance = self.self_model.self_relevance(embedding)
+                # Only user-role content shapes the self prior — assistant/tool
+                # outputs are observations OF the world, not OF the self.
+                if role == "user":
+                    self.self_model.update(embedding, weight=max(significance, 0.1))
+
+            # Self-modulated encoding depth — vivid AND self-relevant content
+            # gets bumped one tier higher (capped at META).
+            if self.self_model is not None and self_relevance > 0.65:
+                depth = EncodingDepth(min(int(depth) + 1, int(EncodingDepth.META)))
+
             memory_id = msg.get("id") or msg.get("_borge_id") or str(uuid.uuid4())
             self.store.insert({
                 "id":                     memory_id,
@@ -283,12 +306,15 @@ Return JSON:
                 "encoding_depth":         int(depth),
                 "f_total_at_encoding":    f_total,
                 "delta_f_total":          delta_f,
+                "self_relevance_score":   round(self_relevance, 4),
+                "embedding":              embedding,
             })
             persisted += 1
 
             # Keep in-memory hint for any caller that wants it
             msg["_borge_encoding_depth"] = int(depth)
             msg["_borge_significance"]   = round(significance, 4)
+            msg["_borge_self_relevance"] = round(self_relevance, 4)
             msg["_borge_id"]              = memory_id
 
         log.debug(f"[Step5] persisted {persisted} memory rows")

@@ -45,7 +45,9 @@ CREATE TABLE IF NOT EXISTS borge_memories (
     f_total_at_encoding REAL,
     delta_f_total REAL,
     entity_tags TEXT DEFAULT '[]',
-    graph_node_ids TEXT DEFAULT '[]'
+    graph_node_ids TEXT DEFAULT '[]',
+    self_relevance_score REAL DEFAULT 0.5,
+    embedding TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_borge_memories_session ON borge_memories(session_id);
 CREATE INDEX IF NOT EXISTS idx_borge_memories_depth ON borge_memories(encoding_depth);
@@ -65,14 +67,25 @@ class MemoryStore:
 
     # ── Schema ────────────────────────────────────────────────────────────
 
+    # Columns added after v0.1; ALTER each one to migrate pre-existing DBs.
+    _LATE_COLUMNS = (
+        ("self_relevance_score", "REAL DEFAULT 0.5"),
+        ("embedding",             "TEXT"),
+    )
+
     def ensure_table(self) -> None:
-        """Create the table + indexes if they don't exist."""
+        """Create the table + indexes if they don't exist, and migrate older DBs."""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 for stmt in BORGE_MEMORIES_SCHEMA.strip().split(";"):
                     stmt = stmt.strip()
                     if stmt:
                         conn.execute(stmt)
+                for col, typ in self._LATE_COLUMNS:
+                    try:
+                        conn.execute(f"ALTER TABLE borge_memories ADD COLUMN {col} {typ}")
+                    except sqlite3.OperationalError:
+                        pass  # column already exists
         except sqlite3.OperationalError as e:
             log.warning(f"[MemoryStore] ensure_table failed: {e}")
 
@@ -93,13 +106,15 @@ class MemoryStore:
                         emotional_valence, emotional_arousal, emotional_significance,
                         encoding_depth, importance_score, retrieval_count,
                         last_retrieved, forget_score, f_total_at_encoding,
-                        delta_f_total, entity_tags, graph_node_ids
+                        delta_f_total, entity_tags, graph_node_ids,
+                        self_relevance_score, embedding
                     ) VALUES (
                         :id, :session_id, :role, :content, :timestamp,
                         :emotional_valence, :emotional_arousal, :emotional_significance,
                         :encoding_depth, :importance_score, :retrieval_count,
                         :last_retrieved, :forget_score, :f_total_at_encoding,
-                        :delta_f_total, :entity_tags, :graph_node_ids
+                        :delta_f_total, :entity_tags, :graph_node_ids,
+                        :self_relevance_score, :embedding
                     )""",
                     self._normalize(entry),
                 )
@@ -207,6 +222,9 @@ class MemoryStore:
         def _j(v: Any) -> str:
             return v if isinstance(v, str) else json.dumps(v or [])
 
+        emb = entry.get("embedding")
+        emb_json = None if emb is None else json.dumps(list(emb))
+
         return {
             "id":                     entry["id"],
             "session_id":             entry["session_id"],
@@ -225,4 +243,6 @@ class MemoryStore:
             "delta_f_total":          entry.get("delta_f_total"),
             "entity_tags":            _j(entry.get("entity_tags", [])),
             "graph_node_ids":         _j(entry.get("graph_node_ids", [])),
+            "self_relevance_score":   float(entry.get("self_relevance_score", 0.5)),
+            "embedding":              emb_json,
         }

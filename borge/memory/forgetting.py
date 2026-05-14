@@ -9,11 +9,13 @@ Forgetting is tiered by encoding depth:
   SEMANTIC + forget_score > COMPRESS_THRESHOLD → compress to entity tag only
   SCHEMATIC / META                            → never delete, only compress
 
-The score formula factors emotion explicitly:
+The score formula factors emotion AND self-relevance explicitly:
   score = recency_decay
         × usage_penalty
         × importance_resistance
         × emotion_resistance     ← vivid memories resist forgetting
+        × self_resistance        ← self-relevant memories resist forgetting
+                                   (gated by self-precision π_self at encoding)
 """
 
 from __future__ import annotations
@@ -21,7 +23,6 @@ from __future__ import annotations
 import logging
 import sqlite3
 from datetime import datetime
-from typing import Optional
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ PRUNE_THRESHOLD    = 2.0   # SHALLOW entries above this are deleted
 COMPRESS_THRESHOLD = 3.0   # SEMANTIC entries above this are compressed
 
 EMOTION_RESISTANCE_ALPHA = 2.0  # how strongly |V|·A resists forgetting
+SELF_RESISTANCE_LAMBDA   = 2.0  # how strongly self-relevance resists forgetting
 
 # Borge DB columns added to existing Hermes messages table
 BORGE_COLUMNS_SQL = """
@@ -87,10 +89,17 @@ class ForgettingEngine:
                 else:
                     where_clause = ""
 
+                # Probe whether self_relevance_score column exists on this
+                # table (Hermes `messages` won't have it; standalone
+                # `borge_memories` will).
+                cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+                has_sr = "self_relevance_score" in cols
+                sr_select = ", self_relevance_score" if has_sr else ""
+
                 select_sql = f"""
                     SELECT id, timestamp, last_retrieved, retrieval_count,
                            importance_score, encoding_depth, content,
-                           emotional_valence, emotional_arousal
+                           emotional_valence, emotional_arousal{sr_select}
                     FROM {table}
                     {where_clause}
                 """
@@ -152,6 +161,14 @@ class ForgettingEngine:
         emotion_intensity  = abs(valence) * arousal
         emotion_resistance = 1.0 / (1.0 + EMOTION_RESISTANCE_ALPHA * emotion_intensity)
 
+        # Self-relevance: sr ∈ [0, 1]. Self-relevant memories resist forgetting.
+        # Hermes `messages` table has no such column → defaults to neutral 0.5.
+        try:
+            self_relevance = float(row["self_relevance_score"])
+        except (IndexError, KeyError, TypeError, ValueError):
+            self_relevance = 0.5
+        self_resistance = 1.0 / (1.0 + SELF_RESISTANCE_LAMBDA * self_relevance)
+
         recency_decay    = days_since ** 0.7
         usage_penalty    = 1.0 / (1.0 + retrieval_cnt)
         importance_res   = 1.0 / (1.0 + importance)
@@ -159,7 +176,8 @@ class ForgettingEngine:
         return (recency_decay
                 * usage_penalty
                 * importance_res
-                * emotion_resistance)
+                * emotion_resistance
+                * self_resistance)
 
     @staticmethod
     def _ensure_columns(conn: sqlite3.Connection) -> None:

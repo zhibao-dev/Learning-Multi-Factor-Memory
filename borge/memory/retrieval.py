@@ -23,12 +23,14 @@ context at retrieval matters as much as the cue itself.
 
 from __future__ import annotations
 
+import json
 import logging
 import math
 from datetime import datetime
 from typing import Optional
 
 from .store import MemoryStore
+from ..values.self_model import SelfModel, cosine
 
 log = logging.getLogger(__name__)
 
@@ -44,9 +46,17 @@ class MemoryRetrieval:
         dominate, matching standard episodic retrieval.
     """
 
-    def __init__(self, db_path: str, store: Optional[MemoryStore] = None):
+    def __init__(
+        self,
+        db_path: str,
+        store: Optional[MemoryStore] = None,
+        self_model: Optional[SelfModel] = None,
+    ):
         self.db_path = db_path
         self.store   = store or MemoryStore(db_path)
+        # Optional FEP self model. When provided, retrieval ranking adds a
+        # self_similarity term using cosine(memory.embedding, μ_self).
+        self.self_model = self_model
 
     def recall(
         self,
@@ -55,10 +65,11 @@ class MemoryRetrieval:
         current_arousal: float = 0.5,
         current_f_total: Optional[float] = None,
         k: int = 5,
-        mood_weight:      float = 0.4,
-        recency_weight:   float = 0.2,
-        relevance_weight: float = 0.3,
-        f_weight:         float = 0.1,
+        mood_weight:      float = 0.35,
+        recency_weight:   float = 0.15,
+        relevance_weight: float = 0.25,
+        f_weight:         float = 0.10,
+        self_weight:      float = 0.15,
     ) -> list[dict]:
         rows = self.store.all()
         if not rows:
@@ -76,14 +87,16 @@ class MemoryRetrieval:
                 current_valence,
                 current_arousal,
             )
-            recency   = self._recency(r.get("timestamp"), now)
-            relevance = self._text_overlap(r.get("content", ""), q_tokens)
-            f_bonus   = self._f_bonus(r.get("delta_f_total"))
+            recency    = self._recency(r.get("timestamp"), now)
+            relevance  = self._text_overlap(r.get("content", ""), q_tokens)
+            f_bonus    = self._f_bonus(r.get("delta_f_total"))
+            self_sim   = self._self_similarity(r)
 
             score = (mood_weight      * mood_sim
                    + recency_weight   * recency
                    + relevance_weight * relevance
-                   + f_weight         * f_bonus)
+                   + f_weight         * f_bonus
+                   + self_weight      * self_sim)
             # Importance acts as a multiplier — well-consolidated memories
             # surface a bit more easily even when other signals are weak.
             score *= 1.0 + 0.5 * float(r.get("importance_score") or 0.5)
@@ -143,3 +156,21 @@ class MemoryRetrieval:
         if delta_f is None:
             return 0.0
         return max(0.0, min(1.0, float(delta_f)))
+
+    def _self_similarity(self, row: dict) -> float:
+        """
+        Self-similarity ∈ [0, 1] between the memory and the agent's current
+        μ_self. Falls back to the row's stored self_relevance_score (which
+        was the snapshot at encoding time) when no live SelfModel is wired
+        or the row has no embedding.
+        """
+        if self.self_model is not None and self.self_model.mu_self:
+            emb_raw = row.get("embedding")
+            if isinstance(emb_raw, str) and emb_raw:
+                try:
+                    emb = json.loads(emb_raw)
+                    sim = cosine(emb, self.self_model.mu_self)
+                    return 0.5 + 0.5 * sim
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        return float(row.get("self_relevance_score") or 0.5)
