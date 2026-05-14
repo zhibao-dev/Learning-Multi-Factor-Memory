@@ -9,19 +9,16 @@ Forgetting is tiered by encoding depth:
   SEMANTIC + forget_score > COMPRESS_THRESHOLD → compress to entity tag only
   SCHEMATIC / META                            → never delete, only compress
 
-The score formula now factors emotion explicitly:
+The score formula factors emotion explicitly:
   score = recency_decay
         × usage_penalty
         × importance_resistance
-        × graph_resistance
-        × emotion_resistance     ← NEW: vivid memories resist forgetting
+        × emotion_resistance     ← vivid memories resist forgetting
 """
 
 from __future__ import annotations
 
-import json
 import logging
-import math
 import sqlite3
 from datetime import datetime
 from typing import Optional
@@ -92,7 +89,7 @@ class ForgettingEngine:
 
                 select_sql = f"""
                     SELECT id, timestamp, last_retrieved, retrieval_count,
-                           importance_score, graph_node_ids, encoding_depth, content,
+                           importance_score, encoding_depth, content,
                            emotional_valence, emotional_arousal
                     FROM {table}
                     {where_clause}
@@ -133,8 +130,8 @@ class ForgettingEngine:
         Ebbinghaus-inspired forget score WITH emotion factor.
 
         Higher = more likely to be forgotten.
-        Resisted by: recent retrieval, high importance, dense graph
-        connections, and **emotional intensity** (|V|·A).
+        Resisted by: recent retrieval, high importance, and emotional
+        intensity (|V|·A).
         """
         ts_str = row["last_retrieved"] or row["timestamp"]
         try:
@@ -145,12 +142,6 @@ class ForgettingEngine:
         days_since    = max(0.0, (now - ts).total_seconds() / 86400.0)
         retrieval_cnt = row["retrieval_count"] or 0
         importance    = row["importance_score"] or 0.5
-
-        try:
-            graph_ids = json.loads(row["graph_node_ids"] or "[]")
-            graph_n   = len(graph_ids)
-        except (json.JSONDecodeError, TypeError):
-            graph_n = 0
 
         # Emotion: |V| · A. Range [0, 1]. Vivid memories → strong resistance.
         try:
@@ -164,12 +155,10 @@ class ForgettingEngine:
         recency_decay    = days_since ** 0.7
         usage_penalty    = 1.0 / (1.0 + retrieval_cnt)
         importance_res   = 1.0 / (1.0 + importance)
-        graph_resistance = 1.0 / (1.0 + graph_n)
 
         return (recency_decay
                 * usage_penalty
                 * importance_res
-                * graph_resistance
                 * emotion_resistance)
 
     @staticmethod

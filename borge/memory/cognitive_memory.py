@@ -80,10 +80,12 @@ class MemoryEntry:
         """
         Ebbinghaus-inspired forgetting score.  Higher = candidate for decay.
 
-        Score = recency_decay × usage_penalty × importance_penalty × graph_isolation
+        Score = recency_decay × usage_penalty × importance_penalty
 
-        Entries with HIGH importance, MANY retrievals, or MANY graph connections
-        are resistant to forgetting.
+        Entries with HIGH importance or MANY retrievals are resistant to
+        forgetting. (The persisted `ForgettingEngine._compute_score` adds
+        an emotion_resistance factor on top of this; this dataclass-level
+        method is kept simple for unit-test use of MemoryEntry in isolation.)
         """
         if now is None:
             now = datetime.now()
@@ -91,12 +93,11 @@ class MemoryEntry:
         ref_time = self.last_retrieved or self.timestamp
         days_since = max(0.0, (now - ref_time).total_seconds() / 86400.0)
 
-        recency_decay    = days_since ** 0.7
-        usage_penalty    = 1.0 / (1.0 + self.retrieval_count)
-        importance_res   = 1.0 / (1.0 + self.importance_score)
-        graph_resistance = 1.0 / (1.0 + len(self.graph_node_ids))
+        recency_decay  = days_since ** 0.7
+        usage_penalty  = 1.0 / (1.0 + self.retrieval_count)
+        importance_res = 1.0 / (1.0 + self.importance_score)
 
-        score = recency_decay * usage_penalty * importance_res * graph_resistance
+        score = recency_decay * usage_penalty * importance_res
         self.forget_score = round(score, 4)
         return self.forget_score
 
