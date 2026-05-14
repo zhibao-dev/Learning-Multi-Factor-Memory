@@ -615,16 +615,20 @@ G(tool) = -(Epistemic Value + Pragmatic Value)
 |  | LangChain | AutoGPT | Hermes | **Borge** |
 |--|:---------:|:-------:|:------:|:---------:|
 | Tool calling | ✓ | ✓ | ✓ | ✓ |
-| Skill library | partial | ✗ | ✓ | ✓ |
+| Skill library | partial | ✗ | ✓ | partial<sup>†</sup> |
 | Multi-provider LLMs | ✓ | ✓ | ✓ | ✓ |
 | Emotional state | ✗ | ✗ | ✗ | **✓** |
 | Bayesian belief tracking | ✗ | ✗ | ✗ | **✓** |
-| Information-theoretic tool selection | ✗ | ✗ | ✗ | **✓** |
+| Information-theoretic tool selection | ✗ | ✗ | ✗ | experimental<sup>‡</sup> |
 | Encoding-depth memory | ✗ | ✗ | ✗ | **✓** |
-| Active forgetting | ✗ | ✗ | ✗ | **✓** |
+| Active forgetting (emotion-aware) | ✗ | ✗ | ✗ | **✓** |
+| Mood-congruent retrieval | ✗ | ✗ | ✗ | **✓** |
 | Cross-session relationship model | ✗ | ✗ | ✗ | **✓** |
 | Free energy objective | ✗ | ✗ | ✗ | **✓** |
 | Stagnation detection + reflection | ✗ | ✗ | ✗ | **✓** |
+
+<sub><sup>†</sup> Borge inherits Hermes's skill registry when run as a Hermes plugin; no native skill tracking in standalone mode.</sub><br>
+<sub><sup>‡</sup> EFE-based tool ranking is implemented in `borge/inference/active_inference.py` but not yet wired into the default `BorgeRunner` or Hermes loop — needs a pre-tool-call hook. See [Roadmap](#roadmap).</sub>
 
 ---
 

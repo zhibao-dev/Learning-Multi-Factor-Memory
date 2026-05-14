@@ -1,5 +1,6 @@
 """
-Active Inference Engine
+Active Inference Engine — Expected Free Energy tool ranking
+[EXPERIMENTAL — not wired into the default loop, see note below.]
 
 Scores candidate tool calls by Expected Free Energy (EFE):
 
@@ -8,13 +9,30 @@ Scores candidate tool calls by Expected Free Energy (EFE):
   Epistemic Value = expected entropy reduction (information gain)
   Pragmatic Value = expected progress toward goal / value alignment
 
-The agent selects tools that minimise G (maximise expected free energy
-reduction), naturally balancing exploration (epistemic) and exploitation
-(pragmatic).  Arousal modulates the exploration/exploitation weight:
-high arousal → favour epistemic (explore); low arousal → favour pragmatic.
+The agent would select tools that minimise G, naturally balancing
+exploration (epistemic) and exploitation (pragmatic). Arousal modulates
+the weight: high arousal → favour epistemic; low arousal → favour
+pragmatic.  LLM is used as the oracle for outcome prediction and
+alignment scoring, with deterministic heuristics as fallback.
 
-LLM is used as the oracle for outcome prediction and alignment scoring.
-Falls back to heuristics when no LLM caller is provided.
+Status (v0.1)
+-------------
+This engine is reachable as `BorgeAgent.score_tool_candidates()` but is
+**not** invoked by `BorgeRunner._turn()` or by the Hermes plugin hooks.
+Both deployment paths currently execute every `tool_use` block the LLM
+returns in turn order, so EFE ranking has no integration point yet:
+
+  - Anthropic's tool-use API doesn't expose a "rank before execution"
+    hook in the cleanest sense — the model issues one or more tool_use
+    blocks and the runner executes them sequentially.
+  - Hermes does not expose a `pre_tool_call` hook (tracked on the
+    roadmap).
+
+When either of those gains a real selection step, this module becomes
+the natural place to plug in.  Until then it lives here as a reference
+implementation of the FEP-grounded tool selector and is covered by one
+shape test (`test_score_tool_candidates_returns_candidates`).  Treat
+breaking changes here as low-impact until a production caller appears.
 """
 
 from __future__ import annotations
