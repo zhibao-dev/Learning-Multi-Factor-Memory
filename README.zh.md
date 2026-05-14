@@ -413,28 +413,15 @@ values:
 
 ```yaml
 borge:
-  affective:
-    enabled: true
-    loyalty:
-      enabled: true                       # 跨会话情绪基线
-
   beliefs:
-    enabled: true
     entropy_injection_threshold: 0.5      # bit —— 超过此值才注入信念摘要
 
-  active_inference:
-    enabled: true                          # 按 EFE 重排序工具
-
   memory:
-    consolidation:
-      enabled: true                       # 会话结束时跑 7 步管道
-    knowledge_graph:
-      enabled: true
     forgetting:
       prune_threshold: 2.0                # forget_score 超过此值 → 删除
 ```
 
-每个子系统都有 `enabled` 开关 —— 不需要的可以单独关掉（例如 `beliefs.enabled: false` 跑一个纯情感 agent）。
+只有上面这两个**数值调参**需要配。子系统本身（affective、beliefs、memory 巩固/召回、知识图谱）始终在线 —— 关掉它们等于放弃使用认知层。如果你真的不需要其中某个，要么换种方式实例化 `BorgeAgent`，要么通过子类替换对应引擎（第 3 层）。
 
 ### 第 3 层 —— 继承 `BorgeAgent`（代码级）
 
@@ -659,10 +646,10 @@ Borge 不是研究玩具 —— 它的工程目标是以最小代价接入真实
 所有插件 hook 都包 `try/except`。认知层 bug **永远** 不会让宿主崩溃。失败只会 log 并返回空 context。
 
 **🎛️ 子系统可组合**
-每个模块都有 `enabled` 开关。只想要情感不想要信念追踪？`beliefs.enabled: false` 即可。
+每个子系统都暴露为 `BorgeAgent` 的公共属性（`_signal_extractor`、`_loyalty_tracker`、`_meta`、`_kg`、`_retrieval`……），继承 + 替换其中一个即可换另一种模型。
 
 **📐 类型化数据模型**
-全程 `@dataclass`。`EmotionalState`、`BeliefState`、`MemoryEntry`、`SkillFitness` —— 全部显式、全部可内省。
+全程 `@dataclass`。`EmotionalState`、`BeliefState`、`MemoryEntry` —— 全部显式、全部可内省。
 
 **📚 无魔法**
 每条公式都能追溯到同行评议的论文（见 [理论基础](#理论基础)）。没有"我们训了个模型"的玄学。
@@ -760,20 +747,11 @@ Borge 不是研究玩具 —— 它的工程目标是以最小代价接入真实
 
 <br>
 
-可以。每个子系统在 `config.yaml` 都有 `enabled` 开关：
+`config.yaml` 里**没有任何"一键关停"开关** —— 每个子系统都常开，因为关掉任意一个等于放弃使用认知层。可配的只有数值调参（`beliefs.entropy_injection_threshold`、`memory.forgetting.prune_threshold`）。
 
-```yaml
-borge:
-  affective: { enabled: true }       # 关掉 → 无情感状态
-  beliefs: { enabled: false }        # 关掉 → 无信念追踪
-  active_inference: { enabled: true }
-  memory:
-    consolidation: { enabled: true }
-    knowledge_graph: { enabled: true }
-    forgetting: { enabled: true }
-```
+如果你真的不需要某个子系统（比如只想要情感不想要信念追踪），推荐路径是**继承 `BorgeAgent`** 并在 `super().__init__()` 之后覆盖对应的引擎字段。详见 `个人设置 → 第 3 层`。
 
-只要情感、不要信念追踪？三行配置搞定。
+我们在一次 clean-code 整理里把所有 `enabled` 死开关都删了：它们默认全是 `True`，也从没有用户翻成 `False` 过 —— 纯粹是"装饰性的 configuration soup"。
 
 </details>
 

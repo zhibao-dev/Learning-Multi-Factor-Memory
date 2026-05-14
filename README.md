@@ -413,28 +413,15 @@ Create `~/.borge/config.yaml` (standalone) or add a `borge:` section to `~/.herm
 
 ```yaml
 borge:
-  affective:
-    enabled: true
-    loyalty:
-      enabled: true                       # cross-session emotional baseline
-
   beliefs:
-    enabled: true
     entropy_injection_threshold: 0.5      # bits — above this, inject belief summary
 
-  active_inference:
-    enabled: true                          # EFE-based tool re-ranking
-
   memory:
-    consolidation:
-      enabled: true                       # 7-step pipeline at session end
-    knowledge_graph:
-      enabled: true
     forgetting:
       prune_threshold: 2.0                # forget_score above this → prune
 ```
 
-Every subsystem has an `enabled` toggle — turn off what you don't need (e.g. set `beliefs.enabled: false` for a pure affective agent without belief tracking).
+Only the **numeric tuning knobs** above need configuring. Subsystems themselves (affective, beliefs, memory consolidation/retrieval, knowledge graph) are always on — turning them off would defeat the whole point of using a cognitive layer. If you genuinely don't need one of them, instantiate `BorgeAgent` differently or replace the engine via subclassing (Layer 3).
 
 ### Layer 3 — Subclass `BorgeAgent` (code-level)
 
@@ -658,11 +645,11 @@ All cognitive state lives in `~/.borge/borge.db` (SQLite). No cloud dependency. 
 **🛡️ Graceful degradation**
 Every plugin hook wraps in `try/except`. A cognitive-layer bug **never** crashes the host. Failures log and return empty context.
 
-**🎛️ Composable subsystems**
-Every module has an `enabled` toggle. Want pure affective without belief tracking? Set `beliefs.enabled: false`. Done.
+**🎛️ Composable engines**
+Every subsystem is exposed as a public-ish attribute on `BorgeAgent` (`_signal_extractor`, `_loyalty_tracker`, `_meta`, `_kg`, `_retrieval`, …). Subclass + replace any one to swap in a different model.
 
 **📐 Type-safe data models**
-`@dataclass` throughout. `EmotionalState`, `BeliefState`, `MemoryEntry`, `SkillFitness` — all explicit, all introspectable.
+`@dataclass` throughout. `EmotionalState`, `BeliefState`, `MemoryEntry` — all explicit, all introspectable.
 
 **📚 No magic**
 Every formula traces to a peer-reviewed paper (see [Theoretical Foundations](#theoretical-foundations)). No "we trained a model on this" hand-waving.
@@ -760,20 +747,11 @@ In practice: Borge's memory subsystem (knowledge graph + active forgetting + enc
 
 <br>
 
-Yes. Every subsystem has an `enabled` flag in `config.yaml`:
+There are **no kill-switch toggles** in `config.yaml` — every subsystem is always on, because turning any of them off would defeat the point of a cognitive layer. Only numeric tuning knobs are configurable (`beliefs.entropy_injection_threshold`, `memory.forgetting.prune_threshold`).
 
-```yaml
-borge:
-  affective: { enabled: true }       # turn off → no emotional state
-  beliefs: { enabled: false }        # turn off → no belief tracking
-  active_inference: { enabled: true }
-  memory:
-    consolidation: { enabled: true }
-    knowledge_graph: { enabled: true }
-    forgetting: { enabled: true }
-```
+If you genuinely don't need a subsystem (e.g. you want a pure affective agent without belief tracking), the supported path is to **subclass `BorgeAgent`** and overwrite the engine fields after `super().__init__()`. See `Personal Setup → Layer 3`.
 
-A pure affective agent with no belief tracking? Three lines of config away.
+We removed the dead `enabled` flags in a clean-code pass: they all defaulted to `True` and no user had ever flipped one to `False`, so they were just decorative configuration soup.
 
 </details>
 

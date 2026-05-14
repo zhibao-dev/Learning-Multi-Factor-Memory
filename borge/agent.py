@@ -89,7 +89,7 @@ class BorgeAgent:
         self._afe = ActiveInferenceEngine(self.beliefs, self.emotion)
 
         # ── Memory infrastructure ─────────────────────────────────────────
-        self._kg = KnowledgeGraph(self._db_path) if self._cfg("memory.knowledge_graph.enabled", True) else None
+        self._kg = KnowledgeGraph(self._db_path)
         self._forgetting = ForgettingEngine(
             prune_threshold=self._cfg("memory.forgetting.prune_threshold", 2.0),
         )
@@ -113,7 +113,7 @@ class BorgeAgent:
     # ── Session start ─────────────────────────────────────────────────────
 
     def on_session_start(self, user_id: Optional[str] = None) -> None:
-        if user_id and self._cfg("affective.loyalty.enabled", True):
+        if user_id:
             sessions = self._fetch_past_sessions(user_id)
             v_base, a_base = self._loyalty_tracker.compute_baseline(sessions)
             self.emotion.set_baseline(v_base, a_base)
@@ -135,20 +135,17 @@ class BorgeAgent:
     ) -> str:
         self._turn_count += 1
 
-        if self._cfg("affective.enabled", True):
-            dv, da = self._signal_extractor.extract(user_message, conversation_history)
-            self.emotion.update(dv, da)
-            self._emotional_history.append((self.emotion.valence, self.emotion.arousal))
-            log.debug(f"[Emotion] {self.emotion}")
+        dv, da = self._signal_extractor.extract(user_message, conversation_history)
+        self.emotion.update(dv, da)
+        self._emotional_history.append((self.emotion.valence, self.emotion.arousal))
+        log.debug(f"[Emotion] {self.emotion}")
 
         if self._turn_count == 1:
             self.beliefs.task = user_message[:200]
 
-        loyalty_hint = ""
-        if self._cfg("affective.loyalty.enabled", True):
-            loyalty_hint = self._loyalty_tracker.system_prompt_hint(
-                self.emotion.valence_baseline
-            )
+        loyalty_hint = self._loyalty_tracker.system_prompt_hint(
+            self.emotion.valence_baseline
+        )
 
         signal = self._meta.tick(
             self.beliefs, self.emotion, self.values,
@@ -173,7 +170,7 @@ class BorgeAgent:
         tool_result: str,
         llm_caller: Optional[Callable[[str], str]] = None,
     ) -> None:
-        if self._cfg("beliefs.enabled", True) and self.beliefs.hypotheses:
+        if self.beliefs.hypotheses:
             self.beliefs.bayesian_update(tool_result, tool_name, llm_caller)
             log.debug(f"[Belief] entropy={self.beliefs.shannon_entropy():.2f}bits")
 
@@ -186,7 +183,7 @@ class BorgeAgent:
         candidates: list[dict],
         llm_caller: Optional[Callable[[str], str]] = None,
     ) -> list[dict]:
-        if not self._cfg("active_inference.enabled", True) or not candidates:
+        if not candidates:
             return candidates
 
         self._afe.beliefs = self.beliefs
@@ -207,9 +204,6 @@ class BorgeAgent:
         session_id: str,
         messages: list[dict],
     ) -> None:
-        if not self._cfg("memory.consolidation.enabled", True):
-            return
-
         log.info(f"[BorgeAgent] Running consolidation for session {session_id}")
         report = self._consolidation.run(
             session_id=session_id,
@@ -241,11 +235,8 @@ class BorgeAgent:
         recall makes a memory harder to forget (closes the retrieval ↔
         forgetting loop).
 
-        Returns the top-k rows as dicts (empty list if retrieval is
-        disabled via `config.memory.retrieval.enabled: false`).
+        Returns the top-k rows as dicts.
         """
-        if not self._cfg("memory.retrieval.enabled", True):
-            return []
         cur_f = self._session_f_history[-1] if self._session_f_history else None
         return self._retrieval.recall(
             query=query,
