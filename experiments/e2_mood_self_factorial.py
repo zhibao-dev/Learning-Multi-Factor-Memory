@@ -109,12 +109,36 @@ def run_experiment(n_per_cell: int, age_days: int) -> dict:
                     })
                     break
 
-        # Fit additive: log_forget = α + β_e·E + β_s·S
-        # Fit multiplicative: log_forget = α + β_e·E + β_s·S + β_es·E·S
-        add_aic, add_coefs, add_residuals = _fit_linear(all_rows, ["E", "S"])
-        mul_aic, mul_coefs, mul_residuals = _fit_linear(all_rows, ["E", "S", "ES"])
+        # Two model comparisons:
+        #
+        # (i)  Raw-scale: tests whether forget_score is recovered by an
+        #      additive vs. additive+interaction linear model. Because the
+        #      true formula is multiplicative in linear space, we expect
+        #      the interaction term to carry non-trivial weight here.
+        #
+        # (ii) Log-scale: tests whether log(forget_score) needs an
+        #      interaction. Because the true formula is a product of
+        #      terms, log(forget_score) is additive in log of each term,
+        #      so the interaction here is NOT predicted to win. This
+        #      comparison serves as a sanity check that the experimental
+        #      data has the multiplicative structure we believe (positive
+        #      coefficients in log-space, near-zero interaction).
+        all_raw = [
+            {"E": r["E"], "S": r["S"], "forget": math.exp(r["log_forget"])}
+            for r in all_rows
+        ]
+        for r in all_raw:
+            r["target"] = r["forget"]
+        for r in all_rows:
+            r["target"] = r["log_forget"]
 
-        delta_aic = mul_aic - add_aic   # negative = multiplicative wins
+        raw_add_aic, raw_add_coefs, _ = _fit_linear(all_raw,  ["E", "S"],          target="target")
+        raw_mul_aic, raw_mul_coefs, _ = _fit_linear(all_raw,  ["E", "S", "ES"],    target="target")
+        log_add_aic, log_add_coefs, _ = _fit_linear(all_rows, ["E", "S"],          target="target")
+        log_mul_aic, log_mul_coefs, _ = _fit_linear(all_rows, ["E", "S", "ES"],    target="target")
+
+        delta_aic_raw = raw_mul_aic - raw_add_aic   # primary test
+        delta_aic_log = log_mul_aic - log_add_aic   # sanity check
 
         # Cell summaries
         per_cell = {}
@@ -127,16 +151,50 @@ def run_experiment(n_per_cell: int, age_days: int) -> dict:
                 "forget_std":  round(v ** 0.5, 4),
             }
 
+        # Interaction-magnitude diagnostic: |delta_high - delta_low|
+        # delta_low  = forget(self_high | emotion_low)  - forget(self_low | emotion_low)
+        # delta_high = forget(self_high | emotion_high) - forget(self_low | emotion_high)
+        # Pure additivity => delta_low == delta_high. Multiplicative gives
+        # |delta_low| > |delta_high| (or vice versa) by a non-trivial margin.
+        m = per_cell
+        delta_low  = m["emotion_low_self_high"]["forget_mean"]  - m["emotion_low_self_low"]["forget_mean"]
+        delta_high = m["emotion_high_self_high"]["forget_mean"] - m["emotion_high_self_low"]["forget_mean"]
+        interaction_magnitude = abs(delta_low - delta_high)
+
         return {
             "n_per_cell":     n_per_cell,
             "per_cell":       per_cell,
-            "model_fit": {
-                "additive":       {"AIC": add_aic, "coefs": add_coefs},
-                "multiplicative": {"AIC": mul_aic, "coefs": mul_coefs},
-                "delta_AIC":      delta_aic,     # negative = mul wins
-                "winner":         "multiplicative" if delta_aic < -2 else
-                                  "additive"       if delta_aic >  2 else
+            "interaction_diagnostic": {
+                "delta_low":             round(delta_low, 4),
+                "delta_high":            round(delta_high, 4),
+                "interaction_magnitude": round(interaction_magnitude, 4),
+                "interpretation":        ("Pure additivity predicts "
+                                          "delta_low ≈ delta_high; any "
+                                          "non-trivial difference signals "
+                                          "interaction."),
+            },
+            "model_fit_raw": {
+                "additive":       {"AIC": raw_add_aic, "coefs": raw_add_coefs},
+                "with_interaction": {"AIC": raw_mul_aic, "coefs": raw_mul_coefs},
+                "delta_AIC":      delta_aic_raw,
+                "winner":         "with_interaction" if delta_aic_raw < -2 else
+                                  "additive"        if delta_aic_raw >  2 else
                                   "tie",
+                "note":           "Primary test: raw-scale linear regression. "
+                                  "Multiplicative ground-truth predicts the "
+                                  "interaction term wins on raw scale.",
+            },
+            "model_fit_log": {
+                "additive":         {"AIC": log_add_aic, "coefs": log_add_coefs},
+                "with_interaction": {"AIC": log_mul_aic, "coefs": log_mul_coefs},
+                "delta_AIC":        delta_aic_log,
+                "winner":           "with_interaction" if delta_aic_log < -2 else
+                                    "additive"        if delta_aic_log >  2 else
+                                    "tie",
+                "note":             "Sanity check: log-scale. Because the true "
+                                    "formula is a product of terms, "
+                                    "log-additivity is predicted; the "
+                                    "interaction term should ROT win here.",
             },
         }
     finally:
@@ -148,7 +206,7 @@ def run_experiment(n_per_cell: int, age_days: int) -> dict:
 
 # ── Tiny OLS implementation ──────────────────────────────────────────────
 
-def _fit_linear(rows: list[dict], features: list[str]) -> tuple[float, dict, list[float]]:
+def _fit_linear(rows: list[dict], features: list[str], target: str = "log_forget") -> tuple[float, dict, list[float]]:
     """OLS fit; returns (AIC, coefs_dict, residuals)."""
     n = len(rows)
     if n == 0:
@@ -156,10 +214,10 @@ def _fit_linear(rows: list[dict], features: list[str]) -> tuple[float, dict, lis
     # Build X (n × p+1) with intercept, y (n)
     p = len(features) + 1
     X = [[1.0] + [_feature(r, f) for f in features] for r in rows]
-    y = [r["log_forget"] for r in rows]
+    y = [r[target] for r in rows]
     # Normal equations: (XᵀX) β = Xᵀy
     XtX = [[sum(X[i][k] * X[i][j] for i in range(n)) for j in range(p)] for k in range(p)]
-    Xty = [sum(X[i][k] * y[i] for i in range(n)) for k in range(p)]
+    Xty: list[float] = [float(sum(X[i][k] * y[i] for i in range(n))) for k in range(p)]
     beta = _solve_linear(XtX, Xty)
     # Residuals
     y_hat = [sum(beta[k] * X[i][k] for k in range(p)) for i in range(n)]
@@ -232,11 +290,24 @@ def main():
     print(f"\n=== E2 Mood × Self Factorial — {args.n_per_cell} items per cell ===")
     for cell, stats in result["per_cell"].items():
         print(f"  {cell:30s}  forget = {stats['forget_mean']:.4f}")
-    print()
-    fit = result["model_fit"]
-    print(f"  Additive       AIC = {fit['additive']['AIC']:.2f}   coefs={fit['additive']['coefs']}")
-    print(f"  Multiplicative AIC = {fit['multiplicative']['AIC']:.2f}   coefs={fit['multiplicative']['coefs']}")
-    print(f"  ΔAIC (mul − add)  = {fit['delta_AIC']:+.2f}   winner = {fit['winner']}")
+
+    diag = result["interaction_diagnostic"]
+    print(f"\n  Interaction diagnostic (cell means in raw forget-score space):")
+    print(f"    delta_low  (S_high - S_low @ E_low)  = {diag['delta_low']:+.4f}")
+    print(f"    delta_high (S_high - S_low @ E_high) = {diag['delta_high']:+.4f}")
+    print(f"    |delta_low - delta_high|             = {diag['interaction_magnitude']:.4f}   "
+          f"(pure additive predicts 0)")
+
+    raw = result["model_fit_raw"]
+    log = result["model_fit_log"]
+    print(f"\n  Raw-scale OLS (primary test):")
+    print(f"    additive          AIC = {raw['additive']['AIC']:.2f}   {raw['additive']['coefs']}")
+    print(f"    with_interaction  AIC = {raw['with_interaction']['AIC']:.2f}   {raw['with_interaction']['coefs']}")
+    print(f"    ΔAIC = {raw['delta_AIC']:+.2f}   winner = {raw['winner']}")
+    print(f"\n  Log-scale OLS (sanity check):")
+    print(f"    additive          AIC = {log['additive']['AIC']:.2f}   {log['additive']['coefs']}")
+    print(f"    with_interaction  AIC = {log['with_interaction']['AIC']:.2f}   {log['with_interaction']['coefs']}")
+    print(f"    ΔAIC = {log['delta_AIC']:+.2f}   winner = {log['winner']}")
     print(f"  → wrote {out}")
 
 

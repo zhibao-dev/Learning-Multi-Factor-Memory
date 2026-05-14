@@ -1,17 +1,91 @@
 {
-  "experiment": "E3 — λ_self ablation",
-  "ran_at": "2026-05-14T23:58:00.673350",
+  "experiment": "E3 — π_self ablation (primary) + λ sensitivity (secondary)",
+  "ran_at": "2026-05-15T00:05:06.605515",
   "n_per_condition": 50,
-  "lambdas": [
-    0.0,
-    0.25,
-    0.5,
-    1.0,
-    2.0,
-    4.0,
-    8.0
+  "pi_self_runs": [
+    {
+      "pi_self": 0.0,
+      "condition_sr": {
+        "structural": 0.5,
+        "phonemic": 0.5,
+        "semantic": 0.5,
+        "self_ref": 0.5
+      },
+      "cell_forget_means": {
+        "structural": 1.3015,
+        "phonemic": 1.3015,
+        "semantic": 1.3015,
+        "self_ref": 1.3015
+      },
+      "sre_size": 0.0
+    },
+    {
+      "pi_self": 0.25,
+      "condition_sr": {
+        "structural": 0.4728,
+        "phonemic": 0.4507,
+        "semantic": 0.5915,
+        "self_ref": 0.625
+      },
+      "cell_forget_means": {
+        "structural": 1.3379,
+        "phonemic": 1.369,
+        "semantic": 1.1924,
+        "self_ref": 1.1569
+      },
+      "sre_size": 0.0355
+    },
+    {
+      "pi_self": 0.5,
+      "condition_sr": {
+        "structural": 0.4455,
+        "phonemic": 0.4014,
+        "semantic": 0.683,
+        "self_ref": 0.75
+      },
+      "cell_forget_means": {
+        "structural": 1.3765,
+        "phonemic": 1.4439,
+        "semantic": 1.1001,
+        "self_ref": 1.0412
+      },
+      "sre_size": 0.0589
+    },
+    {
+      "pi_self": 0.75,
+      "condition_sr": {
+        "structural": 0.4183,
+        "phonemic": 0.3521,
+        "semantic": 0.7746,
+        "self_ref": 0.875
+      },
+      "cell_forget_means": {
+        "structural": 1.4173,
+        "phonemic": 1.5275,
+        "semantic": 1.0211,
+        "self_ref": 0.9466
+      },
+      "sre_size": 0.0745
+    },
+    {
+      "pi_self": 1.0,
+      "condition_sr": {
+        "structural": 0.3911,
+        "phonemic": 0.3028,
+        "semantic": 0.8661,
+        "self_ref": 1.0
+      },
+      "cell_forget_means": {
+        "structural": 1.4606,
+        "phonemic": 1.6213,
+        "semantic": 0.9527,
+        "self_ref": 0.8677
+      },
+      "sre_size": 0.085
+    }
   ],
-  "runs": [
+  "pi_self_monotone_increase": true,
+  "lambda_runs": [
     {
       "lambda": 0.0,
       "cell_means": {
@@ -83,5 +157,5 @@
       "sre_size": 0.1869
     }
   ],
-  "monotonic": false
+  "lambda_peak": 2.0
 }

@@ -1,6 +1,6 @@
 {
   "experiment": "E2 — Mood × Self factorial (additive vs multiplicative)",
-  "ran_at": "2026-05-14T23:57:04.592950",
+  "ran_at": "2026-05-15T00:03:27.008131",
   "n_per_cell": 100,
   "per_cell": {
     "emotion_low_self_low": {
@@ -24,7 +24,35 @@
       "forget_std": 0.0
     }
   },
-  "model_fit": {
+  "interaction_diagnostic": {
+    "delta_low": -1.2051,
+    "delta_high": -0.4939,
+    "interaction_magnitude": 0.7112,
+    "interpretation": "Pure additivity predicts delta_low ≈ delta_high; any non-trivial difference signals interaction."
+  },
+  "model_fit_raw": {
+    "additive": {
+      "AIC": -1375.6768,
+      "coefs": {
+        "intercept": 1.9914,
+        "E": -0.9246,
+        "S": -0.8495
+      }
+    },
+    "with_interaction": {
+      "AIC": -11044.4084,
+      "coefs": {
+        "intercept": 2.1692,
+        "E": -1.2802,
+        "S": -1.2051,
+        "ES": 0.7112
+      }
+    },
+    "delta_AIC": -9668.731600000001,
+    "winner": "with_interaction",
+    "note": "Primary test: raw-scale linear regression. Multiplicative ground-truth predicts the interaction term wins on raw scale."
+  },
+  "model_fit_log": {
     "additive": {
       "AIC": -9211.4357,
       "coefs": {
@@ -33,7 +61,7 @@
         "S": -0.8109
       }
     },
-    "multiplicative": {
+    "with_interaction": {
       "AIC": -11044.4084,
       "coefs": {
         "intercept": 0.7744,
@@ -43,7 +71,8 @@
       }
     },
     "delta_AIC": -1832.9727000000003,
-    "winner": "multiplicative"
+    "winner": "with_interaction",
+    "note": "Sanity check: log-scale. Because the true formula is a product of terms, log-additivity is predicted; the interaction term should ROT win here."
   },
   "note": "Predicts ΔAIC < -2 (multiplicative wins) because the forget_score formula multiplies emotion_resistance and self_resistance."
 }
