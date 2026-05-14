@@ -1,17 +1,16 @@
 """
 Memory Consolidation Pipeline
 
-Offline 7-step pipeline run after each session (or on cron schedule).
+Offline pipeline run after each session (or on cron schedule).
 Corresponds to sleep-based memory consolidation in cognitive neuroscience.
 
 Steps:
   1. Entity & Relation Extraction    → raw material for semantic memory
   2. Schema Matching                 → integrate with existing knowledge graph
-  3. Contradiction Detection         → flag conflicting beliefs
-  4. Importance Re-scoring           → update based on retrieval utility
-  5. Emotional Significance Update   → recompute encoding depths
-  6. Skill Candidate Detection       → find reusable procedural patterns
-  7. Active Forgetting               → apply Ebbinghaus decay, prune SHALLOW entries
+  3. Emotional Significance Update   → persist (V, A, depth, ΔF) to borge_memories
+  4. ΔF_total → importance bonus     → progress-bearing turns resist forgetting
+  5. Skill Candidate Detection       → find reusable procedural patterns
+  6. Active Forgetting               → apply Ebbinghaus decay, prune SHALLOW entries
 """
 
 from __future__ import annotations
@@ -38,8 +37,6 @@ class ConsolidationReport:
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
     entities_extracted: int = 0
     relations_added: int = 0
-    contradictions_flagged: int = 0
-    importance_updates: int = 0
     skill_candidates: list[str] = field(default_factory=list)
     entries_forgotten: int = 0
     entries_compressed: int = 0
@@ -103,25 +100,19 @@ class MemoryConsolidationPipeline:
             # Step 2: Schema matching & KG update
             self._step2_update_kg(entities, relations, report)
 
-            # Step 3: Contradiction detection
-            self._step3_detect_contradictions(entities, report)
-
-            # Step 4: Importance re-scoring
-            self._step4_rescore_importance(session_id, messages, report)
-
-            # Step 5: Emotional significance update — persist to borge_memories
-            self._step5_emotional_significance(
+            # Step 3: Emotional significance update — persist to borge_memories
+            self._step3_emotional_significance(
                 session_id, messages, emotional_history, f_history, report
             )
 
-            # Step 5b: ΔF_total → importance bonus
+            # Step 4: ΔF_total → importance bonus
             apply_importance_from_delta_f(self.db_path, gain=0.3)
 
-            # Step 6: Skill candidate detection
-            self._step6_detect_skills(messages, report)
+            # Step 5: Skill candidate detection
+            self._step5_detect_skills(messages, report)
 
-            # Step 7: Active forgetting
-            self._step7_forgetting(session_id, report)
+            # Step 6: Active forgetting
+            self._step6_forgetting(session_id, report)
 
         except Exception as e:
             log.error(f"[Consolidation] Pipeline error: {e}")
@@ -218,32 +209,9 @@ Return JSON:
                 self.kg.add_edge(src_id, tgt_id, r.get("relation", "relates_to"))
                 report.relations_added += 1
 
-    # ── Step 3: Contradiction Detection ──────────────────────────────────
+    # ── Step 3: Emotional Significance ───────────────────────────────────
 
-    def _step3_detect_contradictions(
-        self,
-        entities: list[dict],
-        report: ConsolidationReport,
-    ) -> None:
-        # Lightweight: look for entities with "contradicts" relations in new data
-        # Full implementation would compare against stored facts
-        report.contradictions_flagged = 0  # placeholder for future LLM pass
-
-    # ── Step 4: Importance Re-scoring ─────────────────────────────────────
-
-    def _step4_rescore_importance(
-        self,
-        session_id: str,
-        messages: list[dict],
-        report: ConsolidationReport,
-    ) -> None:
-        # Heuristic: longer, more-referenced content → higher importance
-        # Full implementation queries retrieval logs from DB
-        report.importance_updates = len(messages)
-
-    # ── Step 5: Emotional Significance ───────────────────────────────────
-
-    def _step5_emotional_significance(
+    def _step3_emotional_significance(
         self,
         session_id: str,
         messages: list[dict],
@@ -325,9 +293,9 @@ Return JSON:
 
         log.debug(f"[Step5] persisted {persisted} memory rows")
 
-    # ── Step 6: Skill Candidate Detection ────────────────────────────────
+    # ── Step 5: Skill Candidate Detection ────────────────────────────────
 
-    def _step6_detect_skills(
+    def _step5_detect_skills(
         self,
         messages: list[dict],
         report: ConsolidationReport,
@@ -356,9 +324,9 @@ Otherwise: {{"worth_saving": false}}"""
             except Exception:
                 pass
 
-    # ── Step 7: Active Forgetting ─────────────────────────────────────────
+    # ── Step 6: Active Forgetting ─────────────────────────────────────────
 
-    def _step7_forgetting(
+    def _step6_forgetting(
         self,
         session_id: str,
         report: ConsolidationReport,
