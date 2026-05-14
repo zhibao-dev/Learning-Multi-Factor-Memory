@@ -456,7 +456,7 @@ class MyBorge(BorgeAgent):
         self._signal_extractor = ChineseSignalExtractor()
 ```
 
-`BorgeAgent` 的设计就鼓励替换 —— 所有引擎（`_signal_extractor`、`_loyalty_tracker`、`_meta`、`_afe`、`_kg`、`_forgetting`、`_consolidation`、`_skill_evolution`）都是 init 后可替换的公共属性。
+`BorgeAgent` 的设计就鼓励替换 —— 所有引擎（`_signal_extractor`、`_loyalty_tracker`、`_meta`、`_afe`、`_kg`、`_forgetting`、`_consolidation`、`_memory_store`、`_retrieval`）都是 init 后可替换的公共属性。
 
 ### 环境变量
 
@@ -501,11 +501,10 @@ flowchart TB
 borge/                                   (认知层实现)
     ├── affective/      Russell 2D, 信号提取, 忠诚度
     ├── beliefs/        贝叶斯假设追踪, 香农熵
-    ├── inference/      主动推断, EFE 评分
-    ├── memory/         4 级编码深度, 知识图谱, 遗忘, 巩固
+    ├── inference/      主动推断, EFE 评分（实验性）
+    ├── memory/         4 级编码深度, 知识图谱, 遗忘, 巩固, 召回
     ├── meta/           自由能, 中央执行系统 (MetaAgent)
     ├── values/         SOUL.md 解析, ValueSystem, 约束检查
-    ├── skill_evolution.py   技能库的达尔文式适应度
     └── agent.py        BorgeAgent —— 主集成接口
 ```
 
@@ -564,10 +563,10 @@ borge/                                   (认知层实现)
 </td>
 <td width="50%" valign="top">
 
-#### ⚖️ `values/` &nbsp;+&nbsp; 🌱 `skill_evolution`
+#### ⚖️ `values/` &nbsp;<sub><i>SOUL.md 先验作为类型化价值</i></sub>
 
-- **`value_system`** &nbsp;<sub><i>价值对齐</i></sub><br/><sub>`F_pragmatic = 1 - V_alignment` —— SOUL.md 先验作为类型化价值</sub>
-- **`skill_evolution`** &nbsp;<sub><i>达尔文式适应度</i></sub><br/><sub>`fitness = success_rate × log(1+n) × recency × Δfree_energy`</sub>
+- **`value_system`**<br/><sub>`F_pragmatic = 1 - V_alignment` —— 从 SOUL.md YAML frontmatter 派生的类型化先验偏好</sub>
+- **`parse_soul_frontmatter`**<br/><sub>把 `emotional_defaults` + `values` 段加载到 `ValueSystem` 实例</sub>
 
 </td>
 </tr>

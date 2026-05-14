@@ -456,7 +456,7 @@ class MyBorge(BorgeAgent):
         self._signal_extractor = ChineseSignalExtractor()
 ```
 
-`BorgeAgent` is designed for replacement — all engines (`_signal_extractor`, `_loyalty_tracker`, `_meta`, `_afe`, `_kg`, `_forgetting`, `_consolidation`, `_skill_evolution`) are public-ish attributes you can swap after init.
+`BorgeAgent` is designed for replacement — all engines (`_signal_extractor`, `_loyalty_tracker`, `_meta`, `_afe`, `_kg`, `_forgetting`, `_consolidation`, `_memory_store`, `_retrieval`) are public-ish attributes you can swap after init.
 
 ### Environment variables
 
@@ -501,11 +501,10 @@ flowchart TB
 borge/                                   (cognitive implementation)
     ├── affective/      Russell 2D, signal extraction, loyalty tracker
     ├── beliefs/        Bayesian hypothesis tracking, Shannon entropy
-    ├── inference/      Active inference, EFE-based tool scoring
-    ├── memory/         4-depth encoding, KG, forgetting, consolidation
+    ├── inference/      Active inference, EFE-based tool scoring (experimental)
+    ├── memory/         4-depth encoding, KG, forgetting, consolidation, retrieval
     ├── meta/           Free energy, central executive (MetaAgent)
     ├── values/         SOUL.md parser, ValueSystem, constraint checking
-    ├── skill_evolution.py   Darwinian fitness for the skill library
     └── agent.py        BorgeAgent — main integration surface
 ```
 
@@ -564,10 +563,10 @@ Remove the plugin → Hermes reverts to vanilla. No leftover state, no broken sc
 </td>
 <td width="50%" valign="top">
 
-#### ⚖️ `values/` &nbsp;+&nbsp; 🌱 `skill_evolution`
+#### ⚖️ `values/` &nbsp;<sub><i>SOUL.md priors as typed values</i></sub>
 
-- **`value_system`** &nbsp;<sub><i>Value alignment</i></sub><br/><sub>`F_pragmatic = 1 - V_alignment` — SOUL.md priors as typed values</sub>
-- **`skill_evolution`** &nbsp;<sub><i>Darwinian fitness</i></sub><br/><sub>`fitness = success_rate × log(1+n) × recency × Δfree_energy`</sub>
+- **`value_system`**<br/><sub>`F_pragmatic = 1 - V_alignment` — typed prior preferences derived from SOUL.md YAML frontmatter</sub>
+- **`parse_soul_frontmatter`**<br/><sub>Loads `emotional_defaults` + `values` block into a `ValueSystem` instance</sub>
 
 </td>
 </tr>

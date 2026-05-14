@@ -39,7 +39,6 @@ from .memory.retrieval import MemoryRetrieval
 from .memory.store import MemoryStore
 from .meta.free_energy import ExtendedFreeEnergy
 from .meta.meta_agent import MetaAgent
-from .skill_evolution import SkillEvolutionEngine
 from .values.soul_parser import parse_soul_frontmatter
 from .values.value_system import ValueSystem
 
@@ -103,7 +102,6 @@ class BorgeAgent:
             memory_store=self._memory_store,
         )
         self._retrieval = MemoryRetrieval(self._db_path, store=self._memory_store)
-        self._skill_evolution = SkillEvolutionEngine(self._db_path)
 
         # ── Session state ─────────────────────────────────────────────────
         self._emotional_history: list[tuple[float, float]] = []
@@ -225,18 +223,6 @@ class BorgeAgent:
             f"skills={report.skill_candidates} "
             f"forgotten={report.entries_forgotten}"
         )
-
-    # ── Skill tracking ────────────────────────────────────────────────────
-
-    def record_skill(self, skill_name: str, success: bool, f_before: float = 0.5, f_after: float = 0.5) -> None:
-        f_reduction = max(0.0, f_before - f_after)
-        self._skill_evolution.record_invocation(skill_name, success, f_reduction)
-
-    def skill_health_report(self) -> dict:
-        return {
-            "prune_candidates": self._skill_evolution.prune_candidates(),
-            "generalise_candidates": self._skill_evolution.generalise_candidates(),
-        }
 
     # ── Memory retrieval ──────────────────────────────────────────────────
 

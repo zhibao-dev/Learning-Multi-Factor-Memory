@@ -63,7 +63,6 @@ Each directory is mostly self-contained; `BorgeAgent` is the only place where th
 | `borge/memory/` | `CognitiveMemory` (4-level encoding depth), `KnowledgeGraph` (**pure SQLite**, no networkx), `MemoryConsolidationPipeline`, `ForgettingEngine` (emotion-aware Ebbinghaus score), `MemoryStore` (owns `borge_memories` table), `MemoryRetrieval` (mood-congruent + ΔF ranking) |
 | `borge/meta/` | `ExtendedFreeEnergy` (`F = F_ep × precision + F_pr × V_alignment + F_hm`), `MetaAgent` (Baddeley central executive — monitors F-trajectory, triggers reflection after 3 non-decreasing turns, builds the context-injection string) |
 | `borge/values/` | `parse_soul_frontmatter` (YAML frontmatter parser), `ValueSystem` (typed prior preferences + hard constraints derived from SOUL.md) |
-| `borge/skill_evolution.py` | `SkillEvolutionEngine` — fitness = `success_rate × log(1+n) × recency × (1 + avg_f_reduction)`; surfaces prune/generalise candidates |
 
 ## Configuration & persistence
 

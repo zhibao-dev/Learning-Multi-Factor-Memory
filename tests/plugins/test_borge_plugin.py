@@ -64,20 +64,6 @@ def test_score_tool_candidates_returns_candidates():
     assert names == {"bash", "read_file"}
 
 
-def test_skill_health_report_returns_dict():
-    from borge.agent import BorgeAgent
-    import tempfile, os
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
-    try:
-        agent = BorgeAgent(agent_backend=None, db_path=db_path)
-        report = agent.skill_health_report()
-        assert "prune_candidates" in report
-        assert "generalise_candidates" in report
-    finally:
-        os.unlink(db_path)
-
-
 def test_plugin_register_hooks():
     registered = []
 
