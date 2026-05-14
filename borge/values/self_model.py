@@ -46,6 +46,22 @@ DEFAULT_GAMMA      = 10.0  # PE-variance scale in π update
 DEFAULT_PI_INIT    = 0.5   # neutral prior on self-precision
 PE_WINDOW          = 50    # rolling window for π_self update
 
+# First-person markers (English + light zh). Updates to μ_self gate on the
+# presence of one of these tokens so the self prior reflects identity-
+# constitutive utterances, not arbitrary world talk.
+SELF_TOKENS = {
+    "i", "i'm", "i've", "i'd", "i'll",
+    "me", "my", "mine", "myself",
+    "we", "we're", "we've", "our", "ours", "ourselves",
+    "我", "我的", "自己", "本人",
+}
+
+
+def has_self_reference(text: str) -> bool:
+    """True if text contains any first-person token (case-insensitive)."""
+    tokens = (text or "").lower().split()
+    return any(t.strip(".,!?;:'\"()[]") in SELF_TOKENS for t in tokens)
+
 
 # ── Embedding ─────────────────────────────────────────────────────────────
 

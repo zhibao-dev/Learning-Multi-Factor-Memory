@@ -27,7 +27,7 @@ from .cognitive_memory import EncodingDepth, MemoryEntry
 from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
 from .store import MemoryStore
-from ..values.self_model import SelfModel, embed
+from ..values.self_model import SelfModel, embed, has_self_reference
 
 log = logging.getLogger(__name__)
 
@@ -283,9 +283,11 @@ Return JSON:
             if self.self_model is not None:
                 embedding = embed(content, dim=self.self_model.dim)
                 self_relevance = self.self_model.self_relevance(embedding)
-                # Only user-role content shapes the self prior — assistant/tool
-                # outputs are observations OF the world, not OF the self.
-                if role == "user":
+                # μ_self updates only on user content that contains explicit
+                # self-references ("I", "me", "my", "我", …). This makes the
+                # self prior identity-constitutive rather than chasing every
+                # topic mentioned by the user.
+                if role == "user" and has_self_reference(content):
                     self.self_model.update(embedding, weight=max(significance, 0.1))
 
             # Self-modulated encoding depth — vivid AND self-relevant content

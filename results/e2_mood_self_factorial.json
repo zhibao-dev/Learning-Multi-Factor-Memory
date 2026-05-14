@@ -1,0 +1,49 @@
+{
+  "experiment": "E2 — Mood × Self factorial (additive vs multiplicative)",
+  "ran_at": "2026-05-14T23:57:04.592950",
+  "n_per_cell": 100,
+  "per_cell": {
+    "emotion_low_self_low": {
+      "n": 100,
+      "forget_mean": 2.1692,
+      "forget_std": 0.0
+    },
+    "emotion_low_self_high": {
+      "n": 100,
+      "forget_mean": 0.9641,
+      "forget_std": 0.0
+    },
+    "emotion_high_self_low": {
+      "n": 100,
+      "forget_mean": 0.889,
+      "forget_std": 0.0
+    },
+    "emotion_high_self_high": {
+      "n": 100,
+      "forget_mean": 0.3951,
+      "forget_std": 0.0
+    }
+  },
+  "model_fit": {
+    "additive": {
+      "AIC": -9211.4357,
+      "coefs": {
+        "intercept": 0.7744,
+        "E": -0.892,
+        "S": -0.8109
+      }
+    },
+    "multiplicative": {
+      "AIC": -11044.4084,
+      "coefs": {
+        "intercept": 0.7744,
+        "E": -0.892,
+        "S": -0.8109,
+        "ES": -0.0
+      }
+    },
+    "delta_AIC": -1832.9727000000003,
+    "winner": "multiplicative"
+  },
+  "note": "Predicts ΔAIC < -2 (multiplicative wins) because the forget_score formula multiplies emotion_resistance and self_resistance."
+}

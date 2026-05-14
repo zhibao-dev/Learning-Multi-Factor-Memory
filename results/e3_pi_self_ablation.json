@@ -1,0 +1,87 @@
+{
+  "experiment": "E3 — λ_self ablation",
+  "ran_at": "2026-05-14T23:58:00.673350",
+  "n_per_condition": 50,
+  "lambdas": [
+    0.0,
+    0.25,
+    0.5,
+    1.0,
+    2.0,
+    4.0,
+    8.0
+  ],
+  "runs": [
+    {
+      "lambda": 0.0,
+      "cell_means": {
+        "structural": 2.603,
+        "phonemic": 2.603,
+        "semantic": 2.603,
+        "self_ref": 2.603
+      },
+      "sre_size": 0.0
+    },
+    {
+      "lambda": 0.25,
+      "cell_means": {
+        "structural": 2.5709,
+        "phonemic": 2.4791,
+        "semantic": 2.3138,
+        "self_ref": 2.1468
+      },
+      "sre_size": 0.167
+    },
+    {
+      "lambda": 0.5,
+      "cell_means": {
+        "structural": 2.5395,
+        "phonemic": 2.3664,
+        "semantic": 2.0824,
+        "self_ref": 1.8267
+      },
+      "sre_size": 0.2557
+    },
+    {
+      "lambda": 1.0,
+      "cell_means": {
+        "structural": 2.4791,
+        "phonemic": 2.1692,
+        "semantic": 1.7353,
+        "self_ref": 1.407
+      },
+      "sre_size": 0.3283
+    },
+    {
+      "lambda": 2.0,
+      "cell_means": {
+        "structural": 2.3664,
+        "phonemic": 1.8593,
+        "semantic": 1.3015,
+        "self_ref": 0.9641
+      },
+      "sre_size": 0.3374
+    },
+    {
+      "lambda": 4.0,
+      "cell_means": {
+        "structural": 2.1692,
+        "phonemic": 1.4461,
+        "semantic": 0.8677,
+        "self_ref": 0.5916
+      },
+      "sre_size": 0.2761
+    },
+    {
+      "lambda": 8.0,
+      "cell_means": {
+        "structural": 1.8593,
+        "phonemic": 1.0012,
+        "semantic": 0.5206,
+        "self_ref": 0.3337
+      },
+      "sre_size": 0.1869
+    }
+  ],
+  "monotonic": false
+}

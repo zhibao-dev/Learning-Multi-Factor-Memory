@@ -1,0 +1,373 @@
+{
+  "experiment": "E1 — SRE replication (mechanical, forget-score)",
+  "ran_at": "2026-05-14T23:55:47.569144",
+  "n_seeds": 10,
+  "n_per_condition": 50,
+  "age_days": 7,
+  "condition_self_relevance": {
+    "structural": 0.05,
+    "phonemic": 0.2,
+    "semantic": 0.5,
+    "self_ref": 0.85
+  },
+  "aggregate": {
+    "structural": {
+      "mean_forget": 2.3664,
+      "std_forget": 0.0,
+      "self_relevance": 0.05
+    },
+    "phonemic": {
+      "mean_forget": 1.8593,
+      "std_forget": 0.0,
+      "self_relevance": 0.2
+    },
+    "semantic": {
+      "mean_forget": 1.3015,
+      "std_forget": 0.0,
+      "self_relevance": 0.5
+    },
+    "self_ref": {
+      "mean_forget": 0.9641,
+      "std_forget": 0.0,
+      "self_relevance": 0.85
+    }
+  },
+  "sre_recall_proxy": {
+    "mean": 0.3374,
+    "std": 0.0
+  },
+  "ordering_hits": "10/10",
+  "per_seed": [
+    {
+      "seed": 42,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 43,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 44,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 45,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 46,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 47,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 48,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 49,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 50,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    },
+    {
+      "seed": 51,
+      "age_days": 7,
+      "per_condition": {
+        "structural": {
+          "n": 50,
+          "forget_mean": 2.3664,
+          "forget_std": 0.0,
+          "self_relevance": 0.05
+        },
+        "phonemic": {
+          "n": 50,
+          "forget_mean": 1.8593,
+          "forget_std": 0.0,
+          "self_relevance": 0.2
+        },
+        "semantic": {
+          "n": 50,
+          "forget_mean": 1.3015,
+          "forget_std": 0.0,
+          "self_relevance": 0.5
+        },
+        "self_ref": {
+          "n": 50,
+          "forget_mean": 0.9641,
+          "forget_std": 0.0,
+          "self_relevance": 0.85
+        }
+      },
+      "sre_forget_diff": -0.3374,
+      "sre_recall_proxy": 0.3374,
+      "ordering_ok": true
+    }
+  ],
+  "note": "E1 tests the forget_score formula's response to self_relevance, holding emotion/importance/recency constant. E1b (future) would use sentence-transformers embeddings to verify the forward pass also assigns condition-appropriate self_relevance from raw text."
+}
