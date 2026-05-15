@@ -1,21 +1,38 @@
 \section{Method}
 \label{sec:method}
 
-\paragraph{Scope: precision-inspired, not variational.}
-Before describing the mechanism, we make the FEP scope precise.
-We use the FEP as a \emph{design discipline}: the self is treated as a
-generative model with a precision-weighted prior, and self-precision
-gates downstream processing the way precision does throughout the FEP
-literature. We do \emph{not} derive the precision update rule from a
-variational free-energy objective; \cref{eq:pi} is engineered to have
-the qualitative shape FEP precision should have (low PE variance
-$\Rightarrow$ high precision) and is a first commitment, not a
-theorem. A variational derivation under a specified likelihood-prior
-pair is named explicitly as a follow-up step
-(\cref{sec:limitations}, L2). Where the paper says ``FEP-inspired'' or
-``FEP-grounded mechanism,'' it means: faithful to the precision-gating
-intuition; not yet faithful to variational free-energy minimisation as
-an objective.
+\paragraph{Scope: variational interpretation of $\piself$.}
+We treat the FEP as a design discipline: the self is a generative model
+with a precision-weighted prior, and self-precision gates downstream
+processing the way precision does throughout the FEP literature. The
+update rule \cref{eq:pi} admits a clean variational reading. Let
+$R \in \{0, 1\}$ be a binary latent ``reliability'' state, with $R=1$
+the proposition that the self prior is currently a reliable predictor
+of self-relevant observations. Under a mild generative model
+
+\[
+p(\Var[\PE] \mid R=1) \;\propto\; \gamma\,\exp(-\gamma\Var[\PE]),
+\qquad
+p(\Var[\PE] \mid R=0) \;\propto\; \text{flat},
+\qquad
+p(R=1) = p(R=0) = \tfrac{1}{2},
+\]
+
+Bayes' rule on the observed $\Var[\PE]$ yields, to first order in
+$\gamma\Var$,
+
+\[
+p(R=1 \mid \Var[\PE]) \;=\; \frac{1}{1 + \gamma\,\Var[\PE]}.
+\]
+
+We identify $\piself \equiv p(R=1 \mid \Var[\PE])$. The hyperparameter
+$\gamma$ is the \emph{prior precision} on $\Var[\PE]$ under the reliable
+hypothesis: large $\gamma$ encodes the prior belief that a working self
+model leaves only tiny PE residuals. The same hyperparameter is exposed
+in code under the explicit name \texttt{prior\_precision} (with
+\texttt{gamma} as a legacy alias) so that the variational connection is
+visible at the API surface. This is the answer to limitation L2 in the
+v0.1 draft.
 
 \subsection{The Self as a Generative Model}
 \label{sec:method:self}

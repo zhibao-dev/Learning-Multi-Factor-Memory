@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS borge_memories (
     entity_tags TEXT DEFAULT '[]',
     graph_node_ids TEXT DEFAULT '[]',
     self_relevance_score REAL DEFAULT 0.5,
-    embedding TEXT
+    embedding TEXT,
+    mu_self_at_encoding TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_borge_memories_session ON borge_memories(session_id);
 CREATE INDEX IF NOT EXISTS idx_borge_memories_depth ON borge_memories(encoding_depth);
@@ -69,8 +70,11 @@ class MemoryStore:
 
     # Columns added after v0.1; ALTER each one to migrate pre-existing DBs.
     _LATE_COLUMNS = (
-        ("self_relevance_score", "REAL DEFAULT 0.5"),
-        ("embedding",             "TEXT"),
+        ("self_relevance_score",  "REAL DEFAULT 0.5"),
+        ("embedding",              "TEXT"),
+        # v0.4 (L5): encoding-time μ_self snapshot for encoding-specificity-
+        # faithful retrieval. Stored as JSON-encoded list of floats.
+        ("mu_self_at_encoding",    "TEXT"),
     )
 
     def ensure_table(self) -> None:
@@ -107,14 +111,14 @@ class MemoryStore:
                         encoding_depth, importance_score, retrieval_count,
                         last_retrieved, forget_score, f_total_at_encoding,
                         delta_f_total, entity_tags, graph_node_ids,
-                        self_relevance_score, embedding
+                        self_relevance_score, embedding, mu_self_at_encoding
                     ) VALUES (
                         :id, :session_id, :role, :content, :timestamp,
                         :emotional_valence, :emotional_arousal, :emotional_significance,
                         :encoding_depth, :importance_score, :retrieval_count,
                         :last_retrieved, :forget_score, :f_total_at_encoding,
                         :delta_f_total, :entity_tags, :graph_node_ids,
-                        :self_relevance_score, :embedding
+                        :self_relevance_score, :embedding, :mu_self_at_encoding
                     )""",
                     self._normalize(entry),
                 )
@@ -223,7 +227,14 @@ class MemoryStore:
             return v if isinstance(v, str) else json.dumps(v or [])
 
         emb = entry.get("embedding")
-        emb_json = None if emb is None else json.dumps(list(emb))
+        emb_json = None if emb is None else (
+            emb if isinstance(emb, str) else json.dumps(list(emb))
+        )
+
+        mu_snap = entry.get("mu_self_at_encoding")
+        mu_snap_json = None if mu_snap is None else (
+            mu_snap if isinstance(mu_snap, str) else json.dumps(list(mu_snap))
+        )
 
         return {
             "id":                     entry["id"],
@@ -245,4 +256,5 @@ class MemoryStore:
             "graph_node_ids":         _j(entry.get("graph_node_ids", [])),
             "self_relevance_score":   float(entry.get("self_relevance_score", 0.5)),
             "embedding":              emb_json,
+            "mu_self_at_encoding":    mu_snap_json,
         }

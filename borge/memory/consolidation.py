@@ -283,6 +283,7 @@ Return JSON:
             # human-data experiments).
             embedding = None
             self_relevance = 0.5
+            mu_self_snapshot: Optional[list[float]] = None
             if self.self_model is not None:
                 embedding = self.self_model._embed(content)
                 self_relevance = self.self_model.self_relevance(embedding)
@@ -292,6 +293,11 @@ Return JSON:
                 # topic mentioned by the user.
                 if role == "user" and has_self_reference(content):
                     self.self_model.update(embedding, weight=max(significance, 0.1))
+                # L5 — snapshot μ_self AFTER any update on this turn so the
+                # row is encoding-specific: retrieval can later compare the
+                # agent's current μ_self with the μ_self that prevailed when
+                # this memory was formed (Tulving encoding specificity).
+                mu_self_snapshot = list(self.self_model.mu_self) if self.self_model.mu_self else None
 
             # Self-modulated encoding depth — vivid AND self-relevant content
             # gets bumped one tier higher (capped at META).
@@ -313,6 +319,7 @@ Return JSON:
                 "delta_f_total":          delta_f,
                 "self_relevance_score":   round(self_relevance, 4),
                 "embedding":              embedding,
+                "mu_self_at_encoding":    mu_self_snapshot,
             })
             persisted += 1
 

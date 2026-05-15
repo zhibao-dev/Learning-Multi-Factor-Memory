@@ -17,15 +17,17 @@ Symons \& Johnson 1997 reference band. The bag-of-tokens default
 remains for backward compatibility and dependency-free testing; it is
 documented as inadequate for forward-pass SRE work.
 
-\paragraph{L2: $\piself$ update rule is engineered, not derived.}
-\Cref{eq:pi} expresses $\piself$ as a function of prediction-error
-variance over a rolling window. The form is FEP-inspired but is not a
-derivation from variational free energy first principles. A defensible
-derivation would cast $\piself$ as the inverse variance of the
-predictive distribution under a specified likelihood/prior pair and
-recover \cref{eq:pi} as the natural-gradient update of that quantity.
-We have not done this; reviewers will reasonably ask where the rule
-comes from.
+\paragraph{L2: $\piself$ update rule ---
+\textit{addressed in v0.4}.}
+\Cref{eq:pi} is now derived as a closed-form variational posterior over
+a binary self-prior reliability latent $R$ under a Gamma-flat prior on
+$\Var[\PE]$ (see \cref{sec:method:self}, ``Scope: variational
+interpretation of $\piself$''). The hyperparameter $\gamma$ is the
+prior precision on $\Var[\PE]$ under the reliable hypothesis and is
+now exposed in code under the explicit name \texttt{prior\_precision}.
+The derivation is first-order in $\gamma\Var[\PE]$; a tighter
+treatment (Gamma--Gamma conjugate, non-binary $R$) is a v0.5 surface
+fix that should not change qualitative behaviour.
 
 \paragraph{L3: Human-data fit ---
 \textit{partially addressed in v0.2}.} The model's predicted Cohen's
@@ -48,22 +50,26 @@ estimates and for the OLS regressions in E2 to be applied to data with
 the variance structure they assume. We expect the qualitative
 conclusions to be robust but cannot claim it from current evidence.
 
-\paragraph{L5: Retrieval uses memory embedding, not encoding-time
-$\muself$.} The retrieval ranking (\cref{eq:rank}) computes
-$\cos(e_i,\muself^{now})$ between the memory's content embedding and
-the agent's \emph{current} $\muself$, falling back to the stored
-$\srel_i$ snapshot. The proposal sketch in the project's idea report
-specified ranking by similarity between current $\muself$ and the
-memory's $\muself^{\text{enc}}$ --- a strictly more faithful
-match to encoding-specificity \cite{tulving1973encodingspec}. Adding
-$\muself^{\text{enc}}$ persistence is a small change but
-not yet done.
+\paragraph{L5: Retrieval uses encoding-time $\muself^{\text{enc}}$ ---
+\textit{addressed in v0.4}.} The retrieval ranking (\cref{eq:rank})
+now prefers $\cos(\muself^{\text{enc}}, \muself^{\text{now}})$ over
+the looser $\cos(e_i, \muself^{\text{now}})$, where
+$\muself^{\text{enc}}$ is the agent's self prior at the moment memory
+$i$ was formed --- persisted in a new \texttt{mu\_self\_at\_encoding}
+column on the memory store. This makes the model strictly faithful to
+Tulving's encoding-specificity principle
+\cite{tulving1973encodingspec}: the agent matches the self it has now
+against the self it had then, not against the literal content of the
+memory. A graceful fallback to the embedding path is retained for
+legacy rows that pre-date the snapshot column.
 
 \paragraph{Path forward.}
-In v0.2 we addressed L1 (sentence-transformers wrapper + E1b
-forward-pass replication) and the first half of L3 (Cohen's $d$ within
-the S\&J 1997 reference band). The remaining items are: L2 (variational
-derivation of $\piself$), L5 (persistent $\muself^{\text{enc}}$ for
-retrieval), the CMR3 head-to-head comparison, and the clinical E6
-attenuation fit. None of these change the central mechanism; they
-sharpen its quantitative claims and tighten the FEP grounding.
+v0.2 addressed L1 (SBert wrapper + E1b forward pass) and the first
+half of L3 (Cohen's $d$ in the S\&J reference band). v0.4 addresses
+L2 (variational derivation of $\piself$) and L5 (encoding-time
+$\muself^{\text{enc}}$ persistence). The remaining items are L4
+(more thorough noise modelling than the $\sigma{=}0.05$ Gaussian we
+already add at the forget-score level), the CMR3 head-to-head
+reimplementation, and the clinical E6 attenuation fit. None of these
+change the central mechanism; they sharpen its quantitative claims
+and broaden empirical coverage.

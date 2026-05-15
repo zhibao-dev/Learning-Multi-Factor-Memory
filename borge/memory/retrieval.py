@@ -160,17 +160,39 @@ class MemoryRetrieval:
     def _self_similarity(self, row: dict) -> float:
         """
         Self-similarity ∈ [0, 1] between the memory and the agent's current
-        μ_self. Falls back to the row's stored self_relevance_score (which
-        was the snapshot at encoding time) when no live SelfModel is wired
-        or the row has no embedding.
+        μ_self.
+
+        Preference order (encoding-specificity-faithful, L5 in v0.4):
+          1. cos(current μ_self, mu_self_at_encoding)   — Tulving (1973)
+          2. cos(current μ_self, memory.embedding)       — legacy fallback
+          3. row.self_relevance_score                    — final fallback
+
+        The snapshot path is preferred because it answers the
+        Tulving question correctly: "how close is what I think about
+        myself now to what I thought about myself when this memory
+        formed?" The embedding fallback answers the looser question:
+        "how close is what I think about myself now to the literal
+        text of this memory?" — useful but conceptually weaker.
         """
         if self.self_model is not None and self.self_model.mu_self:
+            current_mu = self.self_model.mu_self
+            # (1) μ_self_at_encoding snapshot
+            mu_snap_raw = row.get("mu_self_at_encoding")
+            if isinstance(mu_snap_raw, str) and mu_snap_raw:
+                try:
+                    mu_snap = json.loads(mu_snap_raw)
+                    sim = cosine(mu_snap, current_mu)
+                    return 0.5 + 0.5 * sim
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            # (2) memory.embedding fallback (v0.3 path)
             emb_raw = row.get("embedding")
             if isinstance(emb_raw, str) and emb_raw:
                 try:
                     emb = json.loads(emb_raw)
-                    sim = cosine(emb, self.self_model.mu_self)
+                    sim = cosine(emb, current_mu)
                     return 0.5 + 0.5 * sim
                 except (json.JSONDecodeError, TypeError):
                     pass
+        # (3) row's encoding-time sr snapshot
         return float(row.get("self_relevance_score") or 0.5)

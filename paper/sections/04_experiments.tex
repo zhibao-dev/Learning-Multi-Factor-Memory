@@ -45,7 +45,7 @@ is that a forward pass from raw stimuli produces these condition-
 appropriate $\srel$ values; that requires sentence-transformer
 embeddings and is deferred to E1b (\cref{sec:exp:future}).
 
-\begin{figure}[t]
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=0.55\linewidth]{../figures/fig2_sre.pdf}
 \caption{\textbf{E1 --- Controlled self-relevance response.}
@@ -59,7 +59,7 @@ regime).}
 \label{fig:e1}
 \end{figure}
 
-\begin{table}[t]
+\begin{table}[ht!]
 \centering\small
 \caption{E1 per-condition forget\_score (10 seeds $\times$ 50 items).}
 \label{tab:e1}
@@ -110,7 +110,7 @@ A log-scale companion check (Appendix~\ref{app:hparams})
 confirms that the underlying data has pure-product structure: the
 log-interaction coefficient is zero to four decimal places.
 
-\begin{figure}[t]
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=0.55\linewidth]{../figures/fig3_factorial.pdf}
 \caption{\textbf{E2 --- Mood $\times$ Self factorial.}
@@ -122,7 +122,7 @@ deterministic-regression diagnostic.}
 \label{fig:e2}
 \end{figure}
 
-\begin{table}[t]
+\begin{table}[ht!]
 \centering\small
 \caption{E2 raw-scale OLS comparison ($N{=}400$).}
 \label{tab:e2}
@@ -172,7 +172,7 @@ conditions are crushed toward zero forget\_score
 (\cref{fig:e3}, right). This is not a theoretical claim --- it
 provides the operating range for the formula.
 
-\begin{figure}[t]
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=0.95\linewidth]{../figures/fig4_pi_ablation.pdf}
 \caption{\textbf{E3 --- $\piself$ ablation (left) + $\lambda$ sensitivity
@@ -193,8 +193,8 @@ $\srel$ --- recovers the depth-of-processing ordering without any
 manual typing. E1b runs this experiment.
 
 \paragraph{Design.}
-We replace the v0.1 bag-of-tokens embedder with a sentence-transformers
-encoder (\texttt{all-MiniLM-L6-v2}, 384-dim) \cite{reimers2019sbert}.
+We swap the v0.1 bag-of-tokens embedder for a sentence-transformers
+encoder \cite{reimers2019sbert} (model: MiniLM~L6~v2, 384-dim).
 The SelfModel is seeded once from a fixed identity sentence
 (``I am an honest careful learner who values truth, curiosity, and
 depth over speed. I take responsibility for my mistakes and try to
@@ -230,7 +230,7 @@ the human depth-of-processing prediction:
 This is the first quantitative match of our model's predicted SRE
 effect size against the human meta-analysis.
 
-\begin{figure}[t]
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=0.55\linewidth]{../figures/fig5_cohens_d.pdf}
 \caption{\textbf{E1b --- Forward-pass SRE size vs S\&J 1997.}

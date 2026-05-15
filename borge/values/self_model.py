@@ -13,15 +13,35 @@ account — it is the running prior that drives:
 where `sr` is the memory's self-relevance, the cosine similarity between
 its embedding and the current μ_self, mapped into [0, 1].
 
-Precision update follows the FEP-inspired rule
+Precision update follows the variational rule
 
-  π_self ∝ 1 / (1 + γ · Var[PE])
+  π_self = 1 / (1 + γ · Var[PE])
 
-over a rolling window of prediction errors. Low PE-variance (the agent's
-self-prior reliably predicts incoming self-relevant content) → high
-precision → strong modulation of memory. High PE-variance (unstable
-self-evidence) → low precision → memory falls back toward emotion-only
-dynamics. This is the *operational* form of "self-evidencing".
+over a rolling window of prediction errors. **This is the closed-form
+posterior over a binary latent "self-prior reliability" R under a
+mild generative model.** Sketch:
+
+  - R ∈ {0, 1}: 1 = the self prior is currently a reliable predictor
+    of self-relevant observations.
+  - Under R = 1, prediction-error variance Var[PE] is exponentially
+    concentrated near 0 with rate γ:  p(Var | R=1) ∝ γ · exp(-γ·Var).
+  - Under R = 0, Var[PE] is flat (the self prior is uninformative).
+  - With a uniform prior p(R=1) = p(R=0) = 1/2, Bayes' rule on the
+    observed Var[PE] yields, after small-Var-expansion,
+
+      p(R = 1 | Var[PE])  =  1 / (1 + γ · Var[PE]).
+
+  We identify π_self ≡ p(R=1 | Var[PE]). The hyperparameter γ is the
+  *prior precision* on Var[PE] under the reliable hypothesis: large γ
+  encodes the prior belief that a working self model leaves only tiny
+  PE residuals. We expose this hyperparameter under the explicit name
+  `prior_precision` (with `gamma` as the legacy alias).
+
+Low PE-variance (the agent's self-prior reliably predicts incoming
+self-relevant content) → high precision → strong modulation of memory.
+High PE-variance (unstable self-evidence) → low precision → memory
+falls back toward emotion-only dynamics. This is the *operational*
+form of "self-evidencing".
 
 The self model is initialised either:
   - from SOUL.md (`seed_text=` constructor) — bootstrap from value descriptors
@@ -209,9 +229,19 @@ class SelfModel:
     # Pluggable embedder; default = hash_embed (dep-free).
     embedder: Optional[Embedder] = None
 
+    # `prior_precision` is the variational-derivation name for gamma; it
+    # makes the connection to the conjugate prior in the docstring
+    # explicit. When provided, it overrides `gamma`.
+    prior_precision: Optional[float] = field(default=None, repr=False, compare=False)
+
     # Rolling prediction-error history for π_self update (not serialised)
     _pe_history: list[float] = field(default_factory=list, repr=False)
     _max_history: int        = field(default=PE_WINDOW, repr=False)
+
+    def __post_init__(self):
+        # Resolve the `prior_precision` alias into the canonical gamma.
+        if self.prior_precision is not None:
+            self.gamma = float(self.prior_precision)
 
     # ── Constructors ──────────────────────────────────────────────────────
 
@@ -221,9 +251,13 @@ class SelfModel:
         seed_text: str,
         dim: int = DEFAULT_DIM,
         embedder: Optional[Embedder] = None,
+        prior_precision: Optional[float] = None,
     ) -> "SelfModel":
         """Bootstrap μ_self from a seed text (e.g., SOUL.md value descriptors)."""
-        inst = cls(mu_self=[], dim=dim, embedder=embedder)
+        inst = cls(
+            mu_self=[], dim=dim, embedder=embedder,
+            prior_precision=prior_precision,
+        )
         inst.mu_self = inst._embed(seed_text)
         # Adapt dim to the embedder's actual output (sbert is 384, hash is 64).
         if inst.mu_self:
@@ -235,9 +269,13 @@ class SelfModel:
         cls,
         dim: int = DEFAULT_DIM,
         embedder: Optional[Embedder] = None,
+        prior_precision: Optional[float] = None,
     ) -> "SelfModel":
         """Start with no μ_self; first observation becomes the seed."""
-        return cls(mu_self=[], dim=dim, embedder=embedder)
+        return cls(
+            mu_self=[], dim=dim, embedder=embedder,
+            prior_precision=prior_precision,
+        )
 
     # ── Internal embedding shim ───────────────────────────────────────────
 

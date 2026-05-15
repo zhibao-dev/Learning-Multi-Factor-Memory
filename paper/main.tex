@@ -17,8 +17,20 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
+% Numerical natbib (kills author-year overflow). MUST come BEFORE hyperref +
+% cleveref so they pick up numerical refs.
+\usepackage[numbers,sort&compress,square,comma]{natbib}
 \usepackage{hyperref}
 \usepackage{cleveref}
+% Float discipline: \FloatBarrier forces floats to render before each
+% section break so we never get orphan-table pages.
+\usepackage{placeins}
+% Permit a higher fraction of a page to be filled with floats — kills the
+% "one tiny table alone on a blank page" default LaTeX behaviour.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.92}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.7}
 \usepackage{enumitem}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -84,12 +96,19 @@ on a single CPU.
 
 % ---------- main body ----------
 \input{sections/01_intro}
+\FloatBarrier
 \input{sections/02_related_work}
+\FloatBarrier
 \input{sections/03_method}
+\FloatBarrier
 \input{sections/04_experiments}
+\FloatBarrier
 \input{sections/05_discussion}
+\FloatBarrier
 \input{sections/06_limitations}
+\FloatBarrier
 \input{sections/07_conclusion}
+\FloatBarrier
 
 \bibliographystyle{plainnat}
 \bibliography{references}
