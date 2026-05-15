@@ -1,0 +1,207 @@
+\section{Experiments}
+\label{sec:exp}
+
+We run three CPU-only experiments. All experiments use the substrate's
+default hyperparameters (\cref{tab:hparams}, Appendix~\ref{app:hparams}),
+are deterministic given seed, and complete in seconds of wall-clock on a
+single laptop CPU.
+
+\subsection{E1 --- Controlled Self-Relevance Response}
+\label{sec:exp:e1}
+
+\paragraph{Design.}
+A 4-condition encoding paradigm (structural / phonemic / semantic /
+self-ref), $N=50$ items per condition $\times$ 10 seeds. Each
+condition is assigned a self-relevance score drawn from depth-of-
+processing theory (\textsf{structural}: $0.05$; \textsf{phonemic}:
+$0.20$; \textsf{semantic}: $0.50$; \textsf{self-ref}: $0.85$).
+Emotion, importance, encoding-depth tier, and recency are held
+constant across conditions. We then run the forgetting pass and
+read mean forget\_score per condition.
+
+\paragraph{What this tests.}
+The forget\_score formula's response to $\srel$ as a controlled input
+--- not a forward pass from raw stimulus to $\srel$. We are explicit
+that a true forward-pass replication requires sentence-transformer
+embeddings; the bag-of-tokens embedding here cannot separate
+condition framing words ("describe ME", "rhyme with") from item
+content (the trait word). See \cref{sec:limitations} (L1) and the
+discussion of E1b in \cref{sec:exp:future}.
+
+\paragraph{Result.}
+\Cref{fig:e1} and \cref{tab:e1} show the result. The forget-score
+ordering matches the human SRE direction in $10/10$ seeds:
+\[
+\text{self\_ref}\,(0.964)
+\;<\; \text{semantic}\,(1.302)
+\;<\; \text{phonemic}\,(1.859)
+\;<\; \text{structural}\,(2.366).
+\]
+The semantic--self\_ref forget gap is $\mathbf{+0.337}$.
+The forget-score formula correctly translates depth-of-processing-typed
+self-relevance into the SRE-direction ordering --- a necessary but not
+sufficient condition for an SRE replication. The sufficient condition
+is that a forward pass from raw stimuli produces these condition-
+appropriate $\srel$ values; that requires sentence-transformer
+embeddings and is deferred to E1b (\cref{sec:exp:future}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{../figures/fig2_sre.pdf}
+\caption{\textbf{E1 --- Controlled self-relevance response.}
+Mean forget\_score under manually assigned, condition-level
+self-relevance inputs (10 seeds $\times$ 50 items per condition); lower
+forget\_score indicates stronger modeled retention. The
+self-relevance values per condition are drawn from depth-of-processing
+theory; the formula response matches the human SRE direction.
+Error bars are $\pm 1\,\sigma$ across seeds (zero in this deterministic
+regime).}
+\label{fig:e1}
+\end{figure}
+
+\begin{table}[t]
+\centering\small
+\caption{E1 per-condition forget\_score (10 seeds $\times$ 50 items).}
+\label{tab:e1}
+\begin{tabular}{lrrr}
+\toprule
+Condition & self\_relevance & forget\_score (mean) & forget\_score (std) \\
+\midrule
+structural   & $0.05$ & $2.366$ & $0.000$ \\
+phonemic     & $0.20$ & $1.859$ & $0.000$ \\
+semantic     & $0.50$ & $1.302$ & $0.000$ \\
+\textbf{self\_ref} & $\mathbf{0.85}$ & $\mathbf{0.964}$ & $\mathbf{0.000}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{E2 --- Mood $\times$ Self Factorial}
+\label{sec:exp:e2}
+
+\paragraph{Design.}
+A $2{\times}2$ factorial: emotion $\in\{\text{low}\;(|\valence|\arousal{=}0.0),\text{high}\;(=0.72)\}$,
+self $\in\{\text{low}\;(\srel{=}0.10),\text{high}\;(\srel{=}0.85)\}$,
+with $N{=}100$ items per cell. We fit a linear regression to raw
+forget\_score in two model classes:
+\textsf{additive} ($\beta_0 + \beta_E E + \beta_S S$) versus
+\textsf{with-interaction} ($+ \beta_{ES} E\cdot S$). Pure additivity
+predicts $\beta_{ES} = 0$.
+
+\paragraph{Result.}
+The signature finding is structural rather than statistical:
+cell-mean differentials are non-constant (\cref{fig:e2}),
+$\Delta_{\text{low-E}}{=}{-1.205}$ versus
+$\Delta_{\text{high-E}}{=}{-0.494}$, a $0.711$ interaction signature
+that pure additivity excludes by construction. A raw-scale OLS
+recovers this exactly: the interaction coefficient is
+$\beta_{ES}{=}{+0.71}$, matching the cell-mean diagnostic.
+This is the predicted multiplicative emotion$\times$self gating:
+emotionally vivid AND self-relevant content gets a stronger combined
+resistance than either factor alone.
+
+The AIC value ($\Delta\text{AIC}{=}{-9669}$, \cref{tab:e2}) is large
+because the experiments are deterministic and residuals are tiny ---
+making the comparison numerically extreme but not interpretable as
+"evidence strength" in the usual Bayesian sense.
+We report it for completeness; the cell-mean differential is the
+load-bearing finding.
+
+A log-scale companion check (Appendix~\ref{app:hparams})
+confirms that the underlying data has pure-product structure: the
+log-interaction coefficient is zero to four decimal places.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{../figures/fig3_factorial.pdf}
+\caption{\textbf{E2 --- Mood $\times$ Self factorial.}
+Mean forget\_score per cell. Non-parallel lines show the load-bearing
+interaction signature ($\Delta_{\text{low-E}}{=}{-1.21}$,
+$\Delta_{\text{high-E}}{=}{-0.49}$). OLS recovers the analytic
+$\beta_{ES}{=}{+0.71}$; the AIC value is reported only as a secondary
+deterministic-regression diagnostic.}
+\label{fig:e2}
+\end{figure}
+
+\begin{table}[t]
+\centering\small
+\caption{E2 raw-scale OLS comparison ($N{=}400$).}
+\label{tab:e2}
+\begin{tabular}{lrr}
+\toprule
+Model & AIC & Coefficients \\
+\midrule
+additive ($\beta_0+\beta_E+\beta_S$)
+  & $-1376$
+  & $\beta_0{=}1.99,\;\beta_E{=}{-0.92},\;\beta_S{=}{-0.85}$ \\
+with interaction ($+\beta_{ES}$)
+  & $\mathbf{-11044}$
+  & $\beta_0{=}2.17,\;\beta_E{=}{-1.28},\;\beta_S{=}{-1.21},\;\boldsymbol{\beta_{ES}{=}{+0.71}}$ \\
+\midrule
+$\Delta$AIC (interaction $-$ additive) & $\mathbf{-9669}$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{E3 --- $\piself$ Ablation + $\lambda$ Sensitivity}
+\label{sec:exp:e3}
+
+\paragraph{E3a --- $\piself$ ablation (primary).}
+This is the theoretical claim from \cref{sec:method:self}: as
+$\piself \to 0$, stored self-relevance collapses to the neutral
+prior $0.5$, and the SRE should attenuate to zero. For each
+$\piself \in \{0.0,0.25,0.5,0.75,1.0\}$, we instantiate a SelfModel
+pinned at that precision (seeded with "I am honest careful patient
+kind myself"), forward-pass condition-typed text through
+\cref{eq:sr}, and run the forgetting pass.
+
+\Cref{fig:e3} (left) shows the result. SRE size grows
+\emph{monotonically} from $0.000$ at $\piself{=}0$ to $0.085$ at
+$\piself{=}1$. At $\piself{=}0$ all conditions converge to $\srel{=}0.5$
+and the SRE collapses. This is the model's clinical prediction:
+populations with impaired self-precision should show empirically
+attenuated SREs, consistent with reports in dissociation and severe
+depression \cite{conway2005smemsys}.
+
+\paragraph{E3b --- $\lambda$ sensitivity (secondary).}
+With $\piself$ pinned at the production default, we sweep the formula
+coefficient $\lambda$ across $\{0,0.25,0.5,1,2,4,8\}$ to bound the
+regime in which the SRE remains non-trivial. SRE size peaks at
+$\lambda=2$ (the production default), collapses to $0$ at $\lambda=0$
+(no self gating), and attenuates again at large $\lambda$ as all
+conditions are crushed toward zero forget\_score
+(\cref{fig:e3}, right). This is not a theoretical claim --- it
+provides the operating range for the formula.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{../figures/fig4_pi_ablation.pdf}
+\caption{\textbf{E3 --- $\piself$ ablation (left) + $\lambda$ sensitivity
+(right).} Left: SRE size grows monotonically with self-precision,
+collapsing at $\piself{=}0$. Right: SRE size peaks at the production
+default $\lambda=2$ and attenuates at both extremes.}
+\label{fig:e3}
+\end{figure}
+
+\subsection{Future Experiments (not run)}
+\label{sec:exp:future}
+
+We name three experiments that would strengthen the present account
+but are explicitly out of scope for v0.1:
+
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{E1b --- Raw-stimulus SRE forward pass.} Replace the
+bag-of-tokens embedding with a sentence-transformer encoder
+\cite{reimers2019sbert}; demonstrate that the agent assigns
+condition-appropriate $\srel$ to raw encoding prompts without manual
+typing. This is the experimental test of whether the forward pass
+captures human SRE, not just the formula.
+\item \textbf{E4 --- $\Ftotal$ trajectory on self-relevant turns.}
+Track free-energy descent across multi-turn dialogs; predict that
+self-relevant turns produce larger $\Delta\Ftotal$ (the self-evidencing
+prediction).
+\item \textbf{E5 --- Quantitative CMR3 comparison.} Re-implement CMR3
+\cite{cohen2022cmr3}, fit both models to held-out emotional-memory
+benchmark data, and report log-likelihoods. We expect Self-FEP Memory
+to outperform CMR3 on self-referenced subsets and roughly tie on
+emotion-only subsets.
+\end{itemize}

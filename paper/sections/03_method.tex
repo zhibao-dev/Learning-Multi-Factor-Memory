@@ -1,0 +1,149 @@
+\section{Method}
+\label{sec:method}
+
+\paragraph{Scope: precision-inspired, not variational.}
+Before describing the mechanism, we make the FEP scope precise.
+We use the FEP as a \emph{design discipline}: the self is treated as a
+generative model with a precision-weighted prior, and self-precision
+gates downstream processing the way precision does throughout the FEP
+literature. We do \emph{not} derive the precision update rule from a
+variational free-energy objective; \cref{eq:pi} is engineered to have
+the qualitative shape FEP precision should have (low PE variance
+$\Rightarrow$ high precision) and is a first commitment, not a
+theorem. A variational derivation under a specified likelihood-prior
+pair is named explicitly as a follow-up step
+(\cref{sec:limitations}, L2). Where the paper says ``FEP-inspired'' or
+``FEP-grounded mechanism,'' it means: faithful to the precision-gating
+intuition; not yet faithful to variational free-energy minimisation as
+an objective.
+
+\subsection{The Self as a Generative Model}
+\label{sec:method:self}
+
+We treat the agent's self as a one-component generative model
+$\Mself = (\muself,\piself)$ over an embedding space $\mathbb{R}^d$.
+The mean $\muself \in \mathbb{R}^d$ is the running centroid of
+identity-constitutive content; the scalar precision
+$\piself \in [0,1]$ encodes the agent's confidence in $\muself$.
+We use $d = 64$ throughout.
+
+\paragraph{Embedding.}
+For an utterance $u$ tokenised as $\{t_1,\dots,t_n\}$, we use a
+deterministic SHA1-bag embedding
+\(
+e(u) \;=\;
+\mathrm{normalise}\!
+\left(\sum_{i=1}^{n} \mathrm{hash}_d(t_i)\right),
+\)
+where each token hashes to a unit-vector contribution per dimension and
+the sum is $L^2$-normalised. This embedding has zero external
+dependencies and is fully deterministic, but cannot separate framing
+words from content words --- a limitation we discuss in
+\cref{sec:limitations} (L1).
+
+\paragraph{Self-token gating.}
+$\muself$ updates only on user utterances that contain first-person
+tokens (English: \texttt{i}, \texttt{me}, \texttt{my}, \texttt{myself},
+\dots; Chinese first-person markers \emph{wo}, \emph{ziji}, \dots).
+This is the cognitive-science commitment that the self is
+identity-constitutive rather than topic-tracking: utterances about
+arbitrary content do not reshape the self prior.
+
+\paragraph{Update rule.}
+Given a self-referencing user utterance $u$ with emotional significance
+$w_u = |\valence_u|\cdot\arousal_u$, the update is exponential-moving-average:
+\begin{equation}
+\muself \;\leftarrow\;
+(1 - \alpha w_u)\,\muself \;+\; \alpha w_u\,e(u),
+\qquad \alpha = 0.1,
+\end{equation}
+with prediction error $\PE = \lVert\muself^{new}-\muself^{old}\rVert$
+appended to a rolling window of size $W{=}50$.
+
+\paragraph{Precision rule.}
+Precision is FEP-inspired:
+\begin{equation}
+\label{eq:pi}
+\piself \;\propto\;
+\frac{1}{1 + \gamma\,\Var\!\left[\PE_t\right]_{t\in W}},
+\qquad \gamma=10.
+\end{equation}
+Low PE-variance (the self prior reliably predicts incoming
+self-relevant content) yields high precision. High PE-variance (unstable
+self-evidence) yields low precision. We are explicit that this rule is
+engineered rather than derived from a full variational objective
+(\cref{sec:limitations}, L2); the qualitative behaviour --- stability
+$\Rightarrow$ high precision --- matches the FEP literature.
+
+\subsection{Self-Relevance}
+
+Given memory $i$ with embedding $e_i$, its self-relevance is the
+precision-weighted cosine similarity to $\muself$:
+\begin{equation}
+\label{eq:sr}
+\srel_i \;=\;
+\piself \cdot \tfrac{1 + \cos(e_i,\muself)}{2}
+\;+\;
+(1 - \piself)\cdot 0.5.
+\end{equation}
+At $\piself = 1$ the score is the rescaled cosine. At $\piself = 0$ it
+collapses to $0.5$ (neutral, no self prior) --- which is the formal
+mechanism by which low precision attenuates the SRE (E3a).
+
+\subsection{Memory Dynamics}
+
+We extend an existing forget\_score formula (recency / usage /
+importance / emotion-resistance) with a self-resistance term:
+\begin{equation}
+\label{eq:forget}
+\text{forget\_score}_i \;=\;
+\underbrace{d_i^{0.7}}_{\text{Ebbinghaus}}
+\cdot
+\underbrace{\frac{1}{1+r_i}}_{\text{usage}}
+\cdot
+\underbrace{\frac{1}{1+I_i}}_{\text{importance}}
+\cdot
+\underbrace{\frac{1}{1+\alpha|\valence_i|\arousal_i}}_{\text{emotion\_res}}
+\cdot
+\underbrace{\frac{1}{1+\lambda\,\srel_i}}_{\text{self\_res}}.
+\end{equation}
+where $d_i$ is age in days, $r_i$ is retrieval count, $I_i$ is importance,
+and we use $\alpha=\lambda=2$ throughout. The formula factorises across
+five resistances; entries with low recency, low usage, low importance,
+weak emotion, and weak self-relevance are most likely to be forgotten
+(highest score). The five factors are intentionally multiplicative ---
+\cref{sec:exp:e2} tests this against the additive alternative.
+
+\paragraph{Retrieval ranking.}
+Retrieval of $k$ memories under query $q$ and current emotional state
+$(\valence_c,\arousal_c)$ scores each row as
+\begin{equation}
+\label{eq:rank}
+\text{rank}_i =
+w_m\,\mathrm{mood}_i + w_r\,\mathrm{recency}_i + w_q\,\mathrm{rel}_i(q)
++ w_f\,\Delta F_i + w_s\,\cos(e_i,\muself),
+\end{equation}
+with default weights $(w_m,w_r,w_q,w_f,w_s){=}(0.35,0.15,0.25,0.10,0.15)$.
+Each retrieved memory's count $r_i$ is incremented, closing the
+retrieval $\leftrightarrow$ forgetting loop (more recall makes a memory
+harder to forget on the next sweep).
+
+\subsection{Encoding-Time Self-Modulation}
+
+At session-end consolidation, each persisted memory has
+\cref{eq:sr}'s $\srel_i$ computed against the live $\muself$ at that
+moment, written to the database as \texttt{self\_relevance\_score}.
+Emotionally vivid AND self-relevant memories ($\srel > 0.65$) are
+bumped one tier deeper in the Craik-Lockhart \cite{craik1972lop}
+encoding-depth ladder, capped at the META tier --- this is the
+encoding-side counterpart to the retrieval-side gating.
+
+\subsection{Implementation}
+
+The model is a $\sim$200-line addition to a public Python substrate;
+all components ship in a single SQLite table extended with two columns
+(\texttt{self\_relevance\_score} and JSON \texttt{embedding}) plus the
+\texttt{SelfModel} class. Existing test coverage (30 cases) passes
+unchanged; we add 7 cases that pin the new behaviour. The substrate
+and reproducibility scripts are released under an anonymous
+repository \cite{anon_substrate}.

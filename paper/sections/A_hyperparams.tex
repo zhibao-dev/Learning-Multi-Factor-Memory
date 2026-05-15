@@ -1,0 +1,87 @@
+\section{Hyperparameters and Reproduction Recipe}
+\label{app:hparams}
+
+\Cref{tab:hparams} lists every hyperparameter used in the experiments.
+Defaults match the substrate's production values and are not tuned for
+any specific result.
+
+\begin{table}[h]
+\centering\small
+\caption{Hyperparameters used throughout the experiments.}
+\label{tab:hparams}
+\begin{tabular}{lll}
+\toprule
+Symbol & Default & Meaning \\
+\midrule
+$d$       & $64$  & Embedding dimension \\
+$\alpha$  & $0.1$ & EMA learning rate for $\muself$ update (\cref{sec:method:self}) \\
+$\gamma$  & $10$  & PE-variance scale in $\piself$ update (\cref{eq:pi}) \\
+$W$       & $50$  & Rolling window for $\piself$ refresh \\
+$\alpha_{\text{emo}}$ & $2$ & Emotion-resistance coefficient in forget\_score (\cref{eq:forget}) \\
+$\lambda$ & $2$   & Self-resistance coefficient in forget\_score (\cref{eq:forget}) \\
+$w_m$     & $0.35$ & Mood similarity weight in retrieval (\cref{eq:rank}) \\
+$w_r$     & $0.15$ & Recency weight in retrieval \\
+$w_q$     & $0.25$ & Query-relevance weight in retrieval \\
+$w_f$     & $0.10$ & $\Delta F$ bonus weight in retrieval \\
+$w_s$     & $0.15$ & Self-similarity weight in retrieval \\
+$\theta_{\text{depth}}$ & $0.65$ & $\srel$ threshold for encoding-depth bump \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Reproduction commands}
+
+(Repository URL withheld for anonymous submission; see
+\cite{anon_substrate}.)
+
+\begin{verbatim}
+git clone <anonymised repository URL>
+cd <repo> && git checkout v0.2-cleaner
+pip install -e ".[anthropic]"
+
+# E1: SRE replication (mechanical), 10 seeds * 50 items per condition
+python experiments/e1_sre_replication.py \
+       --n-per-condition 50 --n-seeds 10
+
+# E2: Mood x Self factorial, 100 items per cell
+python experiments/e2_mood_self_factorial.py --n-per-cell 100
+
+# E3: pi_self ablation + lambda sensitivity
+python experiments/e3_pi_self_ablation.py --n-per-condition 50
+
+# Results land in results/*.json; figures rendered by
+python figures/render_figures.py
+\end{verbatim}
+
+Total wall-clock for all three experiments is under five seconds on a
+2024 MacBook Pro (M3 Max). No GPU required.
+
+\subsection*{E2 log-scale companion check}
+
+\Cref{tab:e2log} reports the log-scale OLS on the same factorial data
+as \cref{tab:e2}. Because the true forget\_score formula is a product
+of resistances, $\log(\text{forget\_score})$ is additive in the
+log of each resistance term, so the log-interaction coefficient
+should round to $0$. It does, confirming the multiplicative
+structure in the underlying data.
+
+\begin{table}[h]
+\centering\small
+\caption{E2 log-scale OLS sanity check.}
+\label{tab:e2log}
+\begin{tabular}{lrr}
+\toprule
+Model & AIC & Interaction $\beta_{ES}$ \\
+\midrule
+additive ($\log$-scale)         & $-9211$ & --- \\
+with interaction ($\log$-scale) & $-11044$ & $-0.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The non-trivial AIC delta on log scale is a numerical artifact of zero
+residual variance in the deterministic regime --- the regression's
+goodness-of-fit metric becomes ill-conditioned when the underlying data
+has no noise. This is part of Limitation L4 (\cref{sec:limitations}):
+adding encoding noise before submission resolves the numerical fragility
+and gives the log-scale comparison clean semantics.

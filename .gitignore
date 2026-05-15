@@ -32,3 +32,15 @@ Thumbs.db
 # Local Borge state
 .borge/
 borge.db
+
+# LaTeX build artifacts (keep .tex, .bib, .pdf; drop the rest)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
+paper/.aris/

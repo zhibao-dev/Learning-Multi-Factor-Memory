@@ -1,0 +1,97 @@
+% Self-FEP Memory — v0.1 draft for NeurIPS 2026
+% Compile: latexmk -pdf main.tex   (TeX Live 2026 verified working)
+%
+% NOTE: This draft uses the standard `article` class with NeurIPS-like
+% geometry. Before submission, swap in the official `neurips_2026.sty`
+% style file (replace \documentclass line + \usepackage{neurips_2026}).
+
+\documentclass[10pt]{article}
+
+% ---------- packages ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in,top=1in,bottom=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{titlesec}
+\usepackage{authblk}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes,calc,fit,backgrounds}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!70!black,
+}
+
+\titleformat*{\section}{\large\bfseries}
+\titleformat*{\subsection}{\normalsize\bfseries}
+
+\input{math_commands}
+
+% ---------- title ----------
+\title{\textbf{Self-FEP Memory:\\
+A Precision-Weighted Generative Self Drives\\
+Memory Encoding, Forgetting, and Retrieval}}
+\author{Anonymous Authors\\\small\texttt{anonymous submission}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Forty years of work on the Self-Reference Effect (SRE) has established a
+robust empirical pattern --- self-referenced encoding produces better
+recall than semantic, phonemic, or structural encoding --- without a
+mechanistic computational account that connects the effect to the Free
+Energy Principle (FEP).
+We introduce \textbf{Self-FEP Memory}, a mechanism in which the agent's
+self is a generative model $M_{\text{self}} = (\mu_{\text{self}},
+\pi_{\text{self}})$ with running embedding centroid $\mu_{\text{self}}$
+and a precision-inspired gating term $\pi_{\text{self}}$.
+Self-precision multiplicatively gates encoding depth, forget score, and
+retrieval ranking through a single self-relevance signal.
+We instantiate the mechanism as a $\sim$200-line extension to an existing
+cognitive-layer substrate and run three controlled CPU experiments:
+(E1) the forget-score formula has the qualitative response to controlled
+self-relevance inputs predicted by depth-of-processing theory, in $10/10$
+seeds;
+(E2) a $2{\times}2$ Mood$\,\times\,$Self factorial recovers the
+multiplicative cell-mean structure analytically expected from a
+product-of-resistances formula and rejected by an additive linear model;
+(E3) a true $\pi_{\text{self}}$ ablation monotonically attenuates the SRE
+size from $0.085$ at $\pi{=}1$ to $0.000$ at $\pi{=}0$, consistent with
+empirical reports of SRE attenuation in dissociation and severe depression.
+We name five scope boundaries (\cref{sec:limitations}) and a corresponding
+validation roadmap; the present work establishes the mechanism, not the
+quantitative human-data fit. The substrate is open-source and the
+experiments complete in seconds on a single CPU.
+\end{abstract}
+
+% ---------- main body ----------
+\input{sections/01_intro}
+\input{sections/02_related_work}
+\input{sections/03_method}
+\input{sections/04_experiments}
+\input{sections/05_discussion}
+\input{sections/06_limitations}
+\input{sections/07_conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/A_hyperparams}
+
+\end{document}

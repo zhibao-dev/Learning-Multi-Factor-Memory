@@ -1,0 +1,60 @@
+\section{Discussion}
+\label{sec:disc}
+
+\paragraph{Why multiplicative?}
+The cleanest distinguishing prediction of Self-FEP Memory against
+emotion-only models (CMR3) and against ad-hoc self-relevance heuristics
+is the \emph{multiplicative} interaction between emotion and self
+(E2). Bower's associative-network account of mood-congruent memory
+\cite{bower1981mood} naturally predicts additivity: an emotional node
+spreads activation, and a self node spreads activation, and the
+contributions sum. Our model predicts the contributions \emph{combine}:
+a vivid AND self-relevant memory has substantially lower forget\_score
+than the additive prediction. The 0.71-magnitude interaction signature
+recovered in E2 is the operational signature of this difference.
+
+\paragraph{Clinical implications.}
+E3a's $\piself{\to}0$ collapse of the SRE has empirical correlates.
+Patients with dissociative identity disorder
+\cite{conway2005smemsys} and severe depression show attenuated
+self-reference effects in memory tasks. Our model expresses this as a
+\emph{precision} deficit: when the self prior is unreliable, all
+memories drift toward neutral self-relevance, and the simulated SRE
+flattens. This gives a single computational lever --- $\piself$ --- that
+\emph{can} express both ordinary SRE behaviour and attenuated SRE
+behaviour within one framework. The clinical mapping remains a
+prediction: impaired self-precision should reduce the self-reference
+advantage in patient populations; this has not yet been fit to patient
+data.
+
+\paragraph{Self-evidencing and the memory system.}
+The FEP-self literature \cite{apps2014freeself,limanowski2013minimalself}
+emphasises that an agent samples the world to confirm its model of
+itself (\textit{self-evidencing} \cite{hohwy2016selfevidencing}). Our
+mechanism plugs into this naturally: encoding-time
+$\muself$-updates only fire on user content that contains first-person
+tokens, and the resulting precision is the agent's confidence that its
+internal model of self correctly predicts what shows up about itself.
+The retrieval-side $w_s\,\cos(e_i,\muself)$ term then biases recall
+toward self-confirming content --- a state-dependent retrieval mechanism
+in the encoding-specificity tradition \cite{tulving1973encodingspec}.
+
+\paragraph{Where reconsolidation fits.}
+Nader and Hardt \cite{nader2011reconsolidation} review reconsolidation:
+retrieved memories become labile and re-encode under the current context.
+Our retrieval loop already increments the retrieval count, but it does
+not yet re-encode content. A natural extension is a
+\texttt{re\_encode\_on\_recall} hook that blends the current $\muself$
+and current emotional state into the recalled memory's stored fields,
+with learning rate scaled by $\piself$. We flag this as v2 work in
+\cref{sec:limitations}.
+
+\paragraph{Position vs.\ CMR3.}
+CMR3 \cite{cohen2022cmr3} models mood-congruent memory and intrusive
+memory via context-emotion binding without a self representation; our
+model adds the self dimension orthogonally. On self-referenced material
+the two should diverge --- Self-FEP Memory predicts a robust effect,
+CMR3 predicts none. On purely emotion-valenced material (no self
+content) the two should agree closely. We have not yet performed this
+quantitative comparison; \cref{sec:limitations} (L3) is candid about
+this gap.

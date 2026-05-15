@@ -1,0 +1,67 @@
+\section{Limitations}
+\label{sec:limitations}
+
+We ship a v0.1 draft. Five named limitations bound the scope of the
+claims above. Carried forward verbatim from the project's narrative
+report (NARRATIVE\_REPORT.md, §6) as the spine of honesty.
+
+\paragraph{L1: Bag-of-tokens embedding cannot replicate the SRE from raw
+stimuli.} \texttt{SelfModel.embed()} uses SHA1-hashed bag-of-tokens
+embeddings. A forward-pass diagnostic confirmed that self-ref and
+phonemic prompts both containing the trait word ``honest'' received
+near-identical $\srel$, because the shared content word dominates the
+embedding similarity over the framing distinction. The mechanical
+SRE replication in E1 (\cref{sec:exp:e1}) sidesteps this by typing
+$\srel$ per condition manually; the true forward-pass SRE replication
+(E1b in \cref{sec:exp:future}) requires a sentence-transformer encoder
+\cite{reimers2019sbert} or a BERT-class model. We expect this to land
+the model in genuine SRE territory but cannot claim it from current
+evidence.
+
+\paragraph{L2: $\piself$ update rule is engineered, not derived.}
+\Cref{eq:pi} expresses $\piself$ as a function of prediction-error
+variance over a rolling window. The form is FEP-inspired but is not a
+derivation from variational free energy first principles. A defensible
+derivation would cast $\piself$ as the inverse variance of the
+predictive distribution under a specified likelihood/prior pair and
+recover \cref{eq:pi} as the natural-gradient update of that quantity.
+We have not done this; reviewers will reasonably ask where the rule
+comes from.
+
+\paragraph{L3: No human-data fit.} All experiments are agent-internal.
+We have not fit our model to Symons \& Johnson \cite{symons1997meta}
+effect sizes, to Rogers, Kuiper \& Kirker \cite{rogers1977sre} raw
+data, or to any clinical SRE-attenuation dataset. The
+"matches human direction'' claim in E1 is qualitative, not
+quantitative. The quantitative side-by-side against CMR3
+\cite{cohen2022cmr3} (E5 in \cref{sec:exp:future}) is also not done;
+CMR3 is not packaged as a library and reimplementation is a
+multi-day effort we have not budgeted.
+
+\paragraph{L4: Deterministic experiments without noise.} All three
+experiments are deterministic given seed; cell-level variance is exactly
+zero in E1. Adding realistic encoding noise --- Gaussian on forget\_score,
+or stochastic embedding perturbation --- is necessary for honest variance
+estimates and for the OLS regressions in E2 to be applied to data with
+the variance structure they assume. We expect the qualitative
+conclusions to be robust but cannot claim it from current evidence.
+
+\paragraph{L5: Retrieval uses memory embedding, not encoding-time
+$\muself$.} The retrieval ranking (\cref{eq:rank}) computes
+$\cos(e_i,\muself^{now})$ between the memory's content embedding and
+the agent's \emph{current} $\muself$, falling back to the stored
+$\srel_i$ snapshot. The proposal sketch in the project's idea report
+specified ranking by similarity between current $\muself$ and the
+memory's $\muself^{\text{enc}}$ --- a strictly more faithful
+match to encoding-specificity \cite{tulving1973encodingspec}. Adding
+$\muself^{\text{enc}}$ persistence is a small change but
+not yet done.
+
+\paragraph{Path forward.}
+L1 (sentence-transformers) and L3 (CMR3 fit) are the two changes
+that would most strongly upgrade the present account from "framework
+demonstration" to "submission-ready empirical paper". L2 (precision
+derivation) and L5 (encoding-time $\muself$) are smaller surface fixes.
+L4 (noise) is a re-run of the existing experiments with a single
+hyperparameter added. None of these change the central mechanism;
+they sharpen its quantitative claims.

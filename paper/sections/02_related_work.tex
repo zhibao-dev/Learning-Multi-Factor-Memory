@@ -1,0 +1,70 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Retrieved-context memory models.}
+The Temporal Context Model \cite{howard2002tcm} and its descendants
+\cite{polyn2009cmr,cohen2022cmr3} represent each studied item as a feature
+vector bound to a drifting context vector; retrieval reinstates context,
+which probabilistically reactivates associated items. CMR3
+\cite{cohen2022cmr3} extends CMR with a bi-cell representation of
+emotional valence and predicts mood-congruent recall, intrusive
+memories, and the effects of emotion dysregulation. These models do not
+include a self representation: the context vector drifts with topic, not
+identity, and emotional features are content-attached, not agent-attached.
+
+\paragraph{Activation-based memory.}
+ACT-R \cite{anderson2007actr} stores declarative chunks with
+base-level activation $B_i = \ln \sum_j t_j^{-d}$ summing over past
+retrievals. Recent LLM-agent memory architectures port ACT-R-style
+activation to dialog memory \cite{memos2025},
+combined with surprise or emotional arousal for retention; a recent wave
+of 2025 systems carry this style further with cognitive-science-inspired
+organisation. None of these treat the self as a distinct generative
+entity that gates encoding.
+
+\paragraph{FEP and self.}
+Friston's free-energy principle \cite{friston2010fep,friston2017ai}
+formalises perception and action as minimising variational free energy
+under a generative model. \textit{Self-evidencing} interpretations
+\cite{hohwy2016selfevidencing,seth2018beast} cast the agent as actively
+sampling sensations that confirm its model of itself. Apps and Tsakiris
+\cite{apps2014freeself} apply this to bodily self-recognition; Limanowski
+and Blankenburg \cite{limanowski2013minimalself} map minimal phenomenal
+selfhood to a hierarchical generative model. The thread we pick up is
+the implicit one: if the self is a generative model with precision
+$\piself$, that precision should modulate memory the same way it
+modulates other generative-model-driven processes.
+
+\paragraph{Self-Reference Effect.}
+Rogers, Kuiper, and Kirker \cite{rogers1977sre} showed that
+self-referenced encoding produces a robust advantage over semantic,
+phonemic, and structural encoding. Symons and Johnson \cite{symons1997meta}
+synthesised the meta-analysis. The effect has been a sustained empirical target;
+\cite{conway2005smemsys} situates it within the self-memory system,
+and \cite{klein2012selfref} reviews conceptual cautions about its
+variants and boundary conditions. The empirical pattern is
+exceptionally well-documented; what is missing is a computational
+mechanism that connects it to a broader theory of mind.
+
+\paragraph{Encoding and forgetting.}
+Levels of processing \cite{craik1972lop} and encoding specificity
+\cite{tulving1973encodingspec} predict that depth of processing and
+context match drive recall. Ebbinghaus \cite{ebbinghaus1885forgetting}
+quantified forgetting as a near-power-law of time. Bower
+\cite{bower1981mood} established the associative-network account of
+mood-congruent memory. Nader and Hardt \cite{nader2011reconsolidation}
+reviewed reconsolidation, the phenomenon that retrieved memories become
+labile and can be re-encoded. Our model builds on these foundations but
+unifies them with the FEP self, which none of the prior work
+explicitly formalises in a memory context.
+
+\paragraph{Position of this work.}
+We are not claiming the first computational model of the SRE, nor the
+first FEP account of self, nor the first emotion-modulated memory model.
+We are claiming the first model that wires \emph{all three} together
+into a single mechanism whose multiplicative interaction structure
+generates falsifiable predictions, and that can be tested as a thin
+extension to an existing agent substrate. The closest comparison
+target, CMR3, is emotion-only and lacks a self dimension; we leave a
+quantitative side-by-side comparison to future work
+(\cref{sec:limitations}).

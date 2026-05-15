@@ -1,0 +1,93 @@
+\section{Introduction}
+\label{sec:intro}
+
+Information encoded with reference to the self is remembered better than
+information processed for meaning, sound, or surface form. This pattern,
+the \emph{Self-Reference Effect} (SRE), has been documented since
+Rogers, Kuiper, and Kirker \cite{rogers1977sre} and confirmed in the
+meta-analysis of Symons and Johnson \cite{symons1997meta} with a robust
+Cohen's $d \approx 0.50$ separation between self-referenced and
+semantically encoded items. The self-memory system has been a productive framework for connecting
+the effect to autobiographical memory and the broader self-concept
+\cite{conway2005smemsys}.
+
+What computational mechanism produces it?
+Existing models stop short. Retrieved-context theories of episodic
+memory --- TCM \cite{howard2002tcm}, CMR \cite{polyn2009cmr}, and the
+emotional extension CMR3 \cite{cohen2022cmr3} --- model emotion-modulated
+recall but lack a representation of self. Activation-based theories like
+ACT-R \cite{anderson2007actr} treat all chunks symmetrically.
+Recent cognitive-architecture proposals for LLM agents
+\cite{sumers2024cogarch} explicitly enumerate working, episodic,
+semantic, and procedural stores; concrete implementations
+\cite{memos2025} retrieve via embedding similarity plus heuristic
+decay, but none distinguish self-relevance from topical relevance. Conversely, the Free Energy Principle (FEP) literature on
+self \cite{friston2010fep,apps2014freeself,limanowski2013minimalself}
+articulates a generative model of selfhood but does not connect it to
+memory dynamics: precision-weighted self priors have been linked to body
+recognition and minimal phenomenal selfhood, not to encoding depth or
+forgetting rate.
+
+The white space is the intersection. We propose to model the self as
+a generative model $\Mself = (\muself, \piself)$ under the FEP and to let
+its precision multiplicatively gate memory:
+
+\begin{equation}
+\text{forget\_score}\;=\;
+\underbrace{\text{recency}\cdot\text{usage}}_{\text{Ebbinghaus}}
+\;\cdot\;\frac{1}{1+\text{importance}}
+\;\cdot\;\frac{1}{1+\alpha|\valence|\arousal}
+\;\cdot\;\frac{1}{1+\lambda\,\srel}
+\end{equation}
+
+where $\srel = \piself \cdot \tfrac{1+\cos(e_i,\muself)}{2}
++ (1-\piself)\cdot 0.5$ is the self-relevance of memory $i$ given its
+embedding $e_i$.
+The self prior $\muself$ is updated by exponential moving average toward
+\emph{identity-constitutive} utterances --- user content containing
+first-person tokens --- gated by emotional significance. The precision
+$\piself$ follows an FEP-inspired rule
+$\piself \propto 1/(1+\gamma\,\Var[\PE])$ over a rolling prediction-error
+window.
+
+The contributions of this paper are:
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{A precision-weighted generative self that drives memory
+dynamics (\cref{sec:method}).} The self enters the existing
+forget\_score formula as a multiplicative factor, dual to the emotional
+intensity factor; entering it into retrieval ranking adds a single
+weighted similarity term.
+\item \textbf{Controlled self-relevance response (E1, \cref{sec:exp}).}
+On a $4$-condition encoding paradigm with condition-typed self-relevance
+values drawn from depth-of-processing theory, the forget-score ordering
+follows the human SRE direction in $10/10$ seeds.
+We are explicit that $\srel$ is manually assigned, so this tests the
+gating formula's qualitative response --- not the stimulus-to-memory
+forward pass.
+\item \textbf{Non-parallel raw-scale cell means (E2, \cref{sec:exp}).}
+A $2{\times}2$ factorial recovers the multiplicative structure analytically
+expected from \cref{eq:forget}: cell-mean differentials are not constant
+(diagnostic magnitude $0.71$), so the raw-scale linear-additive model is
+rejected against the model containing the interaction term. We present the
+analytic interpretation alongside the AIC value, because the AIC magnitude
+itself is fragile under deterministic data.
+\item \textbf{Monotone $\piself$ attenuation (E3, \cref{sec:exp}).} A
+true precision ablation through the \texttt{SelfModel} forward pass
+yields SRE size $0.000$ at $\piself{=}0$, growing monotonically to
+$0.085$ at $\piself{=}1$. This is consistent with empirical SRE
+attenuation reported in dissociation and severe depression.
+\item \textbf{Open-source substrate.} The complete implementation is a
+$\sim$200-line extension to an existing open-source cognitive-layer
+substrate \cite{anon_substrate}; all experiments are CPU-only and run
+in seconds.
+\end{enumerate}
+
+\Cref{sec:limitations} states five scope boundaries together with the
+validation roadmap they imply: a bag-of-tokens embedding that defers a
+true raw-stimulus SRE forward pass (L1) to follow-up with a
+sentence-transformer encoder; a precision-inspired gating rule that is
+not yet derived from a variational objective (L2); the absence of a
+quantitative fit to human meta-analytic effect sizes (L3). The present
+work establishes the mechanism and its falsifiable predictions; the
+empirical quantitative fit is the explicit next step.

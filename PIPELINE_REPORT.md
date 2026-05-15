@@ -14,7 +14,7 @@
 | 3. Experiments | E1 (mechanical SRE), E2 (Mood × Self factorial), E3a/b (π_self ablation + λ sensitivity) | CPU; ~5 s total |
 | 4. Auto-review (1 round, Codex MCP) | 3/10 reject → fixed E2 raw-scale + E3 real π_self → ~5/10 with named limitations | Codex MCP read-only |
 | 5. Narrative | `NARRATIVE_REPORT.md` with brutally honest limitations | Local |
-| 6. Paper writing | **HOLD** — recommended pause; see Gate 2 below | n/a |
+| 6. Paper writing | **DONE** — 12 pp NeurIPS-format PDF at `paper/main.pdf` (~5.7/10) | 4 Codex MCP calls |
 
 ## Implementation
 
@@ -76,22 +76,38 @@ Nice-to-have:
 - [ ] Markov blanket extension (v2)
 - [ ] Source monitoring / reconsolidation hook (v2)
 
-## Recommendation on Stage 6
+## Stage 6 — DONE
 
-**HOLD on /paper-writing.** Current state would produce a paper Codex (and likely human reviewers) would reject. The critical TODOs are 2-3 days of additional work that **should land before writing**, not after — they will change the narrative's main story, not just polish it.
+Triggered after the user explicitly chose "write a v0.1 draft now" at
+Gate 2. Full sub-pipeline executed:
 
-If you nevertheless want the writing pipeline triggered now, the input is ready (`NARRATIVE_REPORT.md`) and you only need to invoke:
+| Phase | Outcome | Compute |
+|-------|---------|---------|
+| 1. PAPER_PLAN.md | ✅ 9-page section plan + claims-evidence matrix + 25-entry citation scaffold | Local |
+| 2. Figures | ✅ 3 matplotlib PDFs from results JSON (`fig2_sre`, `fig3_factorial`, `fig4_pi_ablation`) | Local |
+| 3. LaTeX writing | ✅ `main.tex` + 7 section files + `references.bib` + `math_commands.tex` | Local |
+| 4. Compilation | ✅ 12 pp PDF, 0 unresolved refs/cites | TeX Live 2026 |
+| 4.7 Claim audit | ✅ WARN — **23/23 numeric matches**, 0 mismatch | 1 Codex call |
+| 5. Improvement loop | ✅ 2 rounds: 4/10 → 5/10 → 5.7/10 | 2 Codex calls |
+| 5.8 Citation audit | ✅ 17 KEEP / 2 FIX-META / 3 REPLACE / 2 REMOVE — all applied | 1 Codex call |
+| 6. Final report | ✅ `paper/PAPER_IMPROVEMENT_LOG.md` | Local |
 
-```
-/paper-writing "NARRATIVE_REPORT.md" — venue: NeurIPS
-```
+**Final paper artifacts**:
+- `paper/main.pdf` — 12 pp final PDF
+- `paper/main_round0_original.pdf` — initial compile baseline
+- `paper/main_round1.pdf` — after Codex Round 1 (5 fixes)
+- `paper/main_round2.pdf` — after Codex Round 2 (3 fixes) + citation audit (7 fixes)
+- `paper/PAPER_IMPROVEMENT_LOG.md` — full round-by-round log
+
+**Final score**: ~5.7/10 NeurIPS, ~6/10 workshop/arXiv preprint
+quality.
 
 ## Budget & Audit
 
 - GPU hours used: 0
-- Codex MCP calls: 1
+- Codex MCP calls: **5** (1 research review, 1 claim audit, 2 paper review rounds, 1 citation audit)
 - Tests: 37 → 37 (no regression)
-- Commits in this pipeline: 4 (`feat(self)`, `feat(experiments)`, `fix(experiments)`, narrative)
-- Files added: 6 (1 module, 1 test, 3 experiments, 1 narrative)
-- Lines added: ~1500
-- Lines removed: 0
+- Commits in this pipeline: 5 (research feat, fix, narrative, paper, this report)
+- Files added: **17** (1 module, 1 test, 3 experiments, 2 reports, 1 plan, 3 figures, 1 figure script, 1 paper improvement log, 1 main.tex, 7 sections, 1 bib, 1 math_commands, 3 round PDFs)
+- Lines added: ~3500
+- Lines removed: 0 in this pipeline (1 in claim-audit-driven citation pruning)
