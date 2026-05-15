@@ -63,7 +63,7 @@ and a precision-inspired gating term $\pi_{\text{self}}$.
 Self-precision multiplicatively gates encoding depth, forget score, and
 retrieval ranking through a single self-relevance signal.
 We instantiate the mechanism as a $\sim$200-line extension to an existing
-cognitive-layer substrate and run three controlled CPU experiments:
+cognitive-layer substrate and run four controlled CPU experiments:
 (E1) the forget-score formula has the qualitative response to controlled
 self-relevance inputs predicted by depth-of-processing theory, in $10/10$
 seeds;
@@ -72,11 +72,14 @@ multiplicative cell-mean structure analytically expected from a
 product-of-resistances formula and rejected by an additive linear model;
 (E3) a true $\pi_{\text{self}}$ ablation monotonically attenuates the SRE
 size from $0.085$ at $\pi{=}1$ to $0.000$ at $\pi{=}0$, consistent with
-empirical reports of SRE attenuation in dissociation and severe depression.
-We name five scope boundaries (\cref{sec:limitations}) and a corresponding
-validation roadmap; the present work establishes the mechanism, not the
-quantitative human-data fit. The substrate is open-source and the
-experiments complete in seconds on a single CPU.
+empirical reports of SRE attenuation in dissociation and severe depression;
+(E1b) when the bag-of-tokens embedder is swapped for a sentence-transformer
+encoder, the agent's raw-stimulus forward pass recovers the human SRE
+ordering in $5/5$ seeds and produces a Cohen's $d = 0.67 \pm 0.16$ that
+falls inside Symons \& Johnson's (1997) meta-analytic reference band
+$[0.30, 0.70]$.
+The substrate is open-source and all experiments complete in seconds
+on a single CPU.
 \end{abstract}
 
 % ---------- main body ----------

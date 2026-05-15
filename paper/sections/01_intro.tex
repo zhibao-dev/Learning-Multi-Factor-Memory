@@ -77,6 +77,13 @@ true precision ablation through the \texttt{SelfModel} forward pass
 yields SRE size $0.000$ at $\piself{=}0$, growing monotonically to
 $0.085$ at $\piself{=}1$. This is consistent with empirical SRE
 attenuation reported in dissociation and severe depression.
+\item \textbf{Quantitative SRE match against the human meta-analysis
+(E1b, \cref{sec:exp:e1b}).} Swapping the bag-of-tokens embedder for
+a sentence-transformers encoder \cite{reimers2019sbert} and running
+the raw-stimulus forward pass produces a Cohen's $d = 0.67 \pm 0.16$
+between self-ref and semantic conditions, inside Symons \& Johnson's
+1997 meta-analytic band $[0.30, 0.70]$ \cite{symons1997meta}, with
+the ordering matching the human direction in $5/5$ seeds.
 \item \textbf{Open-source substrate.} The complete implementation is a
 $\sim$200-line extension to an existing open-source cognitive-layer
 substrate \cite{anon_substrate}; all experiments are CPU-only and run

@@ -1,0 +1,229 @@
+{
+  "experiment": "E1b — True forward-pass SRE with SBert",
+  "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+  "ran_at": "2026-05-15T12:29:26.711530",
+  "n_seeds": 5,
+  "n_per_condition": 30,
+  "noise_std": 0.05,
+  "self_seed": "I am an honest careful learner who values truth, curiosity, and depth over speed. I take responsibility for my mistakes and try to grow from them.",
+  "aggregate": {
+    "structural": {
+      "sr_mean_across_seeds": 0.5181,
+      "forget_mean_across_seeds": 1.2784
+    },
+    "phonemic": {
+      "sr_mean_across_seeds": 0.5004,
+      "forget_mean_across_seeds": 1.2963
+    },
+    "semantic": {
+      "sr_mean_across_seeds": 0.5824,
+      "forget_mean_across_seeds": 1.2043
+    },
+    "self_ref": {
+      "sr_mean_across_seeds": 0.6233,
+      "forget_mean_across_seeds": 1.1616
+    }
+  },
+  "cohens_d": {
+    "mean": 0.6687,
+    "std": 0.1647,
+    "per_seed": [
+      0.7896,
+      0.543,
+      0.8974,
+      0.5379,
+      0.5756
+    ]
+  },
+  "symons_johnson_1997": {
+    "d": 0.5,
+    "ci_95": [
+      0.3,
+      0.7
+    ],
+    "within_band": true
+  },
+  "ordering_hits": "5/5",
+  "per_seed": [
+    {
+      "seed": 42,
+      "n_items": 30,
+      "per_condition": {
+        "structural": {
+          "sr_mean": 0.5199,
+          "sr_std": 0.0299,
+          "forget_mean": 1.2646,
+          "forget_std": 0.0615,
+          "n": 30
+        },
+        "phonemic": {
+          "sr_mean": 0.5019,
+          "sr_std": 0.0238,
+          "forget_mean": 1.3102,
+          "forget_std": 0.0628,
+          "n": 30
+        },
+        "semantic": {
+          "sr_mean": 0.5846,
+          "sr_std": 0.0344,
+          "forget_mean": 1.2035,
+          "forget_std": 0.0723,
+          "n": 30
+        },
+        "self_ref": {
+          "sr_mean": 0.6267,
+          "sr_std": 0.0408,
+          "forget_mean": 1.1528,
+          "forget_std": 0.055,
+          "n": 30
+        }
+      },
+      "ordering_ok": true,
+      "cohens_d_self_vs_semantic": 0.7896
+    },
+    {
+      "seed": 43,
+      "n_items": 30,
+      "per_condition": {
+        "structural": {
+          "sr_mean": 0.5192,
+          "sr_std": 0.0318,
+          "forget_mean": 1.2755,
+          "forget_std": 0.0766,
+          "n": 30
+        },
+        "phonemic": {
+          "sr_mean": 0.5009,
+          "sr_std": 0.0257,
+          "forget_mean": 1.2903,
+          "forget_std": 0.0605,
+          "n": 30
+        },
+        "semantic": {
+          "sr_mean": 0.5851,
+          "sr_std": 0.036,
+          "forget_mean": 1.199,
+          "forget_std": 0.0719,
+          "n": 30
+        },
+        "self_ref": {
+          "sr_mean": 0.6256,
+          "sr_std": 0.0449,
+          "forget_mean": 1.1582,
+          "forget_std": 0.0784,
+          "n": 30
+        }
+      },
+      "ordering_ok": true,
+      "cohens_d_self_vs_semantic": 0.543
+    },
+    {
+      "seed": 44,
+      "n_items": 30,
+      "per_condition": {
+        "structural": {
+          "sr_mean": 0.5188,
+          "sr_std": 0.0248,
+          "forget_mean": 1.2808,
+          "forget_std": 0.0586,
+          "n": 30
+        },
+        "phonemic": {
+          "sr_mean": 0.5008,
+          "sr_std": 0.021,
+          "forget_mean": 1.2942,
+          "forget_std": 0.0532,
+          "n": 30
+        },
+        "semantic": {
+          "sr_mean": 0.5806,
+          "sr_std": 0.028,
+          "forget_mean": 1.2018,
+          "forget_std": 0.0516,
+          "n": 30
+        },
+        "self_ref": {
+          "sr_mean": 0.6206,
+          "sr_std": 0.0345,
+          "forget_mean": 1.1501,
+          "forget_std": 0.063,
+          "n": 30
+        }
+      },
+      "ordering_ok": true,
+      "cohens_d_self_vs_semantic": 0.8974
+    },
+    {
+      "seed": 45,
+      "n_items": 30,
+      "per_condition": {
+        "structural": {
+          "sr_mean": 0.5185,
+          "sr_std": 0.0253,
+          "forget_mean": 1.2819,
+          "forget_std": 0.0602,
+          "n": 30
+        },
+        "phonemic": {
+          "sr_mean": 0.5006,
+          "sr_std": 0.0216,
+          "forget_mean": 1.2793,
+          "forget_std": 0.058,
+          "n": 30
+        },
+        "semantic": {
+          "sr_mean": 0.582,
+          "sr_std": 0.0286,
+          "forget_mean": 1.2143,
+          "forget_std": 0.0673,
+          "n": 30
+        },
+        "self_ref": {
+          "sr_mean": 0.623,
+          "sr_std": 0.0374,
+          "forget_mean": 1.1791,
+          "forget_std": 0.0633,
+          "n": 30
+        }
+      },
+      "ordering_ok": true,
+      "cohens_d_self_vs_semantic": 0.5379
+    },
+    {
+      "seed": 46,
+      "n_items": 30,
+      "per_condition": {
+        "structural": {
+          "sr_mean": 0.5143,
+          "sr_std": 0.0288,
+          "forget_mean": 1.2891,
+          "forget_std": 0.0566,
+          "n": 30
+        },
+        "phonemic": {
+          "sr_mean": 0.4977,
+          "sr_std": 0.0226,
+          "forget_mean": 1.3073,
+          "forget_std": 0.0572,
+          "n": 30
+        },
+        "semantic": {
+          "sr_mean": 0.5797,
+          "sr_std": 0.0328,
+          "forget_mean": 1.2027,
+          "forget_std": 0.0566,
+          "n": 30
+        },
+        "self_ref": {
+          "sr_mean": 0.6207,
+          "sr_std": 0.0431,
+          "forget_mean": 1.1678,
+          "forget_std": 0.0643,
+          "n": 30
+        }
+      },
+      "ordering_ok": true,
+      "cohens_d_self_vs_semantic": 0.5756
+    }
+  ]
+}

@@ -33,8 +33,12 @@ anthropic = ["anthropic>=0.39.0,<1"]
 # Hermes plugin integration
 hermes = ["hermes-agent>=0.7.0"]
 
+# Semantic embedding for SelfModel (Stage L1 v0.2 experiments).
+# sentence-transformers pulls torch + huggingface tokenizers; cost ~500 MB.
+sbert = ["sentence-transformers>=3.0", "scipy>=1.10"]
+
 # All
-all = ["borge-agent[anthropic]"]
+all = ["borge-agent[anthropic,sbert]"]
 
 dev = [
   "pytest>=9.0",

@@ -5,18 +5,17 @@ We ship a v0.1 draft. Five named limitations bound the scope of the
 claims above. Carried forward verbatim from the project's narrative
 report (NARRATIVE\_REPORT.md, §6) as the spine of honesty.
 
-\paragraph{L1: Bag-of-tokens embedding cannot replicate the SRE from raw
-stimuli.} \texttt{SelfModel.embed()} uses SHA1-hashed bag-of-tokens
-embeddings. A forward-pass diagnostic confirmed that self-ref and
-phonemic prompts both containing the trait word ``honest'' received
-near-identical $\srel$, because the shared content word dominates the
-embedding similarity over the framing distinction. The mechanical
-SRE replication in E1 (\cref{sec:exp:e1}) sidesteps this by typing
-$\srel$ per condition manually; the true forward-pass SRE replication
-(E1b in \cref{sec:exp:future}) requires a sentence-transformer encoder
-\cite{reimers2019sbert} or a BERT-class model. We expect this to land
-the model in genuine SRE territory but cannot claim it from current
-evidence.
+\paragraph{L1: Bag-of-tokens vs.\ semantic embedding ---
+\textit{partially addressed in v0.2}.} The v0.1 default embedder is
+SHA1-hashed bag-of-tokens and cannot separate framing words from
+content words in encoding-task prompts. We added a pluggable embedder
+interface and a sentence-transformers
+(\texttt{all-MiniLM-L6-v2}) wrapper \cite{reimers2019sbert}; E1b
+(\cref{sec:exp:e1b}) demonstrates that the true forward pass with this
+real semantic embedder recovers the human SRE Cohen's $d$ within the
+Symons \& Johnson 1997 reference band. The bag-of-tokens default
+remains for backward compatibility and dependency-free testing; it is
+documented as inadequate for forward-pass SRE work.
 
 \paragraph{L2: $\piself$ update rule is engineered, not derived.}
 \Cref{eq:pi} expresses $\piself$ as a function of prediction-error
@@ -28,15 +27,18 @@ recover \cref{eq:pi} as the natural-gradient update of that quantity.
 We have not done this; reviewers will reasonably ask where the rule
 comes from.
 
-\paragraph{L3: No human-data fit.} All experiments are agent-internal.
-We have not fit our model to Symons \& Johnson \cite{symons1997meta}
-effect sizes, to Rogers, Kuiper \& Kirker \cite{rogers1977sre} raw
-data, or to any clinical SRE-attenuation dataset. The
-"matches human direction'' claim in E1 is qualitative, not
-quantitative. The quantitative side-by-side against CMR3
-\cite{cohen2022cmr3} (E5 in \cref{sec:exp:future}) is also not done;
-CMR3 is not packaged as a library and reimplementation is a
-multi-day effort we have not budgeted.
+\paragraph{L3: Human-data fit ---
+\textit{partially addressed in v0.2}.} The model's predicted Cohen's
+$d$ between self-ref and semantic conditions now meets the Symons \&
+Johnson 1997 meta-analytic reference band (E1b, \cref{fig:e1b-cohensd}).
+However, we have not yet:
+(a) fit our model to Rogers, Kuiper \& Kirker \cite{rogers1977sre} raw
+per-subject recall data, or
+(b) compared head-to-head with CMR3 \cite{cohen2022cmr3} on emotional
+memory benchmarks (E5 in \cref{sec:exp:future}),
+(c) attempted clinical fits against attenuated SREs in dissociation
+and depression (E6).
+CMR3 reimplementation is a multi-day effort we have not budgeted.
 
 \paragraph{L4: Deterministic experiments without noise.} All three
 experiments are deterministic given seed; cell-level variance is exactly
@@ -58,10 +60,10 @@ $\muself^{\text{enc}}$ persistence is a small change but
 not yet done.
 
 \paragraph{Path forward.}
-L1 (sentence-transformers) and L3 (CMR3 fit) are the two changes
-that would most strongly upgrade the present account from "framework
-demonstration" to "submission-ready empirical paper". L2 (precision
-derivation) and L5 (encoding-time $\muself$) are smaller surface fixes.
-L4 (noise) is a re-run of the existing experiments with a single
-hyperparameter added. None of these change the central mechanism;
-they sharpen its quantitative claims.
+In v0.2 we addressed L1 (sentence-transformers wrapper + E1b
+forward-pass replication) and the first half of L3 (Cohen's $d$ within
+the S\&J 1997 reference band). The remaining items are: L2 (variational
+derivation of $\piself$), L5 (persistent $\muself^{\text{enc}}$ for
+retrieval), the CMR3 head-to-head comparison, and the clinical E6
+attenuation fit. None of these change the central mechanism; they
+sharpen its quantitative claims and tighten the FEP grounding.

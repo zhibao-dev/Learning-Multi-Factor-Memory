@@ -119,9 +119,46 @@ def fig4_pi_ablation():
     print(f"  → {out}")
 
 
+def fig5_cohens_d_vs_sj():
+    data = json.loads((RESULTS / "e1b_sre_forward_pass.json").read_text())
+    d_per_seed = data["cohens_d"]["per_seed"]
+    d_mean     = data["cohens_d"]["mean"]
+    d_std      = data["cohens_d"]["std"]
+    sj_d       = data["symons_johnson_1997"]["d"]
+    sj_lo, sj_hi = data["symons_johnson_1997"]["ci_95"]
+
+    fig, ax = plt.subplots(figsize=(4.2, 2.8))
+    # Symons & Johnson 1997 reference band
+    ax.axhspan(sj_lo, sj_hi, color="#fde68a", alpha=0.6,
+               label=f"S&J 1997 d≈{sj_d} (CI {sj_lo}–{sj_hi})")
+    ax.axhline(sj_d, color="#b45309", linewidth=1.2, linestyle="--")
+    # Our per-seed dots
+    xs = list(range(len(d_per_seed)))
+    ax.scatter(xs, d_per_seed, s=42, color="#7c3aed",
+               edgecolors="black", linewidths=0.6, zorder=3,
+               label="Self-FEP Memory (per seed)")
+    # Mean line
+    ax.axhline(d_mean, color="#7c3aed", linewidth=1.6,
+               label=f"Self-FEP mean d = {d_mean:.2f} ± {d_std:.2f}")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([f"seed {42 + i}" for i in xs], fontsize=8)
+    ax.set_ylabel("Cohen's d  (self_ref vs semantic)")
+    ax.set_title("E1b — Forward-pass SRE size vs S&J 1997")
+    ax.set_ylim(0, 1.1)
+    ax.grid(axis="y", alpha=0.3, linewidth=0.5)
+    ax.set_axisbelow(True)
+    ax.legend(loc="lower right", frameon=False, fontsize=8)
+    plt.tight_layout()
+    out = OUT_DIR / "fig5_cohens_d.pdf"
+    plt.savefig(out, bbox_inches="tight")
+    plt.close()
+    print(f"  → {out}")
+
+
 if __name__ == "__main__":
     print("Rendering figures …")
     fig2_sre_bars()
     fig3_factorial_interaction()
     fig4_pi_ablation()
+    fig5_cohens_d_vs_sj()
     print("Done.")

@@ -29,6 +29,14 @@ The self model is initialised either:
 
 Treat π_self ∈ [0.0, 1.0] as a single scalar. A two-precision (sensory vs
 prior) extension is possible but unnecessary for the v1 hypothesis test.
+
+Embedding
+---------
+The embedder is pluggable. Default is `hash_embed` (SHA1 bag-of-tokens,
+zero deps, 64-dim) for fast deterministic testing. For research that
+needs real semantics — replicating the Self-Reference Effect from raw
+stimuli — pass an `SBertEmbedder()` via the `embedder=` constructor
+argument. See `SBertEmbedder` below for the optional dependency.
 """
 
 from __future__ import annotations
@@ -36,6 +44,7 @@ from __future__ import annotations
 import hashlib
 import math
 from dataclasses import dataclass, field
+from typing import Callable, Optional
 
 
 # ── Default hyperparameters (paper-table reproducibility) ─────────────────
@@ -65,7 +74,13 @@ def has_self_reference(text: str) -> bool:
 
 # ── Embedding ─────────────────────────────────────────────────────────────
 
-def embed(text: str, dim: int = DEFAULT_DIM) -> list[float]:
+# An Embedder is anything callable text → list[float]. The two built-in
+# implementations are `hash_embed` (default, dep-free) and `SBertEmbedder`
+# (lazy sentence-transformers wrapper for real semantics).
+Embedder = Callable[[str], list[float]]
+
+
+def hash_embed(text: str, dim: int = DEFAULT_DIM) -> list[float]:
     """
     Deterministic bag-of-tokens hash embedding, L2-normalised.
 
@@ -73,9 +88,10 @@ def embed(text: str, dim: int = DEFAULT_DIM) -> list[float]:
     a signed unit to one of `dim` dimensions. Sum and L2-normalise. This
     captures lexical-overlap similarity without external dependencies.
 
-    For human-data benchmark comparisons (E5 vs CMR3), swap this for a
-    sentence-transformers encoder via the `embedder=` argument on
-    SelfModel.update() / self_relevance().
+    Sufficient for self-token-gating and "is this user message
+    identity-constitutive" checks. **Not** sufficient for replicating
+    the Self-Reference Effect from raw encoding-task prompts — for that,
+    use `SBertEmbedder()` (Stage L1 v0.2 experiments).
     """
     tokens = [t for t in (text or "").lower().split() if t]
     if not tokens:
@@ -88,6 +104,72 @@ def embed(text: str, dim: int = DEFAULT_DIM) -> list[float]:
             vec[i] += (b / 255.0 - 0.5) * 2.0
     norm = math.sqrt(sum(x * x for x in vec))
     return vec if norm < 1e-9 else [x / norm for x in vec]
+
+
+# Back-compat alias — pre-v0.2 callers may still import `embed`.
+embed = hash_embed
+
+
+class SBertEmbedder:
+    """
+    Sentence-Transformers wrapper, lazy-loaded.
+
+    Encodes text into an `dim`-dim semantic embedding using a chosen
+    SBERT model. Model is downloaded on first call and cached on the
+    instance (and at the class level, so multiple instances share weights).
+
+    Optional dependency: `pip install borge-agent[sbert]` installs
+    `sentence-transformers>=3.0`. We do NOT import sentence-transformers
+    at module import time; the import happens only when the embedder is
+    first invoked.
+
+    Example:
+        from borge.values.self_model import SelfModel, SBertEmbedder
+        sm = SelfModel.from_seed("I value honesty", embedder=SBertEmbedder())
+        sr = sm.self_relevance_of("Does this describe ME?")
+    """
+
+    # Class-level cache so multiple SBertEmbedder() share weights.
+    _model_cache: dict = {}
+
+    # Default model is the standard small-fast SBERT (~22M params, 384-dim,
+    # English). For richer semantics swap to "all-mpnet-base-v2".
+    DEFAULT_MODEL = "all-MiniLM-L6-v2"
+
+    def __init__(self, model_name: str = DEFAULT_MODEL):
+        self.model_name = model_name
+        self._model = None  # lazy
+
+    def _ensure_loaded(self):
+        if self._model is not None:
+            return
+        cached = type(self)._model_cache.get(self.model_name)
+        if cached is not None:
+            self._model = cached
+            return
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as e:
+            raise ImportError(
+                "SBertEmbedder requires sentence-transformers. "
+                "Install via `pip install borge-agent[sbert]`."
+            ) from e
+        self._model = SentenceTransformer(self.model_name)
+        type(self)._model_cache[self.model_name] = self._model
+
+    @property
+    def dim(self) -> int:
+        self._ensure_loaded()
+        assert self._model is not None
+        return int(self._model.get_sentence_embedding_dimension() or DEFAULT_DIM)
+
+    def __call__(self, text: str) -> list[float]:
+        self._ensure_loaded()
+        assert self._model is not None
+        # sentence-transformers returns np.ndarray; convert to list[float]
+        # for serialisation compatibility with the existing JSON store.
+        vec = self._model.encode(text or "", normalize_embeddings=True)
+        return [float(x) for x in vec.tolist()]
 
 
 def cosine(a: list[float], b: list[float]) -> float:
@@ -112,6 +194,10 @@ class SelfModel:
     μ_self is an EMA-updated centroid in embedding space.
     π_self is updated from the variance of prediction errors over a rolling
     window of recent updates, following π ∝ 1/(1 + γ·Var[PE]).
+
+    The `embedder` field controls how text → embedding is computed.
+    Default `hash_embed` is dependency-free; pass `SBertEmbedder()` for
+    real semantic embeddings (sentence-transformers).
     """
 
     mu_self: list[float]    = field(default_factory=list)
@@ -120,6 +206,9 @@ class SelfModel:
     alpha: float            = DEFAULT_ALPHA
     gamma: float            = DEFAULT_GAMMA
 
+    # Pluggable embedder; default = hash_embed (dep-free).
+    embedder: Optional[Embedder] = None
+
     # Rolling prediction-error history for π_self update (not serialised)
     _pe_history: list[float] = field(default_factory=list, repr=False)
     _max_history: int        = field(default=PE_WINDOW, repr=False)
@@ -127,14 +216,36 @@ class SelfModel:
     # ── Constructors ──────────────────────────────────────────────────────
 
     @classmethod
-    def from_seed(cls, seed_text: str, dim: int = DEFAULT_DIM) -> "SelfModel":
+    def from_seed(
+        cls,
+        seed_text: str,
+        dim: int = DEFAULT_DIM,
+        embedder: Optional[Embedder] = None,
+    ) -> "SelfModel":
         """Bootstrap μ_self from a seed text (e.g., SOUL.md value descriptors)."""
-        return cls(mu_self=embed(seed_text, dim=dim), dim=dim)
+        inst = cls(mu_self=[], dim=dim, embedder=embedder)
+        inst.mu_self = inst._embed(seed_text)
+        # Adapt dim to the embedder's actual output (sbert is 384, hash is 64).
+        if inst.mu_self:
+            inst.dim = len(inst.mu_self)
+        return inst
 
     @classmethod
-    def empty(cls, dim: int = DEFAULT_DIM) -> "SelfModel":
+    def empty(
+        cls,
+        dim: int = DEFAULT_DIM,
+        embedder: Optional[Embedder] = None,
+    ) -> "SelfModel":
         """Start with no μ_self; first observation becomes the seed."""
-        return cls(mu_self=[], dim=dim)
+        return cls(mu_self=[], dim=dim, embedder=embedder)
+
+    # ── Internal embedding shim ───────────────────────────────────────────
+
+    def _embed(self, text: str) -> list[float]:
+        """Run the configured embedder; fall back to hash_embed if None."""
+        if self.embedder is not None:
+            return self.embedder(text)
+        return hash_embed(text, dim=self.dim)
 
     # ── Updates ───────────────────────────────────────────────────────────
 
@@ -146,7 +257,7 @@ class SelfModel:
         `weight` ∈ [0, 1] scales the learning rate — pass emotional_significance
         or similar gating term to bias updates toward emotionally vivid content.
         """
-        return self.update(embed(text, dim=self.dim), weight)
+        return self.update(self._embed(text), weight)
 
     def update(self, embedding: list[float], weight: float = 1.0) -> float:
         if not embedding or all(abs(x) < 1e-12 for x in embedding):
@@ -178,7 +289,7 @@ class SelfModel:
 
     def self_relevance_of(self, text: str) -> float:
         """`sr ∈ [0, 1]` for arbitrary text. 0.5 when self model uninitialised."""
-        return self.self_relevance(embed(text, dim=self.dim))
+        return self.self_relevance(self._embed(text))
 
     def self_relevance(self, embedding: list[float]) -> float:
         """

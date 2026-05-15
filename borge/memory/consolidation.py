@@ -27,7 +27,7 @@ from .cognitive_memory import EncodingDepth, MemoryEntry
 from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
 from .store import MemoryStore
-from ..values.self_model import SelfModel, embed, has_self_reference
+from ..values.self_model import SelfModel, has_self_reference
 
 log = logging.getLogger(__name__)
 
@@ -278,10 +278,13 @@ Return JSON:
 
             # FEP self-relevance: embed → query sr → then update μ_self with
             # this turn's emotional_significance as the update weight.
+            # Embedding goes through whatever embedder the SelfModel was
+            # constructed with (hash_embed default, SBertEmbedder for v0.2
+            # human-data experiments).
             embedding = None
             self_relevance = 0.5
             if self.self_model is not None:
-                embedding = embed(content, dim=self.self_model.dim)
+                embedding = self.self_model._embed(content)
                 self_relevance = self.self_model.self_relevance(embedding)
                 # μ_self updates only on user content that contains explicit
                 # self-references ("I", "me", "my", "我", …). This makes the
