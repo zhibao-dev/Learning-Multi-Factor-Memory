@@ -35,9 +35,12 @@ mechanism plugs into this naturally: encoding-time
 $\muself$-updates only fire on user content that contains first-person
 tokens, and the resulting precision is the agent's confidence that its
 internal model of self correctly predicts what shows up about itself.
-The retrieval-side $w_s\,\cos(e_i,\muself)$ term then biases recall
-toward self-confirming content --- a state-dependent retrieval mechanism
-in the encoding-specificity tradition \cite{tulving1973encodingspec}.
+The retrieval-side
+$w_s\,\cos(\muself^{\text{enc},i}, \muself^{\text{now}})$ term then
+biases recall toward content whose self prior at encoding time matched
+the agent's current self prior --- a state-dependent retrieval
+mechanism in the strict encoding-specificity tradition
+\cite{tulving1973encodingspec}.
 
 \paragraph{Where reconsolidation fits.}
 Nader and Hardt \cite{nader2011reconsolidation} review reconsolidation:

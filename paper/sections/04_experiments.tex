@@ -1,7 +1,7 @@
 \section{Experiments}
 \label{sec:exp}
 
-We run three CPU-only experiments. All experiments use the substrate's
+We run four CPU-only experiments. All experiments use the substrate's
 default hyperparameters (\cref{tab:hparams}, Appendix~\ref{app:hparams}),
 are deterministic given seed, and complete in seconds of wall-clock on a
 single laptop CPU.
@@ -220,10 +220,13 @@ The forward pass recovers the human SRE direction in $5/5$ seeds.
 Mean Cohen's $d = +0.67 \pm 0.16$, falling \emph{within} the
 Symons \& Johnson reference band $[0.30, 0.70]$
 (\cref{fig:e1b-cohensd}). The forward-pass $\srel$ ordering recovers
-the human depth-of-processing prediction:
+the depth-of-processing prediction at the shallow $\to$ deep
+boundary --- semantic and self-ref clearly above the two shallow
+conditions --- while the structural/phonemic pair lands essentially
+on top of each other:
 \[
-\text{structural}\,(0.518)
-\;<\; \text{phonemic}\,(0.500)
+\text{phonemic}\,(0.500)
+\;\approx\; \text{structural}\,(0.518)
 \;<\; \text{semantic}\,(0.582)
 \;<\; \text{self\_ref}\,(0.623).
 \]

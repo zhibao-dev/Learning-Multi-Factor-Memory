@@ -90,11 +90,13 @@ substrate \cite{anon_substrate}; all experiments are CPU-only and run
 in seconds.
 \end{enumerate}
 
-\Cref{sec:limitations} states five scope boundaries together with the
-validation roadmap they imply: a bag-of-tokens embedding that defers a
-true raw-stimulus SRE forward pass (L1) to follow-up with a
-sentence-transformer encoder; a precision-inspired gating rule that is
-not yet derived from a variational objective (L2); the absence of a
-quantitative fit to human meta-analytic effect sizes (L3). The present
-work establishes the mechanism and its falsifiable predictions; the
-empirical quantitative fit is the explicit next step.
+\Cref{sec:limitations} states the remaining scope boundaries
+together with the validation roadmap they imply. Of the five
+limitations named in the v0.1 draft, v0.2 and v0.4 address four:
+L1 (bag-of-tokens embedding $\to$ pluggable SBert encoder), L2
+($\piself$ now carries a documented variationally-inspired
+reliability link), L3 (Cohen's $d$ now falls within the
+Symons \& Johnson 1997 reference band), and L5 (retrieval now uses
+the encoding-time $\muself^{\text{enc}}$ snapshot). Only L4
+(richer noise modelling) and the broader CMR3 / clinical
+comparisons remain open.

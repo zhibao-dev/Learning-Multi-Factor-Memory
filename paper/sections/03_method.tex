@@ -1,38 +1,28 @@
 \section{Method}
 \label{sec:method}
 
-\paragraph{Scope: variational interpretation of $\piself$.}
+\paragraph{Scope: a variationally-inspired reliability link.}
 We treat the FEP as a design discipline: the self is a generative model
 with a precision-weighted prior, and self-precision gates downstream
 processing the way precision does throughout the FEP literature. The
-update rule \cref{eq:pi} admits a clean variational reading. Let
-$R \in \{0, 1\}$ be a binary latent ``reliability'' state, with $R=1$
-the proposition that the self prior is currently a reliable predictor
-of self-relevant observations. Under a mild generative model
-
-\[
-p(\Var[\PE] \mid R=1) \;\propto\; \gamma\,\exp(-\gamma\Var[\PE]),
-\qquad
-p(\Var[\PE] \mid R=0) \;\propto\; \text{flat},
-\qquad
-p(R=1) = p(R=0) = \tfrac{1}{2},
-\]
-
-Bayes' rule on the observed $\Var[\PE]$ yields, to first order in
-$\gamma\Var$,
-
-\[
-p(R=1 \mid \Var[\PE]) \;=\; \frac{1}{1 + \gamma\,\Var[\PE]}.
-\]
-
-We identify $\piself \equiv p(R=1 \mid \Var[\PE])$. The hyperparameter
-$\gamma$ is the \emph{prior precision} on $\Var[\PE]$ under the reliable
-hypothesis: large $\gamma$ encodes the prior belief that a working self
-model leaves only tiny PE residuals. The same hyperparameter is exposed
-in code under the explicit name \texttt{prior\_precision} (with
-\texttt{gamma} as a legacy alias) so that the variational connection is
-visible at the API surface. This is the answer to limitation L2 in the
-v0.1 draft.
+update rule \cref{eq:pi} is the simplest closed-form link that:
+(i) maps observed prediction-error variance $\Var[\PE]$ into $[0,1]$;
+(ii) returns $1$ when $\Var[\PE] \to 0$ (perfectly reliable self prior)
+and $\to 0$ as $\Var[\PE] \to \infty$ (uninformative self prior); and
+(iii) has a single calibration hyperparameter $\gamma$ that we interpret
+as the agent's \emph{prior precision on $\Var[\PE]$ under a reliable
+hypothesis}. Large $\gamma$ encodes the prior belief that a working
+self model leaves only tiny PE residuals; small $\gamma$ admits more
+noisy self-evidence before $\piself$ collapses. We expose the
+hyperparameter in code under the explicit name
+\texttt{prior\_precision} (with \texttt{gamma} as a legacy alias).
+The form recovers (in the limit of large rolling window) a regularised
+inverse-variance precision estimate, which is the same functional shape
+the Gamma--Inverse-Gamma conjugate update gives under Gaussian
+observation noise. We do \emph{not} claim \cref{eq:pi} is the exact
+variational posterior of a fully specified generative model --- a
+strict-derivation treatment is deferred to follow-up work and named
+explicitly in \cref{sec:limitations}.
 
 \subsection{The Self as a Generative Model}
 \label{sec:method:self}
@@ -138,18 +128,29 @@ $(\valence_c,\arousal_c)$ scores each row as
 \label{eq:rank}
 \text{rank}_i =
 w_m\,\mathrm{mood}_i + w_r\,\mathrm{recency}_i + w_q\,\mathrm{rel}_i(q)
-+ w_f\,\Delta F_i + w_s\,\cos(e_i,\muself),
++ w_f\,\Delta F_i + w_s\,\mathrm{self}_i,
 \end{equation}
-with default weights $(w_m,w_r,w_q,w_f,w_s){=}(0.35,0.15,0.25,0.10,0.15)$.
-Each retrieved memory's count $r_i$ is incremented, closing the
-retrieval $\leftrightarrow$ forgetting loop (more recall makes a memory
-harder to forget on the next sweep).
+where $\mathrm{self}_i$ is the encoding-specificity-faithful similarity
+\[
+\mathrm{self}_i = \tfrac{1}{2}\bigl(1 + \cos(\muself^{\text{enc},i}, \muself^{\text{now}})\bigr),
+\]
+with $\muself^{\text{enc},i}$ the snapshot of $\muself$ at the moment
+memory $i$ was formed (persisted per row; see ``Implementation''
+below). For legacy rows that lack the snapshot we fall back to
+$\tfrac{1}{2}(1 + \cos(e_i, \muself^{\text{now}}))$. Default weights
+$(w_m,w_r,w_q,w_f,w_s){=}(0.35,0.15,0.25,0.10,0.15)$. Each retrieved
+memory's count $r_i$ is incremented, closing the retrieval
+$\leftrightarrow$ forgetting loop (more recall makes a memory harder
+to forget on the next sweep).
 
 \subsection{Encoding-Time Self-Modulation}
 
 At session-end consolidation, each persisted memory has
 \cref{eq:sr}'s $\srel_i$ computed against the live $\muself$ at that
 moment, written to the database as \texttt{self\_relevance\_score}.
+We additionally persist the live $\muself$ centroid as
+\texttt{mu\_self\_at\_encoding} (JSON-encoded), enabling the
+encoding-specificity term in \cref{eq:rank} (Tulving 1973).
 Emotionally vivid AND self-relevant memories ($\srel > 0.65$) are
 bumped one tier deeper in the Craik-Lockhart \cite{craik1972lop}
 encoding-depth ladder, capped at the META tier --- this is the
@@ -158,9 +159,9 @@ encoding-side counterpart to the retrieval-side gating.
 \subsection{Implementation}
 
 The model is a $\sim$200-line addition to a public Python substrate;
-all components ship in a single SQLite table extended with two columns
-(\texttt{self\_relevance\_score} and JSON \texttt{embedding}) plus the
-\texttt{SelfModel} class. Existing test coverage (30 cases) passes
+all components ship in a single SQLite table extended with three columns
+(\texttt{self\_relevance\_score}, JSON \texttt{embedding}, and JSON
+\texttt{mu\_self\_at\_encoding}) plus the \texttt{SelfModel} class. Existing test coverage (30 cases) passes
 unchanged; we add 7 cases that pin the new behaviour. The substrate
 and reproducibility scripts are released under an anonymous
 repository \cite{anon_substrate}.

@@ -18,16 +18,21 @@ remains for backward compatibility and dependency-free testing; it is
 documented as inadequate for forward-pass SRE work.
 
 \paragraph{L2: $\piself$ update rule ---
-\textit{addressed in v0.4}.}
-\Cref{eq:pi} is now derived as a closed-form variational posterior over
-a binary self-prior reliability latent $R$ under a Gamma-flat prior on
-$\Var[\PE]$ (see \cref{sec:method:self}, ``Scope: variational
-interpretation of $\piself$''). The hyperparameter $\gamma$ is the
-prior precision on $\Var[\PE]$ under the reliable hypothesis and is
-now exposed in code under the explicit name \texttt{prior\_precision}.
-The derivation is first-order in $\gamma\Var[\PE]$; a tighter
-treatment (Gamma--Gamma conjugate, non-binary $R$) is a v0.5 surface
-fix that should not change qualitative behaviour.
+\textit{partially addressed in v0.4}.}
+\Cref{eq:pi} now carries a documented variational interpretation
+(\cref{sec:method:self}): the formula is the simplest calibrated
+reliability link recovering, in the large-window limit, the
+regularised inverse-variance shape of a Gamma--Inverse-Gamma
+conjugate update under Gaussian observation noise. The
+hyperparameter $\gamma$ is exposed as the explicit
+\texttt{prior\_precision} kwarg in code. We do \emph{not} claim
+\cref{eq:pi} is the exact closed-form posterior of a fully specified
+generative model; a strict derivation that algebraically produces
+\cref{eq:pi} from a single likelihood/prior pair is named as v0.5
+work. The qualitative claims of the paper (Sections 4.2--4.5) do
+not depend on which exact form of $\piself$ is used --- only on the
+property that $\piself \to 1$ at low PE variance and $\to 0$ at
+high PE variance.
 
 \paragraph{L3: Human-data fit ---
 \textit{partially addressed in v0.2}.} The model's predicted Cohen's
