@@ -1,0 +1,66 @@
+{
+  "experiment": "Self-FEP (full) vs CMR-style emotion-only baseline",
+  "ran_at": "2026-05-15T13:54:59.587792",
+  "n_seeds": 10,
+  "n_per_condition": 20,
+  "noise_std": 0.05,
+  "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+  "full_self_fep": {
+    "d_mean": 0.7176,
+    "d_ci": [
+      0.4911,
+      0.9271
+    ],
+    "d_per_seed": [
+      0.6069,
+      0.5539,
+      0.6224,
+      -0.0573,
+      1.1042,
+      0.8011,
+      0.5769,
+      1.2929,
+      0.8999,
+      0.7753
+    ]
+  },
+  "ablated_emotion_only": {
+    "d_mean": -0.0618,
+    "d_ci": [
+      -0.333,
+      0.1844
+    ],
+    "d_per_seed": [
+      -0.0528,
+      -0.1253,
+      -0.2865,
+      -0.9948,
+      0.5062,
+      -0.067,
+      -0.1967,
+      0.5617,
+      0.0315,
+      0.006
+    ]
+  },
+  "self_contribution_gap": {
+    "mean": 0.7794,
+    "ci": [
+      0.7118,
+      0.844
+    ],
+    "per_seed": [
+      0.6596,
+      0.6792,
+      0.9089,
+      0.9375,
+      0.598,
+      0.8681,
+      0.7736,
+      0.7312,
+      0.8684,
+      0.7693
+    ]
+  },
+  "interpretation": "The emotion-only ablation is the CMR-style baseline (no self representation). The full model's Cohen's d minus the ablated model's Cohen's d isolates the self mechanism's contribution to the SRE effect size. A 95% CI on the gap that excludes 0 indicates the self component is responsible for the observed SRE-direction effect."
+}

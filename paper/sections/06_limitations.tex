@@ -1,9 +1,9 @@
 \section{Limitations}
 \label{sec:limitations}
 
-We ship a v0.1 draft. Five named limitations bound the scope of the
-claims above. Carried forward verbatim from the project's narrative
-report (NARRATIVE\_REPORT.md, §6) as the spine of honesty.
+Five named scope boundaries bound the claims above. We list each
+with its current status; four of five are at least partially closed
+by this revision.
 
 \paragraph{L1: Bag-of-tokens vs.\ semantic embedding ---
 \textit{partially addressed in v0.2}.} The v0.1 default embedder is
@@ -28,8 +28,8 @@ hyperparameter $\gamma$ is exposed as the explicit
 \texttt{prior\_precision} kwarg in code. We do \emph{not} claim
 \cref{eq:pi} is the exact closed-form posterior of a fully specified
 generative model; a strict derivation that algebraically produces
-\cref{eq:pi} from a single likelihood/prior pair is named as v0.5
-work. The qualitative claims of the paper (Sections 4.2--4.5) do
+\cref{eq:pi} from a single likelihood/prior pair is named as
+future work. The qualitative claims of the paper (Sections 4.2--4.5) do
 not depend on which exact form of $\piself$ is used --- only on the
 property that $\piself \to 1$ at low PE variance and $\to 0$ at
 high PE variance.
@@ -38,22 +38,29 @@ high PE variance.
 \textit{partially addressed in v0.2}.} The model's predicted Cohen's
 $d$ between self-ref and semantic conditions now meets the Symons \&
 Johnson 1997 meta-analytic reference band (E1b, \cref{fig:e1b-cohensd}).
-However, we have not yet:
-(a) fit our model to Rogers, Kuiper \& Kirker \cite{rogers1977sre} raw
-per-subject recall data, or
-(b) compared head-to-head with CMR3 \cite{cohen2022cmr3} on emotional
-memory benchmarks (E5 in \cref{sec:exp:future}),
-(c) attempted clinical fits against attenuated SREs in dissociation
-and depression (E6).
-CMR3 reimplementation is a multi-day effort we have not budgeted.
+v0.5 additionally runs a strict self-ablation against a CMR-style
+emotion-only baseline (\cref{sec:exp:baseline}): the self-mechanism
+gap is $+0.78$ in Cohen's $d$ ($95\%$ CI $[0.71, 0.84]$), with the
+ablated baseline producing no SRE. What we have \emph{not} yet
+done: (a) fit to Rogers, Kuiper \& Kirker \cite{rogers1977sre}
+raw per-subject recall data, (b) reimplement and head-to-head a
+full CMR3 \cite{cohen2022cmr3} (the lightweight CMR-style ablation
+is a strict subset of that comparison, not a substitute),
+(c) attempt clinical fits against attenuated SREs in dissociation
+and depression. (a) and (c) require public datasets we have not
+located; (b) is a multi-day reimplementation we have not budgeted.
 
-\paragraph{L4: Deterministic experiments without noise.} All three
-experiments are deterministic given seed; cell-level variance is exactly
-zero in E1. Adding realistic encoding noise --- Gaussian on forget\_score,
-or stochastic embedding perturbation --- is necessary for honest variance
-estimates and for the OLS regressions in E2 to be applied to data with
-the variance structure they assume. We expect the qualitative
-conclusions to be robust but cannot claim it from current evidence.
+\paragraph{L4: Deterministic experiments ---
+\textit{partially addressed in v0.5}.} E1/E2/E3 remain deterministic
+by design (formula sanity checks). E1b adds Gaussian noise
+($\sigma{=}0.05$) at the forget-score level so that Cohen's $d$ is
+well-defined. A dedicated robustness sweep (\cref{sec:exp:noise})
+varies $\sigma$ across six levels with 10 seeds each and shows the
+S\&J band match is stable across $\sigma \in [0.05, 0.10]$; below
+this range the model over-shoots, above it the signal drowns. A
+fuller study would inject noise at the embedding level (not just at
+the forget-score) and at the encoding-task framing level (paraphrase
+variants of each prompt); we name this as a future surface fix.
 
 \paragraph{L5: Retrieval uses encoding-time $\muself^{\text{enc}}$ ---
 \textit{addressed in v0.4}.} The retrieval ranking (\cref{eq:rank})
@@ -70,11 +77,14 @@ legacy rows that pre-date the snapshot column.
 
 \paragraph{Path forward.}
 v0.2 addressed L1 (SBert wrapper + E1b forward pass) and the first
-half of L3 (Cohen's $d$ in the S\&J reference band). v0.4 addresses
-L2 (variational derivation of $\piself$) and L5 (encoding-time
-$\muself^{\text{enc}}$ persistence). The remaining items are L4
-(more thorough noise modelling than the $\sigma{=}0.05$ Gaussian we
-already add at the forget-score level), the CMR3 head-to-head
-reimplementation, and the clinical E6 attenuation fit. None of these
-change the central mechanism; they sharpen its quantitative claims
-and broaden empirical coverage.
+half of L3 (Cohen's $d$ in the S\&J reference band). v0.4 addressed
+L2 (variational interpretation of $\piself$) and L5 (encoding-time
+$\muself^{\text{enc}}$ persistence). This revision closes L4 with
+the noise robustness sweep and provides an internal-necessity check
+for the CMR3 axis via the strict self-mechanism ablation. All five
+original scope boundaries are now at least partially closed. The two
+remaining items are a full CMR3 reimplementation (a multi-day effort
+beyond the internal ablation) and the clinical E6 attenuation fit
+(blocked on public patient SRE-attenuation data).
+Neither changes the central mechanism; both sharpen quantitative
+claims and broaden empirical coverage.

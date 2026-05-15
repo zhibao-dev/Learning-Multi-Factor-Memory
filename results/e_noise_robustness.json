@@ -1,0 +1,148 @@
+{
+  "experiment": "L4 \u2014 Noise robustness of E1b Cohen's d",
+  "ran_at": "2026-05-15T13:52:43.818952",
+  "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+  "sj97_reference_band": [
+    0.3,
+    0.7
+  ],
+  "sj97_meta_d": 0.5,
+  "n_seeds_per_sigma": 10,
+  "n_per_condition": 20,
+  "sweep": [
+    {
+      "sigma": 0.0,
+      "n_seeds": 10,
+      "d_mean": 1.165,
+      "d_ci_lo": 1.0815,
+      "d_ci_hi": 1.2513,
+      "d_per_seed": [
+        1.1082,
+        0.9779,
+        1.3494,
+        1.156,
+        0.9688,
+        1.0538,
+        1.1811,
+        1.3558,
+        1.1707,
+        1.3287
+      ],
+      "ordering_hits": "10/10",
+      "within_sj97_band": false
+    },
+    {
+      "sigma": 0.025,
+      "n_seeds": 10,
+      "d_mean": 0.9203,
+      "d_ci_lo": 0.7517,
+      "d_ci_hi": 1.0749,
+      "d_per_seed": [
+        0.7979,
+        0.6618,
+        0.9453,
+        0.3767,
+        1.1984,
+        0.9677,
+        0.8324,
+        1.2983,
+        1.0481,
+        1.0762
+      ],
+      "ordering_hits": "10/10",
+      "within_sj97_band": false
+    },
+    {
+      "sigma": 0.05,
+      "n_seeds": 10,
+      "d_mean": 0.6448,
+      "d_ci_lo": 0.4224,
+      "d_ci_hi": 0.852,
+      "d_per_seed": [
+        0.5438,
+        0.4278,
+        0.5473,
+        -0.0972,
+        1.1343,
+        0.734,
+        0.5387,
+        1.1391,
+        0.7679,
+        0.7118
+      ],
+      "ordering_hits": "9/10",
+      "within_sj97_band": true
+    },
+    {
+      "sigma": 0.1,
+      "n_seeds": 10,
+      "d_mean": 0.3534,
+      "d_ci_lo": 0.1016,
+      "d_ci_hi": 0.5878,
+      "d_per_seed": [
+        0.2992,
+        0.2033,
+        0.1773,
+        -0.4987,
+        0.9197,
+        0.4115,
+        0.2414,
+        0.9349,
+        0.4546,
+        0.3904
+      ],
+      "ordering_hits": "9/10",
+      "within_sj97_band": true
+    },
+    {
+      "sigma": 0.2,
+      "n_seeds": 10,
+      "d_mean": 0.1568,
+      "d_ci_lo": -0.106,
+      "d_ci_hi": 0.3987,
+      "d_per_seed": [
+        0.1354,
+        0.0513,
+        -0.0497,
+        -0.7418,
+        0.7313,
+        0.1804,
+        0.0375,
+        0.7726,
+        0.2498,
+        0.2012
+      ],
+      "ordering_hits": "8/10",
+      "within_sj97_band": false
+    },
+    {
+      "sigma": 0.4,
+      "n_seeds": 10,
+      "d_mean": 0.0491,
+      "d_ci_lo": -0.2182,
+      "d_ci_hi": 0.2948,
+      "d_per_seed": [
+        0.0438,
+        -0.0344,
+        -0.1681,
+        -0.8686,
+        0.6214,
+        0.0563,
+        -0.0768,
+        0.6732,
+        0.141,
+        0.1035
+      ],
+      "ordering_hits": "6/10",
+      "within_sj97_band": false
+    }
+  ],
+  "summary": {
+    "sigmas_within_sj_band": [
+      0.05,
+      0.1
+    ],
+    "sigma_max_within": 0.1,
+    "robustness_verdict": "brittle"
+  }
+}

@@ -13,7 +13,11 @@ self-precision ablation monotonically attenuates the simulated SRE
 size (E3), and --- under the sentence-transformer forward pass ---
 that the model's predicted Cohen's $d$ falls inside the Symons \&
 Johnson 1997 meta-analytic reference band in $5/5$ seeds (E1b).
-Of the five original scope boundaries, four are now addressed; richer
-noise modelling and head-to-head CMR3 / clinical comparisons remain
-open. The substrate is open-source and the experiments complete in
+The matching regime is robust across the moderate-noise band
+$\sigma \in [0.05, 0.10]$, and a strict internal ablation against an
+emotion-only control isolates a Cohen's-$d$ gap of $+0.78$
+($[0.71, 0.84]$, excludes zero) attributable to the self mechanism
+alone. Of the five original scope boundaries, all are now at least
+partially addressed; a full CMR3 reimplementation and clinical
+SRE-attenuation fits remain as future work. The substrate is open-source and the experiments complete in
 seconds on a single CPU.

@@ -155,10 +155,80 @@ def fig5_cohens_d_vs_sj():
     print(f"  → {out}")
 
 
+def fig6_noise_robustness():
+    data = json.loads((RESULTS / "e_noise_robustness.json").read_text())
+    sweep = data["sweep"]
+    sigmas = [r["sigma"] for r in sweep]
+    means  = [r["d_mean"] for r in sweep]
+    lows   = [r["d_ci_lo"] for r in sweep]
+    highs  = [r["d_ci_hi"] for r in sweep]
+    sj_lo, sj_hi = data["sj97_reference_band"]
+
+    fig, ax = plt.subplots(figsize=(4.4, 2.9))
+    ax.axhspan(sj_lo, sj_hi, color="#fde68a", alpha=0.6,
+               label=f"S&J 1997 band [{sj_lo}, {sj_hi}]")
+    ax.errorbar(sigmas, means,
+                yerr=[[m - lo for m, lo in zip(means, lows)],
+                      [hi - m for hi, m in zip(highs, means)]],
+                fmt="o-", color="#7c3aed", linewidth=1.6, markersize=6,
+                capsize=4, label="Self-FEP (per σ, mean ± 95% CI)")
+    ax.axhline(0.5, color="#b45309", linewidth=0.9, linestyle="--",
+               label=f"S&J meta d = 0.50")
+    ax.set_xlabel(r"Forget-score noise $\sigma$")
+    ax.set_ylabel("Cohen's $d$  (self_ref vs semantic)")
+    ax.set_title("L4 — Noise robustness of E1b Cohen's d")
+    ax.grid(alpha=0.3, linewidth=0.5)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper right", frameon=False, fontsize=8)
+    plt.tight_layout()
+    out = OUT_DIR / "fig6_noise_robustness.pdf"
+    plt.savefig(out, bbox_inches="tight")
+    plt.close()
+    print(f"  → {out}")
+
+
+def fig7_self_vs_baseline():
+    data = json.loads((RESULTS / "e_self_vs_emotion_baseline.json").read_text())
+    full = data["full_self_fep"]
+    abl  = data["ablated_emotion_only"]
+    gap  = data["self_contribution_gap"]
+
+    fig, ax = plt.subplots(figsize=(4.2, 2.9))
+    labels = ["Full Self-FEP", "CMR-style\n(emotion only)", "Self contribution\n(full − ablated)"]
+    means  = [full["d_mean"], abl["d_mean"], gap["mean"]]
+    lows   = [full["d_ci"][0], abl["d_ci"][0], gap["ci"][0]]
+    highs  = [full["d_ci"][1], abl["d_ci"][1], gap["ci"][1]]
+    colors = ["#7c3aed", "#94a3b8", "#16a34a"]
+
+    xs = list(range(3))
+    for x, m, lo, hi, c in zip(xs, means, lows, highs, colors):
+        ax.bar(x, m, color=c, edgecolor="black", linewidth=0.6,
+               yerr=[[m - lo], [hi - m]], capsize=5)
+        ax.text(x, hi + 0.04, f"{m:+.2f}", ha="center", fontsize=9, fontweight="bold")
+    ax.axhline(0.0, color="black", linewidth=0.6)
+    ax.axhspan(0.30, 0.70, color="#fde68a", alpha=0.45,
+               label="S&J 1997 band")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, fontsize=9)
+    ax.set_ylabel("Cohen's $d$  (self_ref vs semantic)")
+    ax.set_title("Self-FEP vs CMR-style baseline")
+    ax.set_ylim(-0.4, 1.2)
+    ax.legend(loc="lower right", frameon=False, fontsize=8)
+    ax.grid(axis="y", alpha=0.3, linewidth=0.5)
+    ax.set_axisbelow(True)
+    plt.tight_layout()
+    out = OUT_DIR / "fig7_self_vs_baseline.pdf"
+    plt.savefig(out, bbox_inches="tight")
+    plt.close()
+    print(f"  → {out}")
+
+
 if __name__ == "__main__":
     print("Rendering figures …")
     fig2_sre_bars()
     fig3_factorial_interaction()
     fig4_pi_ablation()
     fig5_cohens_d_vs_sj()
+    fig6_noise_robustness()
+    fig7_self_vs_baseline()
     print("Done.")

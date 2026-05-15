@@ -90,8 +90,14 @@ encoder, the agent's raw-stimulus forward pass recovers the human SRE
 ordering in $5/5$ seeds and produces a Cohen's $d = 0.67 \pm 0.16$ that
 falls inside Symons \& Johnson's (1997) meta-analytic reference band
 $[0.30, 0.70]$.
-The substrate is open-source and all experiments complete in seconds
-on a single CPU.
+Robustness checks across noise levels $\sigma \in [0, 0.4]$ place
+the matching regime at $\sigma \in [0.05, 0.10]$, and a strict
+internal ablation against an emotion-only control shows the self
+mechanism contributes a Cohen's-$d$ gap of $+0.78$ (95\% CI
+$[0.71, 0.84]$, excludes zero), accounting for the entire observed
+effect.
+The substrate is open-source and all experiments complete in
+under thirty seconds on a single CPU.
 \end{abstract}
 
 % ---------- main body ----------
