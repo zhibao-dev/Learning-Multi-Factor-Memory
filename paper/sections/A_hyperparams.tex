@@ -31,13 +31,10 @@ $\theta_{\text{depth}}$ & $0.65$ & $\srel$ threshold for encoding-depth bump \\
 
 \subsection*{Reproduction commands}
 
-(Repository URL withheld for anonymous submission; see
-\cite{anon_substrate}.)
-
 \begin{verbatim}
-git clone <anonymised repository URL>
-cd <repo> && git checkout v0.2-cleaner
-pip install -e ".[anthropic]"
+git clone https://github.com/zhibao-dev/BorgeAgent
+cd BorgeAgent && git checkout v0.5-submit-after-minor
+pip install -e ".[anthropic,sbert]"
 
 # E1: SRE replication (mechanical), 10 seeds * 50 items per condition
 python experiments/e1_sre_replication.py \
