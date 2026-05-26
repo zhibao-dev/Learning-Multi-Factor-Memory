@@ -1,0 +1,47 @@
+{
+  "audit_skill": "citation-audit",
+  "verdict": "WARN",
+  "reason_code": "metadata_drift",
+  "summary": "16 cited entries audited via web/DBLP/arXiv; 13 KEEP, 2 metadata FIX (memos2025, castel2008value), 1 context reword (bjork1994memory). All findings applied; rebuild clean, no undefined citations.",
+  "audited_input_hashes": {
+    "references.bib": "sha256:e784618cadecf3d4d32f80f48eabc56d32307868b485d1c830980dfb6017603c",
+    "main.tex": "sha256:014b9e18d8bc4555ac4365060c73d65184ecff318cf50df78ed8326a4196ecda",
+    "sections/01_intro.tex": "sha256:acbf9c52260a1222cdc97cef2119e60c81413236bc16e4dc64e669fa41c8896d",
+    "sections/02_related_work.tex": "sha256:fa47fd83f2ee8ab3bbe77083121f12636059ca73b6707cb4eb3ca29cf5cff3ae",
+    "sections/03_method.tex": "sha256:fcb5145724c2ff4202ee5eaf6e2da05a3350afaeedd46e805d049b6652acc2a3",
+    "sections/04_experiments.tex": "sha256:c9d8c886a7a0e0f814ba26b4af180470a772bf08fb110ed8e7c36cec7b4a84f7",
+    "sections/05_discussion.tex": "sha256:953a471612443d3ec301ff707244f7bf301eaa3b300458fcdb4a2d41820b7ed2"
+  },
+  "thread_id": "019e643b-e684-74f0-8d51-30797da6c1d1",
+  "reviewer_model": "gpt-5.5",
+  "reviewer_reasoning": "xhigh",
+  "generated_at": "2026-05-26T20:40:00Z",
+  "details": {
+    "total_entries": 16,
+    "counts": { "KEEP": 13, "FIX": 2, "REPLACE": 0, "REMOVE": 0, "REWORD": 1 },
+    "per_entry": [
+      {"key": "reimers2019sbert", "verdict": "KEEP", "axis_failures": [], "note": "EMNLP 2019 (D19-1410) verified; cite for SBert embedder is appropriate (WEAK only re exact MiniLM variant)."},
+      {"key": "wu2025longmemeval", "verdict": "KEEP", "axis_failures": [], "note": "ICLR 2025 + arXiv:2410.10813 verified."},
+      {"key": "park2023generative", "verdict": "KEEP", "axis_failures": [], "note": "UIST 2023 verified; DOI 10.1145/3586183.3606763 optional."},
+      {"key": "lewis2020rag", "verdict": "KEEP", "axis_failures": [], "note": "NeurIPS 2020 verified."},
+      {"key": "packer2023memgpt", "verdict": "KEEP", "axis_failures": [], "note": "arXiv:2310.08560 verified; no confirmed venue update."},
+      {"key": "zhong2024memorybank", "verdict": "KEEP", "axis_failures": [], "note": "AAAI 2024 vol 38/17 pp 19724-19731 verified."},
+      {"key": "memos2025", "verdict": "FIX", "axis_failures": ["METADATA"], "note": "Title -> 'MemOS: A Memory OS for AI System'; author order/list corrected; primaryClass cs.AI -> cs.CL; DOI added. APPLIED."},
+      {"key": "castel2008value", "verdict": "FIX", "axis_failures": ["METADATA"], "note": "Year 2008 -> 2007 per DOI 10.1016/S0079-7421(07)48006-9; editors (Benjamin & Ross) + DOI added; key label kept. APPLIED."},
+      {"key": "craik1972lop", "verdict": "KEEP", "axis_failures": [], "note": "JVLVB 1972 verified."},
+      {"key": "rogers1977sre", "verdict": "KEEP", "axis_failures": [], "note": "JPSP 1977, DOI 10.1037/0022-3514.35.9.677 verified."},
+      {"key": "mcgaugh2000consolidation", "verdict": "KEEP", "axis_failures": [], "note": "Science 2000, DOI 10.1126/science.287.5451.248 verified."},
+      {"key": "anderson1991adaptive", "verdict": "KEEP", "axis_failures": [], "note": "Psychological Science 1991 verified."},
+      {"key": "ebbinghaus1885forgetting", "verdict": "KEEP", "axis_failures": [], "note": "1885 verified; cited with anderson1991 for forgetting-curve shape."},
+      {"key": "bjork1994memory", "verdict": "REWORD", "axis_failures": ["CONTEXT"], "note": "Real chapter (MIT Press, Metcalfe & Shimamura eds.) but WEAK for 'directed forgetting is a feature'; citing sentence reworded to metamemory/desirable-difficulties (its actual content). Ref kept. APPLIED."},
+      {"key": "sutton2018rl", "verdict": "KEEP", "axis_failures": [], "note": "RL: An Introduction 2nd ed, MIT Press 2018 verified."},
+      {"key": "hansen2016cmaes", "verdict": "KEEP", "axis_failures": [], "note": "arXiv:1604.00772 verified."}
+    ],
+    "uncited_entries": [
+      {"key": "tulving1973encodingspec", "suggestion": "prune", "note": "Unused in paper2; REMOVED from references.bib."},
+      {"key": "sumers2024cogarch", "suggestion": "check", "note": "Relevant; ADDED a citation in related work."},
+      {"key": "chen2026borge", "suggestion": "check", "note": "Substrate; ADDED a citation at the open-source mention in conclusion."}
+    ],
+    "uncited_entries_status": "ok"
+  }
+}

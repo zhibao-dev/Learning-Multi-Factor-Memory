@@ -49,7 +49,8 @@
 
 % ---------- title ----------
 \title{\textbf{Learning What to Remember:\\
-A Multi-Factor Value Function for Agentic Memory}}
+A Cognitively Grounded Multi-Factor Value Model\\
+for Agentic Memory}}
 \author[1]{Zhibao Chen\thanks{Corresponding author: \texttt{maxzhibao@gmail.com}}}
 \affil[1]{Huatai Securities, Nanjing, China}
 \date{}
@@ -69,11 +70,13 @@ consolidation time, \emph{before} the future query is known.
 We propose a \textbf{multi-factor memory value function}
 $V(m)=\sum_i w_i f_i(m)$ over seven interpretable factors --- emotional
 intensity, goal relevance, value alignment, self/user relevance, task
-utility, reliability, and usage history --- whose weights are
-\textbf{learned} from a downstream objective (gold-evidence retention
-here; task-QA return in general) by a gradient-free optimiser, and whose
-single scalar uniformly controls encoding depth, forget risk, and
-retrieval rank.
+utility, reliability, and usage history --- each a determinant of human
+retention drawn from cognitive psychology (value-directed remembering,
+levels of processing, adaptive memory, emotional consolidation), whose
+weights are \textbf{learned} from a downstream objective (gold-evidence
+retention here; task-QA return in general) by a gradient-free optimiser,
+and whose single scalar uniformly controls encoding depth, forget risk,
+and retrieval rank.
 We make a methodological point that reframes how memory retention is
 measured: on the LongMemEval benchmark, scoring goal relevance against
 the held-out evaluation question (an \emph{oracle} that peeks at the
