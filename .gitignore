@@ -44,3 +44,6 @@ paper/*.out
 paper/*.toc
 paper/*.synctex.gz
 paper/.aris/
+
+# LongMemEval dataset (277MB, download separately)
+data/

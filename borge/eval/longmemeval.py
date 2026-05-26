@@ -38,19 +38,11 @@ class LongMemEvalCase:
     question_date: str
     haystack_sessions: list           # list[ list[ {role, content, has_answer?} ] ]
     haystack_dates: list = field(default_factory=list)
-    answer_session_ids: list = field(default_factory=list)
+    answer_session_ids: list = field(default_factory=list)   # session-id strings
+    haystack_session_ids: list = field(default_factory=list)  # parallel to sessions
 
     @classmethod
     def from_record(cls, r: dict) -> "LongMemEvalCase":
-        # answer_session_ids may be session indices or session-id strings;
-        # normalise to a list (callers compare against session_idx).
-        asid = r.get("answer_session_ids", [])
-        norm_ids = []
-        for x in asid:
-            try:
-                norm_ids.append(int(x))
-            except (TypeError, ValueError):
-                norm_ids.append(x)
         return cls(
             question_id=str(r.get("question_id", "")),
             question_type=str(r.get("question_type", "")),
@@ -59,8 +51,20 @@ class LongMemEvalCase:
             question_date=str(r.get("question_date", "")),
             haystack_sessions=r.get("haystack_sessions", []),
             haystack_dates=r.get("haystack_dates", []),
-            answer_session_ids=norm_ids,
+            # keep ids as-is (real LongMemEval uses session-id strings like
+            # "answer_280352e9"; the synthetic fixture uses int indices)
+            answer_session_ids=list(r.get("answer_session_ids", [])),
+            haystack_session_ids=list(r.get("haystack_session_ids", [])),
         )
+
+    def is_gold_session(self, s_idx: int) -> bool:
+        """A session is gold if its id ∈ answer_session_ids, OR (fallback
+        for fixtures using int indices) the index itself is listed."""
+        gold = set(self.answer_session_ids)
+        if s_idx < len(self.haystack_session_ids):
+            if self.haystack_session_ids[s_idx] in gold:
+                return True
+        return s_idx in gold
 
 
 def load_longmemeval(path: str | Path) -> Iterator[LongMemEvalCase]:
@@ -91,15 +95,18 @@ def flatten_to_messages(case: LongMemEvalCase) -> list[dict]:
     chronological haystack so consolidation sees the real timeline.
     """
     msgs: list[dict] = []
-    gold = set(case.answer_session_ids)
     for s_idx, session in enumerate(case.haystack_sessions):
+        sid = (case.haystack_session_ids[s_idx]
+               if s_idx < len(case.haystack_session_ids) else s_idx)
+        is_gold = case.is_gold_session(s_idx)
         for turn in session:
             msgs.append({
                 "role":            turn.get("role", "user"),
                 "content":         turn.get("content", ""),
                 "session_idx":     s_idx,
+                "session_id":      sid,
                 "has_answer":      bool(turn.get("has_answer", False)),
-                "is_gold_session": s_idx in gold,
+                "is_gold_session": is_gold,
             })
     return msgs
 
@@ -108,17 +115,27 @@ def gold_retention_rate(kept_messages: list[dict], case: LongMemEvalCase) -> flo
     """
     Fraction of gold-evidence turns retained after a forgetting pass.
 
-    The headline memory-policy metric independent of the LLM answerer:
-    a good value function keeps the gold evidence and forgets distractors.
+    Gold turns are those flagged `has_answer` by the dataset (the true
+    needle). Independent of any LLM answerer: a good value function keeps
+    the gold and forgets distractors.
     """
-    gold = set(case.answer_session_ids)
     total_gold = sum(
         1
-        for s_idx, session in enumerate(case.haystack_sessions)
-        if s_idx in gold
-        for _ in session
+        for session in case.haystack_sessions
+        for t in session
+        if t.get("has_answer")
     )
     if total_gold == 0:
-        return 0.0
-    kept_gold = sum(1 for m in kept_messages if m.get("session_idx") in gold)
+        # fallback: count by gold-session membership
+        total_gold = sum(
+            1
+            for s_idx, session in enumerate(case.haystack_sessions)
+            if case.is_gold_session(s_idx)
+            for _ in session
+        )
+        if total_gold == 0:
+            return 0.0
+        kept_gold = sum(1 for m in kept_messages if m.get("is_gold_session"))
+        return kept_gold / total_gold
+    kept_gold = sum(1 for m in kept_messages if m.get("has_answer"))
     return kept_gold / total_gold

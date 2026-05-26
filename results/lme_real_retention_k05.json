@@ -1,0 +1,28 @@
+{
+  "experiment": "REAL LongMemEval gold-retention (API-free)",
+  "ran_at": "2026-05-26T12:49:08.880339",
+  "data": "data/longmemeval_s_cleaned.json",
+  "n_cases_used": 40,
+  "n_train": 20,
+  "n_test": 20,
+  "keep_frac": 0.05,
+  "learned_weights": {
+    "emotion": 0.209,
+    "goal_relevance": 1.253,
+    "value_alignment": 1.0,
+    "self_relevance": 0.9609,
+    "task_utility": 0.9889,
+    "reliability": 0.888,
+    "usage": 1.0
+  },
+  "test_gold_retention": {
+    "learned_V": 1.0,
+    "uniform_V": 0.95,
+    "goal_only": 1.0,
+    "emotion_only": 0.15,
+    "self_only": 0.05,
+    "recency_only": 0.15,
+    "random_keep": 0.05
+  },
+  "train_final": 0.925
+}
