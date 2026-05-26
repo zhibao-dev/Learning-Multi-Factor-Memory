@@ -1,0 +1,26 @@
+{
+  "experiment": "LongMemEval gold-retention (API-free) \u2014 learned-V vs baselines",
+  "ran_at": "2026-05-26T12:24:37.971639",
+  "data": "synthetic",
+  "n_train": 60,
+  "n_test": 60,
+  "keep_frac": 0.4,
+  "ranking": "by memory value V (desc); recency_only by timestamp",
+  "learned_weights": {
+    "emotion": 0.6065,
+    "goal_relevance": 0.4884,
+    "value_alignment": 0.0889,
+    "self_relevance": 1.0081,
+    "task_utility": 0.8766,
+    "reliability": 1.3611,
+    "usage": 0.6291
+  },
+  "test_gold_retention": {
+    "learned_V": 1.0,
+    "uniform_V": 0.6208,
+    "emotion_only": 0.0,
+    "self_only": 0.0,
+    "recency_only": 0.0
+  },
+  "train_curve_final": 1.0
+}
