@@ -45,4 +45,15 @@ random-restart hill-climb, not CMA-ES; although the blind result is
 stable across $20$ resampled splits, a stronger optimiser or a nonlinear
 value could shift the fitted weights. The reported standard deviations
 reflect split variance over a fixed $74$-case pool, not i.i.d.\ sampling
-from the full $500$-question benchmark.
+from the full $500$-question benchmark. The natural next step is to
+replace the linear form with a neural $g_\theta$ (\cref{sec:method:value})
+--- e.g.\ a small multi-layer perceptron over the factor vector --- and
+train it with a differentiable learning-to-rank loss (gold turns ranked
+above distractors within a case), since the discrete keep/drop objective
+itself is non-differentiable. This would let the value capture the factor
+interactions the linear form misses, at the cost of the per-factor
+interpretability that is currently a feature; on a $74$-case pilot it
+would also overfit, so it should accompany the full $500$-case run.
+Because every downstream operation consumes the value only through the
+scalar $V(m)$, this swap is contained to the scoring function and leaves
+the encoding/forgetting/retrieval machinery unchanged.

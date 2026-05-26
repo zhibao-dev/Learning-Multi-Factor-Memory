@@ -98,7 +98,7 @@ moves. This is exactly the difference between measuring retrieval and
 measuring forgetting.
 
 \paragraph{Result.}
-\Cref{tab:blind} reports both regimes. In the \textbf{oracle} regime,
+\Cref{tab:blind} and \cref{fig:blind} report both regimes. In the \textbf{oracle} regime,
 goal relevance alone retains $0.966$ of gold and learned/uniform value
 match it ($\approx\!0.96$): once you can score similarity to the
 question, similarity is all you need, and there is no room for a
@@ -120,6 +120,19 @@ of $+0.18\pm0.05$ (vs.\ uniform), $+0.27\pm0.06$ (vs.\ reliability-only),
 and $+0.43\pm0.07$ (vs.\ recency), each with a $100\%$ win rate.
 Multi-factor value's advantage is thus precisely where it should be: in
 the query-agnostic forgetting decision, not in query-defined retrieval.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/fig_blind_oracle.pdf}
+\caption{\textbf{Blind vs.\ oracle gold retention} (keep $30\%$; $74$-case
+LongMemEval-S pilot; $20$ resampled splits, mean $\pm 1$ std). Under the
+\emph{oracle} goal anchor (cosine to the held-out question), similarity
+alone saturates retention --- a retrieval ceiling. Under the realistic
+\emph{blind} anchor (session topic only), every single-factor and recency
+baseline collapses toward the chance floor, while the learned multi-factor
+value retains $0.81$. Recency has no oracle variant.}
+\label{fig:blind}
+\end{figure}
 
 \begin{table}[ht!]
 \centering\small

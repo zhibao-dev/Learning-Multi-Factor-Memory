@@ -16,7 +16,11 @@ independently computable determinant of expected future usefulness
 (\cref{tab:factors}). Linearity is a deliberate choice: it keeps the
 policy low-dimensional, lets us read each factor's learned contribution
 directly from $w_i$, and makes the value cheap to evaluate at every
-consolidation step.
+consolidation step. More generally the value is any scoring function
+$V(m)=g_\theta(\fvec(m))$; \cref{eq:value} is its interpretable
+linear instance, and a small neural $g_\theta$ is the natural nonlinear
+extension once interpretability can be traded for capacity
+(\cref{sec:limitations}).
 
 \begin{table}[ht!]
 \centering\small
@@ -52,8 +56,38 @@ The goal anchor is the pivot of our central experiment
 \subsection{One value, three operations}
 \label{sec:method:control}
 
-The single scalar $V(m)$ drives all three memory operations, replacing
-the separate, hand-tuned rules of prior systems.
+The single scalar $V(m)$ drives all three memory operations
+(\cref{fig:schematic}), replacing the separate, hand-tuned rules of prior
+systems.
+
+\begin{figure}[ht!]
+\centering
+\begin{tikzpicture}[
+  font=\small, >=Stealth, node distance=0.45cm and 1.15cm,
+  box/.style={draw, rounded corners, align=left, inner sep=4pt},
+  val/.style={draw, rounded corners, fill=orange!12, align=center,
+              inner sep=5pt, minimum height=1.0cm},
+  op/.style={draw, rounded corners, fill=green!8, align=center,
+             inner sep=4pt, minimum width=3.0cm}]
+\node[box, fill=blue!6] (f)
+  {emotion\\ goal rel.\\ value align.\\ self/user rel.\\
+   task util.\\ reliability\\ usage};
+\node[above=0.05cm of f, font=\footnotesize] {factors $\fvec(m)$};
+\node[val, right=of f] (v) {$V(m)$\\[2pt]$=\sum_i w_i f_i$};
+\node[op, right=1.2cm of v] (forget) {forget score (Eq.~\ref{eq:forget})};
+\node[op, above=of forget] (enc) {encoding depth (4 tiers)};
+\node[op, below=of forget] (ret) {retrieval rank};
+\draw[->, thick] (f) -- (v);
+\draw[->] (v.east) -- (enc.west);
+\draw[->] (v.east) -- (forget.west);
+\draw[->] (v.east) -- (ret.west);
+\end{tikzpicture}
+\caption{\textbf{One value, three operations.} A single learned scalar
+$V(m)=\sum_i w_i f_i(m)$ over seven factors drives encoding depth,
+forgetting, and retrieval, replacing three separately tuned rules. The
+weights $w_i$ are fit to a downstream objective (\cref{sec:method:learn}).}
+\label{fig:schematic}
+\end{figure}
 
 \paragraph{Encoding depth.}
 Following levels-of-processing \citep{craik1972lop}, higher-value items
