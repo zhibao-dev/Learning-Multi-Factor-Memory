@@ -1,0 +1,122 @@
+\begin{thebibliography}{18}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Anderson and Schooler(1991)]{anderson1991adaptive}
+John~R. Anderson and Lael~J. Schooler.
+\newblock Reflections of the environment in memory.
+\newblock \emph{Psychological Science}, 2\penalty0 (6):\penalty0 396--408,
+  1991.
+
+\bibitem[Bjork(1994)]{bjork1994memory}
+Robert~A. Bjork.
+\newblock Memory and metamemory considerations in the training of human beings.
+\newblock In Janet Metcalfe and Arthur~P. Shimamura, editors,
+  \emph{Metacognition: Knowing about Knowing}, pages 185--205. MIT Press, 1994.
+
+\bibitem[Castel(2007)]{castel2008value}
+Alan~D. Castel.
+\newblock The adaptive and strategic use of memory by older adults: Evaluative
+  processing and value-directed remembering.
+\newblock In Aaron~S. Benjamin and Brian~H. Ross, editors, \emph{Psychology of
+  Learning and Motivation}, volume~48, pages 225--270. Academic Press, 2007.
+\newblock \doi{10.1016/S0079-7421(07)48006-9}.
+
+\bibitem[Chen(2026)]{chen2026borge}
+Zhibao Chen.
+\newblock {B}orge{A}gent: An open-source cognitive-layer substrate for {LLM}
+  agents.
+\newblock \url{https://github.com/zhibao-dev/BorgeAgent}, 2026.
+
+\bibitem[Craik and Lockhart(1972)]{craik1972lop}
+Fergus I.~M. Craik and Robert~S. Lockhart.
+\newblock Levels of processing: A framework for memory research.
+\newblock \emph{Journal of Verbal Learning and Verbal Behavior}, 11\penalty0
+  (6):\penalty0 671--684, 1972.
+
+\bibitem[Ebbinghaus(1885)]{ebbinghaus1885forgetting}
+Hermann Ebbinghaus.
+\newblock \emph{{\"U}ber das Ged{\"a}chtnis: Untersuchungen zur experimentellen
+  Psychologie}.
+\newblock Duncker \& Humblot, Leipzig, 1885.
+\newblock English translation by Ruger \& Bussenius, Teachers College, 1913.
+
+\bibitem[Hansen(2016)]{hansen2016cmaes}
+Nikolaus Hansen.
+\newblock The {CMA} evolution strategy: A tutorial.
+\newblock \emph{arXiv preprint arXiv:1604.00772}, 2016.
+\newblock Tutorial reference for gradient-free black-box optimisation.
+
+\bibitem[Lewis et~al.(2020)Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal,
+  K{\"u}ttler, Lewis, Yih, Rockt{\"a}schel, Riedel, and Kiela]{lewis2020rag}
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir
+  Karpukhin, Naman Goyal, Heinrich K{\"u}ttler, Mike Lewis, Wen-tau Yih, Tim
+  Rockt{\"a}schel, Sebastian Riedel, and Douwe Kiela.
+\newblock Retrieval-augmented generation for knowledge-intensive {NLP} tasks.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2020.
+
+\bibitem[Li et~al.(2025)Li, Xi, Li, Chen, Chen, Song, et~al.]{memos2025}
+Zhiyu Li, Chenyang Xi, Chunyu Li, Ding Chen, Boyu Chen, Shichao Song, et~al.
+\newblock {MemOS}: A memory {OS} for {AI} system, 2025.
+
+\bibitem[McGaugh(2000)]{mcgaugh2000consolidation}
+James~L. McGaugh.
+\newblock Memory --- a century of consolidation.
+\newblock \emph{Science}, 287\penalty0 (5451):\penalty0 248--251, 2000.
+
+\bibitem[Packer et~al.(2023)Packer, Wooders, Lin, Fang, Patil, Stoica, and
+  Gonzalez]{packer2023memgpt}
+Charles Packer, Sarah Wooders, Kevin Lin, Vivian Fang, Shishir~G. Patil, Ion
+  Stoica, and Joseph~E. Gonzalez.
+\newblock {MemGPT}: Towards {LLM}s as operating systems.
+\newblock \emph{arXiv preprint arXiv:2310.08560}, 2023.
+
+\bibitem[Park et~al.(2023)Park, O'Brien, Cai, Morris, Liang, and
+  Bernstein]{park2023generative}
+Joon~Sung Park, Joseph~C. O'Brien, Carrie~J. Cai, Meredith~Ringel Morris, Percy
+  Liang, and Michael~S. Bernstein.
+\newblock Generative agents: Interactive simulacra of human behavior.
+\newblock In \emph{Proceedings of the 36th Annual ACM Symposium on User
+  Interface Software and Technology (UIST)}, 2023.
+
+\bibitem[Reimers and Gurevych(2019)]{reimers2019sbert}
+Nils Reimers and Iryna Gurevych.
+\newblock Sentence-{BERT}: Sentence embeddings using {S}iamese {BERT}-networks.
+\newblock In \emph{Proceedings of EMNLP-IJCNLP}, pages 3982--3992, 2019.
+
+\bibitem[Rogers et~al.(1977)Rogers, Kuiper, and Kirker]{rogers1977sre}
+T.~B. Rogers, N.~A. Kuiper, and W.~S. Kirker.
+\newblock Self-reference and the encoding of personal information.
+\newblock \emph{Journal of Personality and Social Psychology}, 35\penalty0
+  (9):\penalty0 677--688, 1977.
+
+\bibitem[Sumers et~al.(2024)Sumers, Yao, Narasimhan, and
+  Griffiths]{sumers2024cogarch}
+Theodore~R. Sumers, Shunyu Yao, Karthik Narasimhan, and Thomas~L. Griffiths.
+\newblock Cognitive architectures for language agents.
+\newblock \emph{Transactions on Machine Learning Research}, 2024.
+
+\bibitem[Sutton and Barto(2018)]{sutton2018rl}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock \emph{Reinforcement Learning: An Introduction}.
+\newblock MIT Press, 2nd edition, 2018.
+
+\bibitem[Wu et~al.(2025)Wu, Wang, Yu, Zhang, Chang, and Yu]{wu2025longmemeval}
+Di~Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, and Dong Yu.
+\newblock {LongMemEval}: Benchmarking chat assistants on long-term interactive
+  memory.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2025.
+\newblock Metadata to be re-verified at submission.
+
+\bibitem[Zhong et~al.(2024)Zhong, Guo, Gao, Ye, and Wang]{zhong2024memorybank}
+Wanjun Zhong, Lianghong Guo, Qiqi Gao, He~Ye, and Yanlin Wang.
+\newblock {MemoryBank}: Enhancing large language models with long-term memory.
+\newblock \emph{Proceedings of the AAAI Conference on Artificial Intelligence},
+  38\penalty0 (17):\penalty0 19724--19731, 2024.
+
+\end{thebibliography}
