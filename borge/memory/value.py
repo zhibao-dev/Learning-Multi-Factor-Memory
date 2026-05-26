@@ -33,6 +33,8 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -69,6 +71,96 @@ class MemoryValue:
             return MemoryValue(weights=dict(self.weights))
         return MemoryValue(weights={f: self.weights.get(f, 0.0) / s
                                     for f in self.FACTORS})
+
+
+# ── Factor extraction + value-driven memory dynamics ─────────────────────
+
+def memory_factors(row: dict[str, Any]) -> dict[str, float]:
+    """
+    Extract the 7-factor dict from a borge_memories row.
+
+    emotion        = |V|·A
+    self_relevance = self_relevance_score
+    goal_relevance / value_alignment / task_utility / reliability =
+        stored columns (default 0.0)
+    usage          = retrieval-frequency saturating in [0,1]
+    """
+    def _f(key: str, default: float = 0.0) -> float:
+        try:
+            v = row.get(key)
+            return default if v is None else float(v)
+        except (TypeError, ValueError):
+            return default
+
+    valence = _f("emotional_valence")
+    arousal = _f("emotional_arousal")
+    rcount  = _f("retrieval_count")
+    # usage saturates: 0 retrievals → 0, →1 as retrievals grow
+    usage = rcount / (1.0 + rcount)
+
+    return {
+        "emotion":         abs(valence) * arousal,
+        "goal_relevance":  _f("goal_relevance"),
+        "value_alignment": _f("value_alignment"),
+        "self_relevance":  _f("self_relevance_score"),
+        "task_utility":    _f("task_utility"),
+        "reliability":     _f("reliability"),
+        "usage":           usage,
+    }
+
+
+def value_forget_score(
+    row: dict[str, Any],
+    mv: "MemoryValue",
+    now: datetime | None = None,
+    *,
+    beta: float = 1.0,
+) -> float:
+    """
+    Value-driven forget score (higher = more likely forgotten).
+
+        score = recency_decay · usage_penalty · 1/(1 + β·V(m))
+
+    High memory value V resists forgetting. Replaces the self-FEP
+    product-of-fixed-resistances with one learned-weighted value term.
+    Recency + usage are kept as the universal time/access dynamics.
+    """
+    if now is None:
+        now = datetime.now()
+    ts_str = row.get("last_retrieved") or row.get("timestamp")
+    try:
+        ts = datetime.fromisoformat(ts_str) if isinstance(ts_str, str) else now
+    except ValueError:
+        ts = now
+    days_since = max(0.0, (now - ts).total_seconds() / 86400.0)
+
+    rcount = float(row.get("retrieval_count") or 0)
+    recency_decay = days_since ** 0.7
+    usage_penalty = 1.0 / (1.0 + rcount)
+
+    v = mv.value(memory_factors(row))
+    value_resistance = 1.0 / (1.0 + beta * max(0.0, v))
+
+    return recency_decay * usage_penalty * value_resistance
+
+
+def value_encoding_depth(factors: dict[str, float], mv: "MemoryValue") -> int:
+    """
+    Map memory value → Craik-Lockhart encoding tier ∈ {1,2,3,4}.
+
+    Thresholds on V normalised by the (uniform) max possible value so
+    the tiers are scale-stable regardless of learned weight magnitude.
+    """
+    v = mv.value(factors)
+    wsum = sum(abs(mv.weights.get(f, 0.0)) for f in MemoryValue.FACTORS)
+    norm = v / wsum if wsum > 1e-12 else 0.0   # factors ∈ [0,1] → norm ∈ [0,1]
+    if norm >= 0.70:
+        return 4   # META
+    if norm >= 0.45:
+        return 3   # SCHEMATIC
+    if norm >= 0.20:
+        return 2   # SEMANTIC
+    return 1       # SHALLOW
 
 
 def learn_weights(

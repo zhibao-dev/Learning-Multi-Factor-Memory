@@ -48,7 +48,11 @@ CREATE TABLE IF NOT EXISTS borge_memories (
     graph_node_ids TEXT DEFAULT '[]',
     self_relevance_score REAL DEFAULT 0.5,
     embedding TEXT,
-    mu_self_at_encoding TEXT
+    mu_self_at_encoding TEXT,
+    goal_relevance REAL DEFAULT 0.0,
+    value_alignment REAL DEFAULT 0.0,
+    task_utility REAL DEFAULT 0.0,
+    reliability REAL DEFAULT 0.0
 );
 CREATE INDEX IF NOT EXISTS idx_borge_memories_session ON borge_memories(session_id);
 CREATE INDEX IF NOT EXISTS idx_borge_memories_depth ON borge_memories(encoding_depth);
@@ -75,6 +79,11 @@ class MemoryStore:
         # v0.4 (L5): encoding-time μ_self snapshot for encoding-specificity-
         # faithful retrieval. Stored as JSON-encoded list of floats.
         ("mu_self_at_encoding",    "TEXT"),
+        # Sister paper (multi-factor value): 4 extra value factors.
+        ("goal_relevance",         "REAL DEFAULT 0.0"),
+        ("value_alignment",        "REAL DEFAULT 0.0"),
+        ("task_utility",           "REAL DEFAULT 0.0"),
+        ("reliability",            "REAL DEFAULT 0.0"),
     )
 
     def ensure_table(self) -> None:
