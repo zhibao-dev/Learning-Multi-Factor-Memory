@@ -28,13 +28,18 @@ $60$ disjoint test cases.
 \Cref{tab:synth} shows that the learner recovers a weighting that retains
 \emph{all} gold ($1.00$) on held-out cases, while uniform weighting ---
 which trusts the confounds equally --- retains only $0.62$, and
-emotion-, self-, and recency-only policies retain $0.00$ (they rank the
-recent, emotionally noisy distractors first). The learned weights place
-the largest mass on the true-signal factors (reliability $1.36$, task
-utility $0.88$, goal relevance $0.49$) and suppress the value-alignment
-confound to $0.09$. This is a sanity check, not the claim: it confirms
-the seven-dimensional black-box search finds a separating value where a
-single factor cannot.
+the emotion-, self-, and recency-only policies we test retain $0.00$
+(they rank the recent, emotionally noisy distractors first). The learned
+weights place the largest mass on the true-signal factors (reliability
+$1.36$, task utility $0.88$, goal relevance $0.49$) and drive the
+\emph{value-alignment} confound down to $0.09$; the self-relevance
+confound is \emph{not} fully suppressed ($1.01$), but the true-signal mass
+alone suffices to separate gold from distractors. This is a sanity check,
+not the central claim: it shows only that the seven-dimensional black-box
+search can fit a \emph{separating mixture} where uniform weighting --- and
+the single-factor policies we test --- cannot. We do not test goal-,
+task-, or reliability-only baselines on the synthetic case; the real-data
+study below tests all four live single factors directly.
 
 \begin{table}[ht!]
 \centering\small
@@ -70,6 +75,12 @@ $\keepfrac=30\%$, and measure the fraction of flagged gold turns
 retained. Weights are learned over the live factors on a training split
 and evaluated on a disjoint test split; we report mean $\pm$ standard
 deviation over $20$ resampled $50/50$ splits ($37$ test cases per rep).
+This isolates the budgeted keep/drop (retention) decision: we do not run
+an answerer or the full encode/forget/retrieve loop here, and we report
+gold-evidence retention rather than QA accuracy (\cref{sec:limitations}).
+We treat these first $80$ cases as a \emph{pilot} subset of
+LongMemEval-S; scaling to all $500$ questions is API-free and a natural
+extension.
 
 \paragraph{The oracle/blind distinction.}
 Gold in LongMemEval is defined relative to the evaluation question, so
@@ -97,14 +108,18 @@ themselves, evaluate a forgetting policy.
 
 In the realistic \textbf{blind} regime the ordering inverts.
 Goal-relevance-to-session collapses to $0.291$ (near the $0.30$ chance
-floor), recency to $0.380$, self to $0.388$, and emotion to $0.271$ ---
-no single factor beats chance by much, because no single cue identifies
-the future needle without the question. The \emph{learned multi-factor
-value} retains $\mathbf{0.811\pm0.047}$, clearing uniform weighting
-($0.633$) by $+0.18$ and recency by $+0.43$, with $\pm1\sigma$ intervals
-that do not overlap any baseline. Multi-factor value's advantage is thus
-precisely where it should be: in the query-agnostic forgetting decision,
-not in query-defined retrieval.
+floor), recency to $0.380$, self to $0.388$, and emotion to $0.271$; the
+strongest single factor, reliability, reaches $0.541$ --- clearly above
+chance, but far short of a multi-factor policy. The \emph{learned
+multi-factor value} retains $\mathbf{0.811\pm0.047}$, beating uniform
+weighting ($0.634$) by $+0.18$, the best single factor (reliability) by
+$+0.27$, and recency by $+0.43$. These gaps are \emph{paired} across the
+$20$ resampled splits --- the same test split scored by both policies ---
+and the learned policy wins on \textbf{every} split: paired differences
+of $+0.18\pm0.05$ (vs.\ uniform), $+0.27\pm0.06$ (vs.\ reliability-only),
+and $+0.43\pm0.07$ (vs.\ recency), each with a $100\%$ win rate.
+Multi-factor value's advantage is thus precisely where it should be: in
+the query-agnostic forgetting decision, not in query-defined retrieval.
 
 \begin{table}[ht!]
 \centering\small
@@ -112,15 +127,17 @@ not in query-defined retrieval.
 std over $20$ resampled test splits, $37$ cases each). \emph{Oracle}
 scores goal relevance against the held-out question (retrieval ceiling);
 \emph{blind} scores it against the session topic (realistic forgetting).
-Self- and emotion-only are regime-invariant by construction.}
+Self-, emotion-, and reliability-only are regime-invariant by
+construction (only the goal anchor moves between regimes).}
 \label{tab:blind}
 \begin{tabular}{lcc}
 \toprule
 Policy & Oracle (peeks at $Q$) & Blind (realistic) \\
 \midrule
 \textbf{learned\_V}  & $0.959 \pm 0.017$ & $\mathbf{0.811 \pm 0.047}$ \\
-uniform\_V           & $0.962 \pm 0.019$ & $0.633 \pm 0.046$ \\
+uniform\_V           & $0.962 \pm 0.019$ & $0.634 \pm 0.046$ \\
 goal\_only           & $0.966 \pm 0.019$ & $0.291 \pm 0.038$ \\
+reliability\_only    & $0.541 \pm 0.051$ & $0.541 \pm 0.051$ \\
 self\_only           & $0.388 \pm 0.050$ & $0.388 \pm 0.050$ \\
 emotion\_only        & $0.271 \pm 0.047$ & $0.271 \pm 0.047$ \\
 recency\_only        & ---               & $0.380 \pm 0.051$ \\

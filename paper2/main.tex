@@ -68,9 +68,10 @@ We propose a \textbf{multi-factor memory value function}
 $V(m)=\sum_i w_i f_i(m)$ over seven interpretable factors --- emotional
 intensity, goal relevance, value alignment, self/user relevance, task
 utility, reliability, and usage history --- whose weights are
-\textbf{learned} from downstream task return by a gradient-free
-optimiser, and whose single scalar uniformly controls encoding depth,
-forget risk, and retrieval rank.
+\textbf{learned} from a downstream objective (gold-evidence retention
+here; task-QA return in general) by a gradient-free optimiser, and whose
+single scalar uniformly controls encoding depth, forget risk, and
+retrieval rank.
 We make a methodological point that reframes how memory retention is
 measured: on the LongMemEval benchmark, scoring goal relevance against
 the held-out evaluation question (an \emph{oracle} that peeks at the
@@ -78,9 +79,10 @@ future query) saturates gold-evidence retention at $\approx\!0.96$ for
 similarity alone --- this measures \emph{retrieval}, not forgetting.
 In the realistic \emph{blind} regime, where the consolidation policy
 never sees the evaluation question, a learned multi-factor value retains
-$\mathbf{0.811 \pm 0.047}$ of gold evidence, versus $0.633$ for uniform
-weights, $0.380$ for recency, and $\le 0.39$ for every single-factor
-baseline (20 resampled splits; non-overlapping $\pm1\sigma$ intervals).
+$\mathbf{0.811 \pm 0.047}$ of gold evidence, versus $0.634$ for uniform
+weights, $0.541$ for the best single factor (reliability), and $0.380$
+for recency --- winning on every one of $20$ resampled splits (paired
+gaps $+0.18$ to $+0.43$).
 The learned blind weights are interpretable --- reliability, emotional
 intensity, and self/user relevance dominate, while query-time goal
 similarity is correctly down-weighted for the forgetting decision.

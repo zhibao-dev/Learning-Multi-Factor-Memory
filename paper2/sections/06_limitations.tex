@@ -19,8 +19,10 @@ API-free setting (\cref{tab:factors}): they need a value profile, an LLM
 judge, and access logs respectively. The blind headline therefore uses
 only four live factors, and task utility --- arguably the most direct
 expected-utility signal --- is exactly the one an answerer would unlock.
-Our result is thus a \emph{lower bound} on what the full value function
-can do, established without any API budget.
+Our result is thus a \emph{conservative, four-factor, API-free} estimate;
+the three inert factors might raise performance or, if noisy, lower it, so
+we do not claim the full function is strictly better --- only that a
+useful value signal is already recoverable with no API budget.
 
 \paragraph{L3 --- Single benchmark and modality.}
 We evaluate on LongMemEval-S ($74$ usable cases of the first $80$),

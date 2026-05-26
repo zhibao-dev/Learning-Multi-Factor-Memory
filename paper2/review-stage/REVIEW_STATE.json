@@ -1,0 +1,14 @@
+{
+  "round": 2,
+  "threadId": "019e6420-2672-7230-b97e-c43ebf5dde0e",
+  "status": "completed",
+  "difficulty": "medium",
+  "last_score": 7.3,
+  "last_verdict": "ready",
+  "score_progression": [
+    {"round": 1, "score": 6.5, "verdict": "almost"},
+    {"round": 2, "score": 7.3, "verdict": "ready"}
+  ],
+  "pending_experiments": [],
+  "timestamp": "2026-05-26T15:40:00"
+}

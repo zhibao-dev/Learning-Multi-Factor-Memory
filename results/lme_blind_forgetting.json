@@ -1,6 +1,6 @@
 {
   "experiment": "REAL LongMemEval \u2014 BLIND vs ORACLE forgetting (API-free)",
-  "ran_at": "2026-05-26T13:04:52.233050",
+  "ran_at": "2026-05-26T19:48:17.348520",
   "data": "data/longmemeval_s_cleaned.json",
   "n_cases_used": 74,
   "reps": 20,
@@ -35,6 +35,10 @@
         "emotion_only": [
           0.2707,
           0.0473
+        ],
+        "reliability_only": [
+          0.5409,
+          0.0514
         ]
       }
     },
@@ -60,6 +64,10 @@
         "emotion_only": [
           0.2707,
           0.0473
+        ],
+        "reliability_only": [
+          0.5409,
+          0.0514
         ]
       }
     }
@@ -74,5 +82,22 @@
     "goal_relevance": 0.0339,
     "self_relevance": 0.2154,
     "reliability": 0.9504
+  },
+  "paired_blind_diffs": {
+    "learned_minus_uniform": {
+      "mean": 0.1771,
+      "std": 0.0463,
+      "win_frac": 1.0
+    },
+    "learned_minus_recency": {
+      "mean": 0.4308,
+      "std": 0.0695,
+      "win_frac": 1.0
+    },
+    "learned_minus_reliability_only": {
+      "mean": 0.2697,
+      "std": 0.0612,
+      "win_frac": 1.0
+    }
   }
 }

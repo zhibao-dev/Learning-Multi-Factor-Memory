@@ -50,13 +50,16 @@ intensity, goal relevance, value alignment, self/user relevance, task
 utility, reliability, and usage history. A \emph{single} scalar $V(m)$
 then uniformly controls all three triage operations: encoding depth,
 forget risk, and retrieval rank. Crucially, the weights $w_i$ are not
-hand-set: they are \textbf{learned} from downstream task return by a
+hand-set: they are \textbf{learned} from a downstream objective by a
 gradient-free optimiser, because the
 encode\,$\rightarrow$\,\allowbreak forget\,$\rightarrow$\,\allowbreak
 retrieve\,$\rightarrow$\,\allowbreak answer
-pipeline is non-differentiable. The value function is thus fit to
-maximise task success, in the spirit of expected-utility credit
-assignment \citep{sutton2018rl}.
+pipeline is non-differentiable. That objective is a stand-in for task
+return; here we use gold-evidence retention under a fixed memory budget
+(an API-free proxy), while a fully instrumented setting would use
+downstream QA accuracy. The value function is thus fit to maximise the
+chosen objective, in the spirit of expected-utility credit assignment
+\citep{sutton2018rl}.
 
 Along the way we surface a methodological pitfall in how memory
 retention is commonly measured, and turn it into a clean experimental
@@ -84,18 +87,20 @@ future agent behaviour, with seven interpretable factors, and a single
 scalar that uniformly drives encoding depth, forgetting, and retrieval
 (\cref{sec:method}).
 \item A \textbf{learned-weight} formulation (A2): a gradient-free
-optimiser fits $\wvec$ to downstream task return, replacing hand-tuned
-resistances with credit-assigned weights (\cref{sec:method:learn}).
+optimiser fits $\wvec$ to a downstream objective (gold-evidence retention
+here; task-QA return in general), replacing hand-tuned resistances with
+credit-assigned weights (\cref{sec:method:learn}).
 \item A \textbf{methodological contrast} --- \emph{oracle} vs.\
 \emph{blind} forgetting --- that separates retrieval from retention and
 shows why query-defined retention benchmarks cannot, on their own,
 demonstrate a forgetting advantage (\cref{sec:exp:blind}).
-\item \textbf{Empirical results} on the real LongMemEval benchmark: in
-the blind regime, learned multi-factor value retains
-$0.811\pm0.047$ of gold evidence versus $0.633$ (uniform), $0.380$
-(recency), and $\le0.39$ (any single factor), with interpretable learned
-weights (\cref{sec:exp:blind}); a synthetic confound study validates the
-learner (\cref{sec:exp:synth}).
+\item \textbf{Empirical results} on a real LongMemEval-S pilot: in the
+blind regime, learned multi-factor value retains $0.811\pm0.047$ of gold
+evidence versus $0.634$ (uniform), $0.541$ (best single factor,
+reliability), and $0.380$ (recency), winning on every one of $20$
+resampled splits, with interpretable learned weights
+(\cref{sec:exp:blind}); a synthetic confound study validates the learner
+(\cref{sec:exp:synth}).
 \item An \textbf{open-source, CPU-only} substrate and evaluation harness;
 every reported number reproduces with no API calls.
 \end{enumerate}

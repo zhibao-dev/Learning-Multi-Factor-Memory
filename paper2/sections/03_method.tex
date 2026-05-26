@@ -86,8 +86,10 @@ At query time the same value contributes to the retrieval rank,
 alongside query-specific similarity and mood congruence, so that durable
 high-value memories are surfaced preferentially. Because our central
 evaluation isolates the budgeted keep/drop decision
-(\cref{sec:exp:blind}), we rank candidates directly by $V(m)$ under the
-retrieval-time goal anchor and report retention of the gold set.
+(\cref{sec:exp:blind}), we rank candidates directly by $V(m)$ --- using
+the regime-specific goal anchor defined there (the question under
+\emph{oracle}, the session topic under \emph{blind}) --- and report
+retention of the gold set.
 
 \subsection{Learning the weights from task return}
 \label{sec:method:learn}

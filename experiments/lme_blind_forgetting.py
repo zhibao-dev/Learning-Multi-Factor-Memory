@@ -184,15 +184,20 @@ def main():
 
     kf = args.keep_frac
     reps = max(1, args.reps)
-    policies = ("learned_V", "uniform_V", "goal_only", "self_only", "emotion_only")
+    # Report ALL four live factors as single-factor baselines (reliability
+    # included — it carries the largest learned weight, so omitting it would
+    # let an "any single factor" claim cheat).
+    policies = ("learned_V", "uniform_V", "goal_only", "self_only",
+                "emotion_only", "reliability_only")
 
     def eval_on(test_set, regime, learned):
         pol = {
-            "learned_V":    learned,
-            "uniform_V":    {f: 1.0 for f in LIVE_FACTORS},
-            "goal_only":    _single("goal_relevance"),
-            "self_only":    _single("self_relevance"),
-            "emotion_only": _single("emotion"),
+            "learned_V":         learned,
+            "uniform_V":         {f: 1.0 for f in LIVE_FACTORS},
+            "goal_only":         _single("goal_relevance"),
+            "self_only":         _single("self_relevance"),
+            "emotion_only":      _single("emotion"),
+            "reliability_only":  _single("reliability"),
         }
         return {n: mean(gold_retention(a, w, regime=regime, keep_frac=kf)
                         for a in test_set)
@@ -237,6 +242,21 @@ def main():
     avg_w_blind = {f: round(sum(row["w_blind"].get(f, 0.0) for row in rows) / reps, 4)
                    for f in LIVE_FACTORS}
 
+    # Paired per-split differences (blind regime): same test split scored by
+    # both policies, so the difference is paired and removes split variance.
+    def paired(a_key, b_is_recency=False):
+        diffs = [row["blind"]["learned_V"] -
+                 (row["recency"] if b_is_recency else row["blind"][a_key])
+                 for row in rows]
+        m, s = agg(diffs)
+        win = round(sum(1 for d in diffs if d > 0) / reps, 3)
+        return {"mean": m, "std": s, "win_frac": win}
+    paired_blind = {
+        "learned_minus_uniform":  paired("uniform_V"),
+        "learned_minus_recency":  paired(None, b_is_recency=True),
+        "learned_minus_reliability_only": paired("reliability_only"),
+    }
+
     payload = {
         "experiment": "REAL LongMemEval — BLIND vs ORACLE forgetting (API-free)",
         "ran_at": datetime.now().isoformat(),
@@ -259,6 +279,7 @@ def main():
         "recency_only_mean_std": ci_recency,
         "random_keep": round(kf, 4),
         "learned_weights_blind_mean": avg_w_blind,
+        "paired_blind_diffs": paired_blind,
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -279,6 +300,9 @@ def main():
     print(f"  {'':8s}{'random_keep':14s}: {kf:.3f}")
     print(f"\n  mean learned blind weights: " +
           ", ".join(f"{f}={avg_w_blind[f]:.2f}" for f in LIVE_FACTORS))
+    print("  paired blind diffs (learned − X; mean ± std, win-frac):")
+    for k, d in paired_blind.items():
+        print(f"    {k:32s}: {d['mean']:+.3f} ± {d['std']:.3f}  ({d['win_frac']:.0%} of splits)")
     print(f"  → wrote {out}")
 
 
