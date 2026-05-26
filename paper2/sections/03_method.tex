@@ -5,7 +5,7 @@
 \label{sec:method:value}
 
 Each memory $m$ (a stored turn or consolidated item) is summarised by a
-factor vector $\fvec(m)\in[0,1]^7$ and scored by a linear value
+factor vector $\fvec(m)\in[0,1]^7$ and scored by a learned linear value
 \begin{equation}
 V(m) \;=\; \sum_{i=1}^{7} w_i\, f_i(m),
 \qquad \wvec \in \mathbb{R}_{\ge 0}^{7}.
@@ -13,14 +13,28 @@ V(m) \;=\; \sum_{i=1}^{7} w_i\, f_i(m),
 \end{equation}
 The seven factors are chosen so that each is an interpretable,
 independently computable determinant of expected future usefulness
-(\cref{tab:factors}). Linearity is a deliberate choice: it keeps the
-policy low-dimensional, lets us read each factor's learned contribution
-directly from $w_i$, and makes the value cheap to evaluate at every
-consolidation step. More generally the value is any scoring function
-$V(m)=g_\theta(\fvec(m))$; \cref{eq:value} is its interpretable
-linear instance, and a small neural $g_\theta$ is the natural nonlinear
-extension once interpretability can be traded for capacity
-(\cref{sec:limitations}).
+(\cref{tab:factors}). We regard \cref{eq:value} as a \emph{learned reward
+model for memory}: $V(m)$ estimates a memory's contribution to future
+task return, and its weights are fit by policy optimisation
+(\cref{sec:method:learn}) rather than set by hand.
+
+Linearity here is a deliberate design choice, not a limitation we
+tolerate, for three reasons. \textbf{(i) Capacity match}: with seven
+interpretable factors and limited, indirect supervision, a
+seven-parameter value is the appropriate capacity; richer function
+classes overfit this regime (\cref{sec:limitations}). \textbf{(ii)
+Auditability}: the learned weights $w_i$ \emph{are} the explanation --- a
+deployment can read off which factors a given workload rewards
+(\cref{sec:exp:blind}), which a black-box scorer cannot provide and which
+is a practical requirement for a memory controller. \textbf{(iii)
+Decision-theoretic reading}: \cref{eq:value} is the first-order
+(additive-utility) approximation of a memory's expected contribution to
+return --- the principled starting point before modelling factor
+interactions. More generally the value is any learned scoring function
+$V(m)=g_\theta(\fvec(m))$, and \cref{eq:value} is its interpretable linear
+instance; we treat a neural $g_\theta$ as a nonlinear extension to be
+validated as an \emph{interaction ablation} (\cref{sec:limitations}), not
+as the default.
 
 \begin{table}[ht!]
 \centering\small
