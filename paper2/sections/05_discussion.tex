@@ -1,0 +1,37 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{One scalar, three operations.}
+The practical appeal of \cref{eq:value} is consolidation: a single
+learned value replaces the separate, independently tuned rules that
+production systems use for write-time importance, eviction, and
+retrieval ranking. A deployment exposes one seven-dimensional knob, and
+\cref{eq:forget} and the encoding tiers inherit any change to it
+automatically. Because the value is linear, the learned weights are a
+\emph{readable audit} of the policy: \cref{sec:exp:blind} shows the
+fitted policy says, in plain terms, ``keep reliable user-stated facts;
+do not trust session-topic similarity for forgetting.''
+
+\paragraph{The oracle/blind lesson generalises.}
+Our sharpest methodological point is independent of the value function.
+Any retention metric whose gold set is defined relative to a future
+query will reward a policy that scores relevance \emph{to that query}
+--- but that policy is unavailable at forgetting time. Reporting such
+numbers measures an upper bound on retrieval, not the quality of
+forgetting. Evaluations of agent forgetting should therefore (i) compute
+relevance only from information available at consolidation, and (ii)
+report the oracle ceiling alongside, so the retrieval/retention gap is
+visible. The $0.966 \rightarrow 0.291$ collapse of goal-only between our
+two regimes (\cref{tab:blind}) is the size of the artefact a careless
+metric would hide.
+
+\paragraph{Learned weights as a workload diagnostic.}
+Because the weights are fit to task return, they characterise the
+workload, not just the policy. On LongMemEval the signal is reliability
+and self-relevance; a coding agent's workload might instead reward task
+utility and goal relevance. The same harness, pointed at a new return
+signal, yields a new interpretable weighting --- a portable recipe for
+\emph{discovering} what a given agent should remember, rather than
+guessing it. This extends the hand-set recency/importance/relevance blend
+of Generative Agents \citep{park2023generative} in two ways: the blend is
+learned, and it governs encoding and forgetting, not only retrieval.

@@ -1,0 +1,113 @@
+% Multi-Factor Memory Value for Agentic Agents — v0.1 draft (arXiv target)
+% Compile: latexmk -pdf main.tex   (TeX Live 2025/2026)
+%
+% Layout discipline mirrors the sister paper: numerical natbib (kills
+% author-year overflow), placeins/FloatBarrier (no orphan-table pages),
+% raised float fractions. Keep these — they fixed real layout bugs.
+
+\documentclass[10pt]{article}
+
+% ---------- packages ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in,top=1in,bottom=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+% Numerical natbib (kills author-year overflow). MUST precede hyperref+cleveref.
+\usepackage[numbers,sort&compress,square,comma]{natbib}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{placeins}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.92}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.7}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{authblk}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!70!black,
+}
+
+\titleformat*{\section}{\large\bfseries}
+\titleformat*{\subsection}{\normalsize\bfseries}
+
+\input{math_commands}
+
+% ---------- title ----------
+\title{\textbf{Learning What to Remember:\\
+A Multi-Factor Value Function for Agentic Memory}}
+\author[1]{Zhibao Chen\thanks{Corresponding author: \texttt{maxzhibao@gmail.com}}}
+\affil[1]{Huatai Securities, Nanjing, China}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Long-running LLM agents accumulate interaction histories far larger than
+any context window, forcing a standing decision: what to encode deeply,
+what to forget, and what to retrieve under a fixed memory budget.
+Production memory systems answer with \emph{semantic similarity} to the
+current query or \emph{recency}. We argue both are mis-specified for the
+governing decision, because the forgetting decision is made at
+consolidation time, \emph{before} the future query is known.
+We propose a \textbf{multi-factor memory value function}
+$V(m)=\sum_i w_i f_i(m)$ over seven interpretable factors --- emotional
+intensity, goal relevance, value alignment, self/user relevance, task
+utility, reliability, and usage history --- whose weights are
+\textbf{learned} from downstream task return by a gradient-free
+optimiser, and whose single scalar uniformly controls encoding depth,
+forget risk, and retrieval rank.
+We make a methodological point that reframes how memory retention is
+measured: on the LongMemEval benchmark, scoring goal relevance against
+the held-out evaluation question (an \emph{oracle} that peeks at the
+future query) saturates gold-evidence retention at $\approx\!0.96$ for
+similarity alone --- this measures \emph{retrieval}, not forgetting.
+In the realistic \emph{blind} regime, where the consolidation policy
+never sees the evaluation question, a learned multi-factor value retains
+$\mathbf{0.811 \pm 0.047}$ of gold evidence, versus $0.633$ for uniform
+weights, $0.380$ for recency, and $\le 0.39$ for every single-factor
+baseline (20 resampled splits; non-overlapping $\pm1\sigma$ intervals).
+The learned blind weights are interpretable --- reliability, emotional
+intensity, and self/user relevance dominate, while query-time goal
+similarity is correctly down-weighted for the forgetting decision.
+A controlled synthetic task with planted confounds confirms the learner
+recovers a separating weighting ($1.00$ retention) where uniform
+weighting trusts the confounds and fails ($0.62$).
+The substrate is open-source; all reported experiments run on a single
+CPU with no API calls.
+\end{abstract}
+
+% ---------- main body ----------
+\input{sections/01_intro}
+\FloatBarrier
+\input{sections/02_related_work}
+\FloatBarrier
+\input{sections/03_method}
+\FloatBarrier
+\input{sections/04_experiments}
+\FloatBarrier
+\input{sections/05_discussion}
+\FloatBarrier
+\input{sections/06_limitations}
+\FloatBarrier
+\input{sections/07_conclusion}
+\FloatBarrier
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,101 @@
+\section{Introduction}
+\label{sec:intro}
+
+An LLM agent deployed over days or weeks accumulates an interaction
+history far larger than any context window. It cannot attend to
+everything, so on every consolidation step it makes a triage decision:
+which observations to \emph{encode} (and how deeply), which to
+\emph{forget}, and which to \emph{retrieve} when a new task arrives.
+This decision is not cosmetic --- it determines whether the agent
+remembers a user's stated preference three weeks later, whether it
+recalls the one reliable fact among a hundred distractors, and whether
+its working memory is dominated by recent chatter or by durable,
+high-value knowledge.
+
+Production memory stacks answer this triage with one of two
+single-factor policies. Retrieval-augmented systems rank stored items by
+\emph{semantic similarity} to the current query
+\citep{lewis2020rag,packer2023memgpt}; time-to-live and sliding-window
+schemes rank by \emph{recency}. Both are intuitive and both are
+mis-specified for the governing decision. Similarity-to-query is only
+defined \emph{at retrieval time}, once the query exists --- but the
+\emph{forgetting} decision is made earlier, at consolidation, when the
+future query is unknown. Recency is query-agnostic but discards the
+common case of an old-but-important fact (a user's allergy, a project
+constraint) in favour of recent low-value chatter. Neither policy has a
+notion of how \emph{useful} a memory is to future behaviour.
+
+Human memory is not single-factor. Decades of work show that what
+survives forgetting is governed by the \emph{value} of an item:
+people preferentially retain information tagged as high-value even at
+the expense of low-value detail \citep{castel2008value}; depth of
+processing --- semantic, self-referential, and goal-relevant encoding
+--- predicts durability over shallow perceptual encoding
+\citep{craik1972lop,rogers1977sre}; emotional arousal modulates
+consolidation \citep{mcgaugh2000consolidation}; and the very shape of
+forgetting tracks the \emph{need-probability} of information in the
+environment, an adaptive rather than passive decay
+\citep{anderson1991adaptive,ebbinghaus1885forgetting}. The common thread
+is that retention is driven by a multi-factor estimate of an item's
+expected future usefulness, not by any single cue.
+
+We bring this principle to agentic memory. We define a
+\textbf{multi-factor memory value function}
+\begin{equation}
+V(m) \;=\; \sum_{i} w_i\, f_i(m),
+\label{eq:value-intro}
+\end{equation}
+a weighted combination of seven interpretable factors --- emotional
+intensity, goal relevance, value alignment, self/user relevance, task
+utility, reliability, and usage history. A \emph{single} scalar $V(m)$
+then uniformly controls all three triage operations: encoding depth,
+forget risk, and retrieval rank. Crucially, the weights $w_i$ are not
+hand-set: they are \textbf{learned} from downstream task return by a
+gradient-free optimiser, because the
+encode\,$\rightarrow$\,\allowbreak forget\,$\rightarrow$\,\allowbreak
+retrieve\,$\rightarrow$\,\allowbreak answer
+pipeline is non-differentiable. The value function is thus fit to
+maximise task success, in the spirit of expected-utility credit
+assignment \citep{sutton2018rl}.
+
+Along the way we surface a methodological pitfall in how memory
+retention is commonly measured, and turn it into a clean experimental
+contrast. On the LongMemEval benchmark \citep{wu2025longmemeval}, the
+``gold'' evidence for a question is, by construction, defined
+\emph{relative to that question}. If a memory policy is allowed to score
+goal relevance as the cosine similarity between a stored turn and the
+held-out evaluation question --- an \emph{oracle} that peeks at the
+future query --- then similarity alone retains essentially all gold
+evidence ($\approx\!0.96$), and no multi-factor advantage is possible.
+But this measures \emph{retrieval}, not forgetting: a real agent has not
+seen the evaluation question at consolidation time. In the realistic
+\emph{blind} regime, where goal relevance is computed only against
+information available at consolidation (the topic of the ongoing
+session), the picture inverts: similarity collapses to near-chance and a
+learned multi-factor value retains gold far better than any single-factor
+baseline. Separating these two regimes is, we argue, necessary for any
+honest evaluation of a forgetting policy.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
+\item A \textbf{multi-factor memory value function}
+(\cref{eq:value-intro}) for the expected usefulness of a memory to
+future agent behaviour, with seven interpretable factors, and a single
+scalar that uniformly drives encoding depth, forgetting, and retrieval
+(\cref{sec:method}).
+\item A \textbf{learned-weight} formulation (A2): a gradient-free
+optimiser fits $\wvec$ to downstream task return, replacing hand-tuned
+resistances with credit-assigned weights (\cref{sec:method:learn}).
+\item A \textbf{methodological contrast} --- \emph{oracle} vs.\
+\emph{blind} forgetting --- that separates retrieval from retention and
+shows why query-defined retention benchmarks cannot, on their own,
+demonstrate a forgetting advantage (\cref{sec:exp:blind}).
+\item \textbf{Empirical results} on the real LongMemEval benchmark: in
+the blind regime, learned multi-factor value retains
+$0.811\pm0.047$ of gold evidence versus $0.633$ (uniform), $0.380$
+(recency), and $\le0.39$ (any single factor), with interpretable learned
+weights (\cref{sec:exp:blind}); a synthetic confound study validates the
+learner (\cref{sec:exp:synth}).
+\item An \textbf{open-source, CPU-only} substrate and evaluation harness;
+every reported number reproduces with no API calls.
+\end{enumerate}

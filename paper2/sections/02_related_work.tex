@@ -1,0 +1,63 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Memory systems for LLM agents.}
+Retrieval-augmented generation retrieves passages by embedding similarity
+to the query \citep{lewis2020rag}, and most agent memory frameworks
+inherit this ranking. MemGPT \citep{packer2023memgpt} treats context as a
+paged virtual memory with explicit eviction, but eviction is driven by
+recency and capacity pressure rather than a learned value. Generative
+Agents \citep{park2023generative} introduce a retrieval score that blends
+recency, importance, and relevance --- importantly, a \emph{multi-factor}
+score --- but the importance term is produced ad hoc by an LLM rating
+$1$--$10$, the weights are fixed and hand-set, and the score governs only
+retrieval, not encoding depth or forgetting. MemoryBank
+\citep{zhong2024memorybank} adds an Ebbinghaus-inspired decay so older
+memories fade unless reinforced, again with hand-set dynamics. MemOS
+\citep{memos2025} frames memory as an operating-system resource with
+scheduling and lifecycle management, motivating a principled value signal
+but not learning one. Across this line of work, the triage signal is
+typically (i) single-factor (similarity or recency), or (ii)
+multi-factor but hand-weighted and confined to retrieval. We differ on
+both counts: our value is multi-factor, its weights are \emph{learned}
+from task return, and the \emph{same} scalar drives encoding, forgetting,
+and retrieval.
+
+\paragraph{Value- and need-based retention in cognition.}
+The factors we combine are not arbitrary; each corresponds to a robust
+determinant of human retention. Value-directed remembering shows people
+strategically retain high-value items and shed low-value detail
+\citep{castel2008value}. Levels-of-processing
+\citep{craik1972lop} and the self-reference effect \citep{rogers1977sre}
+establish that semantically, goal-, and self-relevant encoding is more
+durable than shallow encoding. Emotional arousal modulates consolidation
+\citep{mcgaugh2000consolidation}. The rational analysis of memory
+\citep{anderson1991adaptive} reframes forgetting itself as adaptive: the
+retention function mirrors the environmental \emph{need-probability} of
+information, and directed forgetting is a feature, not a bug
+\citep{bjork1994memory}. Our contribution is to operationalise this
+multi-determinant view as a single learned scalar for an artificial
+agent, rather than to model human data --- a companion paper treats the
+cognitive-modeling angle; here the target is engineering utility.
+
+\paragraph{Learning what to remember.}
+Reinforcement learning provides the natural framing for fitting a memory
+policy to downstream outcome: the value of retaining an item is its
+marginal contribution to future return \citep{sutton2018rl}. Because the
+encode--forget--retrieve--answer pipeline is non-differentiable
+(discrete keep/drop decisions, an external answerer), we fit weights with
+a gradient-free black-box optimiser \citep{hansen2016cmaes} rather than
+backpropagation. This keeps the value function low-dimensional (seven
+weights) and interpretable, in contrast to end-to-end learned memory
+controllers whose policies are opaque.
+
+\paragraph{Evaluating memory.}
+LongMemEval \citep{wu2025longmemeval} is the most directly relevant
+benchmark: $500$ questions over long multi-session chat histories, with
+gold-evidence turns flagged inside a haystack of distractor sessions. We
+use it as our real-data testbed. Our methodological observation ---
+that scoring relevance against the held-out question conflates retrieval
+with retention, and that a forgetting policy must be evaluated
+\emph{blind} to the future query --- applies to any retention metric
+built on query-defined gold, and to our knowledge has not been made
+explicit in this setting.

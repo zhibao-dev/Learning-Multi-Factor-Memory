@@ -1,0 +1,46 @@
+\section{Limitations}
+\label{sec:limitations}
+
+We are deliberately explicit about what the present results do and do not
+establish.
+
+\paragraph{L1 --- Retention is a proxy for end-task accuracy.}
+Our metric is gold-evidence retention under a keep budget, not downstream
+QA correctness. High retention is \emph{necessary} for a correct answer
+that depends on the evidence, but not \emph{sufficient}: the answerer
+must also retrieve and use the retained turn. Measuring final QA accuracy
+under each memory policy requires an answerer LLM and an LLM judge, which
+we leave to an API-gated follow-up. The claim here is about what survives
+forgetting, not about answer quality.
+
+\paragraph{L2 --- Three of seven factors are inert in our annotator.}
+Value alignment, task utility, and usage history are held at $0$ in the
+API-free setting (\cref{tab:factors}): they need a value profile, an LLM
+judge, and access logs respectively. The blind headline therefore uses
+only four live factors, and task utility --- arguably the most direct
+expected-utility signal --- is exactly the one an answerer would unlock.
+Our result is thus a \emph{lower bound} on what the full value function
+can do, established without any API budget.
+
+\paragraph{L3 --- Single benchmark and modality.}
+We evaluate on LongMemEval-S ($74$ usable cases of the first $80$),
+English multi-session chat. Other agentic workloads --- tool use, coding,
+web navigation --- have different gold structure and may favour different
+factors; we do not yet test them. The synthetic study controls confounds
+but is, by design, not naturalistic.
+
+\paragraph{L4 --- The blind goal anchor is one choice among many.}
+We proxy the consolidation-time goal by the session's user-turn centroid.
+Other query-agnostic anchors (an explicit task description, a running
+objective stack) could carry more signal and would change the blind
+goal-relevance term. We claim the \emph{regime distinction} is essential,
+not that the session centroid is optimal.
+
+\paragraph{L5 --- Linear value and a simple optimiser.}
+\Cref{eq:value} is linear, so it cannot represent factor interactions
+(e.g.\ emotion mattering only for self-relevant items). The learner is a
+random-restart hill-climb, not CMA-ES; although the blind result is
+stable across $20$ resampled splits, a stronger optimiser or a nonlinear
+value could shift the fitted weights. The reported standard deviations
+reflect split variance over a fixed $74$-case pool, not i.i.d.\ sampling
+from the full $500$-question benchmark.

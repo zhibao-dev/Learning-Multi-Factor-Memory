@@ -1,0 +1,136 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{A multi-factor memory value}
+\label{sec:method:value}
+
+Each memory $m$ (a stored turn or consolidated item) is summarised by a
+factor vector $\fvec(m)\in[0,1]^7$ and scored by a linear value
+\begin{equation}
+V(m) \;=\; \sum_{i=1}^{7} w_i\, f_i(m),
+\qquad \wvec \in \mathbb{R}_{\ge 0}^{7}.
+\label{eq:value}
+\end{equation}
+The seven factors are chosen so that each is an interpretable,
+independently computable determinant of expected future usefulness
+(\cref{tab:factors}). Linearity is a deliberate choice: it keeps the
+policy low-dimensional, lets us read each factor's learned contribution
+directly from $w_i$, and makes the value cheap to evaluate at every
+consolidation step.
+
+\begin{table}[ht!]
+\centering\small
+\caption{The seven memory-value factors. The right column marks which
+factors are populated by the \emph{API-free} annotator used in our
+experiments; the remaining three require a value profile, an LLM judge,
+or access logs and are held at $0$ here (\cref{sec:limitations}).}
+\label{tab:factors}
+\begin{tabular}{llc}
+\toprule
+Factor & Definition (API-free form) & Live here? \\
+\midrule
+emotional intensity & $|\valence|\cdot\arousal$ from a lexical/structural extractor & yes \\
+goal relevance      & $\tfrac12(1+\cos(\mathbf{e}_m, \mathbf{e}_{\text{goal}}))$ & yes \\
+self/user relevance & $\tfrac12(1+\cos(\mathbf{e}_m, \mu_{\text{user}}))$ & yes \\
+reliability         & provenance heuristic (user-stated $>$ model-stated) & yes \\
+value alignment     & match to a value profile (SOUL) & no ($0$) \\
+task utility        & marginal task-success contribution (LLM judge) & no ($0$) \\
+usage history       & $r/(1+r)$, $r=$ retrieval count & no ($0$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Here $\mathbf{e}_m$ is a sentence embedding of the memory text
+(all-MiniLM-L6-v2, $384$-dim; \citealp{reimers2019sbert}),
+$\mu_{\text{user}}$ is the running centroid of the user's turns (a
+query-agnostic ``what this user is about'' anchor), and
+$\mathbf{e}_{\text{goal}}$ is the embedding of the agent's active goal.
+The goal anchor is the pivot of our central experiment
+(\cref{sec:exp:blind}): at retrieval time it is the query, but at
+\emph{consolidation} time the agent must use a query-agnostic proxy.
+
+\subsection{One value, three operations}
+\label{sec:method:control}
+
+The single scalar $V(m)$ drives all three memory operations, replacing
+the separate, hand-tuned rules of prior systems.
+
+\paragraph{Encoding depth.}
+Following levels-of-processing \citep{craik1972lop}, higher-value items
+are encoded more deeply. We map the normalised value
+$\bar V(m)=V(m)/\sum_i w_i \in[0,1]$ to four encoding tiers
+(shallow / semantic / schematic / meta) by thresholds
+$\{0.20,0.45,0.70\}$, so deeper encoding is allocated to higher-value
+memories at write time.
+
+\paragraph{Forgetting.}
+The forget score combines universal time/access dynamics with a
+value-driven resistance:
+\begin{equation}
+\mathrm{forget}(m) \;=\;
+\underbrace{(\Delta t)^{0.7}}_{\text{recency}}
+\cdot
+\underbrace{\tfrac{1}{1+r}}_{\text{usage}}
+\cdot
+\underbrace{\tfrac{1}{1+\beta\,V(m)}}_{\text{value resistance}},
+\label{eq:forget}
+\end{equation}
+where $\Delta t$ is age in days and $r$ is retrieval count. High value
+$V(m)$ multiplicatively resists forgetting, generalising the
+emotion-only resistance of prior cognitive memory models to the full
+factor set. Items with the highest forget score are dropped first when
+the store exceeds budget.
+
+\paragraph{Retrieval.}
+At query time the same value contributes to the retrieval rank,
+alongside query-specific similarity and mood congruence, so that durable
+high-value memories are surfaced preferentially. Because our central
+evaluation isolates the budgeted keep/drop decision
+(\cref{sec:exp:blind}), we rank candidates directly by $V(m)$ under the
+retrieval-time goal anchor and report retention of the gold set.
+
+\subsection{Learning the weights from task return}
+\label{sec:method:learn}
+
+The weights $\wvec$ are \emph{learned}, not hand-set. Let a memory policy
+parameterised by $\wvec$ run the
+encode\,$\rightarrow$\,\allowbreak forget\,$\rightarrow$\,\allowbreak
+retrieve\,$\rightarrow$\,\allowbreak answer
+pipeline on a set of training episodes and return a scalar
+$\Rtask(\wvec)$ (here, mean gold-evidence retention under a fixed keep
+budget; in a fully API-gated setting, downstream QA accuracy). Because
+the pipeline contains discrete keep/drop decisions and an external
+answerer, $\Rtask$ is non-differentiable in $\wvec$. We therefore
+maximise it with a gradient-free stochastic hill-climb
+(\cref{alg:learn}), a lightweight stand-in for CMA-ES
+\citep{hansen2016cmaes} appropriate to a seven-dimensional search.
+
+\begin{algorithm}[ht!]
+\small
+\caption{Gradient-free weight learning (A2).}
+\label{alg:learn}
+\begin{algorithmic}[1]
+\State $\wvec \gets \mathbf{1}$ \Comment{uniform init}
+\State $R^\star \gets \Rtask(\wvec)$; \; $\sigma \gets \sigma_0$
+\For{$t = 1 \dots T$}
+  \State $\wvec' \gets \wvec$
+  \For{each factor $i$}
+    \If{$\mathrm{rand}() < 0.5$}
+      $\wvec'_i \gets \max(0,\; \wvec_i + \mathcal{N}(0,\sigma))$
+    \EndIf
+  \EndFor
+  \State $R' \gets \Rtask(\wvec')$
+  \If{$R' > R^\star$} $\wvec \gets \wvec'$; \; $R^\star \gets R'$ \EndIf
+  \State $\sigma \gets \gamma\,\sigma$ \Comment{anneal}
+\EndFor
+\State \Return $\wvec$
+\end{algorithmic}
+\end{algorithm}
+
+The objective is evaluated on a held-in training split and the learned
+$\wvec$ is reported on a disjoint test split; best-so-far return is
+monotone non-decreasing by construction. To keep the learned weights
+honest and interpretable, we restrict the search to the factors actually
+populated by the annotator in a given setting --- otherwise the
+optimiser assigns arbitrary non-zero weight to factors that are
+identically $0$ and therefore multiply out of \cref{eq:value}.
