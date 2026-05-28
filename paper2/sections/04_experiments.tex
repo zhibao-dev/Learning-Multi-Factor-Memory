@@ -169,6 +169,10 @@ and that session-topic similarity (the blind goal anchor) is useless for
 predicting the future needle, so it is driven to zero. This is the
 value-directed signal a recency or similarity policy structurally cannot
 represent, and it accounts for the $+0.11$ to $+0.40$ retention gap.
+(Self-relevance is the best \emph{standalone} factor in \cref{tab:blind}
+yet reliability carries the larger learned weight: the weights measure
+each factor's marginal contribution \emph{within} the learned mixture, not
+its solo ranking power.)
 
 \paragraph{Does a neural value help? A nonlinear ablation.}
 Our value is linear by design (\cref{sec:method:value}); a natural worry
@@ -180,9 +184,9 @@ trained by a pairwise logistic ranking loss (gold ranked above non-gold
 within each case), and evaluate it under the identical blind protocol.
 The MLP retains $0.773\pm0.011$ versus the linear model's
 $0.770\pm0.011$ --- a paired difference of $+0.003\pm0.013$, winning on
-only $55\%$ of splits, i.e.\ a statistical tie. On these seven factors the
-nonlinear capacity buys nothing: the factors combine near-additively, so
-the interpretable linear model is not a compromise but the right choice.
+only $55\%$ of splits, i.e.\ a statistical tie. On these four live factors
+the nonlinear capacity buys nothing: the factors combine near-additively,
+so the interpretable linear model is not a compromise but the right choice.
 The MLP is an ablation, not a replacement.
 
 \paragraph{The advantage is not budget-specific.}

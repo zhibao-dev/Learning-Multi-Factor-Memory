@@ -99,3 +99,20 @@ The method is a multi-factor memory value V(m) = Σ_i w_i f_i(m): a non-negative
 2. Close the loop to QA accuracy (needs answerer + judge LLM; unlocks the task_utility factor).
 3. Keep-fraction sweep (show effect is not specific to κ=0.30).
 4. Per-case bootstrap / sign-test CI (20 resampled splits are not independent benchmark samples).
+
+## Round 3 (2026-05-28) — full-479 consistency re-review
+
+- Score: **8.0/10 arXiv** (8.3 workshop), up from 7.3 (74-pilot). Verdict: Almost → fixed.
+- Codex (gpt-5.5 xhigh, fresh thread) verified ALL paper numbers match the new JSONs
+  (lme_blind_forgetting_full / lme_value_net_ablation / lme_bootstrap_ci /
+  lme_keepfrac_sweep / lme_retention); no stale 74-pilot residue.
+- 2 must-fix (applied):
+  1. fig_keepfrac.pdf embedded title "tops every keep budget" contradicted the κ=0.5
+     tie → retitled "Learned value leads at aggressive budgets; saturation at 50% keep";
+     figure regenerated, tarball updated.
+  2. §4.2 MLP paragraph "seven factors" → "four live factors" (MLP is over the 4 live).
+- 1 clarification (applied): added a sentence that self-relevance is the best STANDALONE
+  factor while reliability carries the largest LEARNED weight (marginal-in-mixture ≠ solo).
+- Honesty confirmed: MLP-ties-linear presented as "linear suffices" (not spun); κ=0.5 tie
+  disclosed; bootstrap CIs correctly described.
+- Full-479 run + bootstrap + MLP ablation + sweep moved the score 7.3 → 8.0. READY for arXiv.

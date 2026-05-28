@@ -121,8 +121,9 @@ def render_figure(sweep, out_path):
     ax.set_ylabel("blind gold-evidence retention")
     ax.set_xticks(ks)
     ax.set_ylim(0, 1.0)
-    ax.set_title("Learned multi-factor value tops every keep budget "
-                 "(479 cases, 20 splits; mean +/- 1 std)", fontsize=9)
+    ax.set_title("Learned value leads at aggressive budgets; "
+                 "saturation at 50% keep (479 cases, 20 splits; mean +/- 1 std)",
+                 fontsize=9)
     ax.legend(fontsize=8, loc="upper left", framealpha=0.92)
     ax.spines[["top", "right"]].set_visible(False)
     plt.tight_layout()

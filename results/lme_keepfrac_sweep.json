@@ -1,6 +1,6 @@
 {
   "experiment": "keep-fraction sweep \u2014 BLIND multi-factor forgetting (API-free)",
-  "ran_at": "2026-05-28T14:19:07.383421",
+  "ran_at": "2026-05-28T15:07:50.397265",
   "cache": "results/lme_factor_cache.jsonl",
   "n_cases_used": 479,
   "reps": 20,
