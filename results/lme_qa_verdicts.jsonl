@@ -1,0 +1,10 @@
+{"qid":"e47becba","policy":"learned_V","predicted":"Business Administration","correct":true}
+{"qid":"e47becba","policy":"recency","predicted":"Business Administration","correct":true}
+{"qid":"118b2229","policy":"learned_V","predicted":"45 minutes each way","correct":true}
+{"qid":"118b2229","policy":"recency","predicted":"I don't know","correct":false}
+{"qid":"51a45a95","policy":"learned_V","predicted":"Target","correct":true}
+{"qid":"51a45a95","policy":"recency","predicted":"Target","correct":true}
+{"qid":"58bf7951","policy":"learned_V","predicted":"The Glass Menagerie","correct":true}
+{"qid":"58bf7951","policy":"recency","predicted":"I don't know","correct":false}
+{"qid":"1e043500","policy":"learned_V","predicted":"Summer Vibes","correct":true}
+{"qid":"1e043500","policy":"recency","predicted":"I don't know","correct":false}

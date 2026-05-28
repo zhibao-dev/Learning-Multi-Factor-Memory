@@ -1,0 +1,33 @@
+{
+  "experiment": "LongMemEval QA accuracy \u2014 multi-factor memory value (paper2)",
+  "scored_at": "2026-05-28T22:55:37.213015",
+  "verdicts": "results/lme_qa_verdicts.jsonl",
+  "n_cases": 5,
+  "policies": [
+    "learned_V",
+    "recency"
+  ],
+  "per_policy": {
+    "learned_V": {
+      "accuracy": 1.0,
+      "n": 5
+    },
+    "recency": {
+      "accuracy": 0.4,
+      "n": 5
+    }
+  },
+  "paired_contrasts": {
+    "learned_V_vs_recency": {
+      "vs": "recency",
+      "n_paired": 5,
+      "wins": 3,
+      "ties": 2,
+      "losses": 0,
+      "acc_a": 1.0,
+      "acc_b": 0.4,
+      "acc_gap": 0.6
+    }
+  },
+  "summary_md": "**LongMemEval QA accuracy (paper2)**\n\n- cases: 5; policies: learned_V, recency\n- `learned_V`: 100.0% accuracy (n=5)\n- `recency`: 40.0% accuracy (n=5)\n- `learned_V_vs_recency`: gap +60.0% (learned_V 100.0% vs 40.0%); W/T/L = 3/2/0 of 5 paired"
+}
