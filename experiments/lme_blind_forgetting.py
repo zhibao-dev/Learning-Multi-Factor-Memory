@@ -122,6 +122,61 @@ def annotate_dual(case, embedder) -> list[dict]:
     return out
 
 
+def _record_to_annotated(rec: dict) -> list[dict]:
+    """
+    Re-hydrate one cached case record into the SAME per-turn structure
+    that `annotate_dual` returns, so the rest of `main()` is unchanged.
+
+    Cache turns carry the regime-independent factors plus BOTH goal
+    variants directly (see `build_factor_cache.py`); we map them onto the
+    full MemoryValue factor dict, leaving the three factors that the
+    API-free annotator can't populate (value_alignment, task_utility,
+    usage) at 0.0 — exactly as `annotate_dual` does.
+    """
+    out = []
+    for t in rec["turns"]:
+        common = {
+            "emotion":         t["emotion"],
+            "value_alignment": 0.0,
+            "self_relevance":  t["self"],
+            "task_utility":    0.0,
+            "reliability":     t["reliability"],
+            "usage":           0.0,
+        }
+        out.append({
+            "factors_oracle": {**common, "goal_relevance": t["goal_oracle"]},
+            "factors_blind":  {**common, "goal_relevance": t["goal_blind"]},
+            "has_answer":     bool(t["has_answer"]),
+            "timestamp_idx":  int(t["sidx"]),
+        })
+    return out
+
+
+def load_from_cache(path, n_cases: int | None = None) -> list[list[dict]]:
+    """
+    Load pre-computed per-turn factors from the JSONL cache produced by
+    `experiments/build_factor_cache.py`, yielding the SAME list-of-cases
+    structure as the SBert `annotate_dual` loop in `main()`.
+
+    The cache already applies the ≥1-gold filter at build time, so every
+    record is a usable case; we keep the explicit has_answer guard anyway
+    to mirror `main()`'s SBert path. `n_cases` limits to the FIRST N
+    cached cases (None = all).
+    """
+    cases: list[list[dict]] = []
+    with Path(path).open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if n_cases is not None and len(cases) >= n_cases:
+                break
+            ann = _record_to_annotated(json.loads(line))
+            if any(a["has_answer"] for a in ann):
+                cases.append(ann)
+    return cases
+
+
 def gold_retention(annotated, weights, *, regime: str, keep_frac: float):
     """Rank by V (desc) under the chosen regime's factors, keep top
     frac, return fraction of has_answer gold kept (None if no gold)."""
@@ -163,24 +218,35 @@ def main():
     ap.add_argument("--keep-frac", type=float, default=0.3)
     ap.add_argument("--iters", type=int, default=120)
     ap.add_argument("--reps", type=int, default=20, help="resampled train/test splits for CI")
+    ap.add_argument("--cache", default=None,
+                    help="read pre-computed factors from this JSONL cache "
+                         "(skips SBert); falls back to live SBert annotation if unset")
     ap.add_argument("--out", default="results/lme_blind_forgetting.json")
     args = ap.parse_args()
 
-    print("Loading SBert…")
-    embedder = SBertEmbedder()
-    _ = embedder("warm-up")
+    if args.cache:
+        # Cache-backed path: read pre-computed per-turn factors, skip SBert
+        # entirely. --n-cases limits to the first N cached (usable) cases.
+        print(f"Loading ≤{args.n_cases} cases from factor cache {args.cache}…")
+        cases = load_from_cache(args.cache, n_cases=args.n_cases)
+        print(f"  usable cases (with has_answer gold): {len(cases)}")
+    else:
+        # SBert fallback: embed + annotate each case live (the expensive path).
+        print("Loading SBert…")
+        embedder = SBertEmbedder()
+        _ = embedder("warm-up")
 
-    print(f"Loading + annotating ≤{args.n_cases} cases (dual goal, batched)…")
-    cases = []
-    for i, case in enumerate(load_longmemeval(args.data)):
-        if i >= args.n_cases:
-            break
-        ann = annotate_dual(case, embedder)
-        if any(a["has_answer"] for a in ann):
-            cases.append(ann)
-        if (i + 1) % 10 == 0:
-            print(f"  annotated {i+1}…")
-    print(f"  usable cases (with has_answer gold): {len(cases)}")
+        print(f"Loading + annotating ≤{args.n_cases} cases (dual goal, batched)…")
+        cases = []
+        for i, case in enumerate(load_longmemeval(args.data)):
+            if i >= args.n_cases:
+                break
+            ann = annotate_dual(case, embedder)
+            if any(a["has_answer"] for a in ann):
+                cases.append(ann)
+            if (i + 1) % 10 == 0:
+                print(f"  annotated {i+1}…")
+        print(f"  usable cases (with has_answer gold): {len(cases)}")
 
     kf = args.keep_frac
     reps = max(1, args.reps)
