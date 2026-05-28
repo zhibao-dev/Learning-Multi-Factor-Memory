@@ -1,0 +1,121 @@
+{
+  "experiment": "keep-fraction sweep \u2014 BLIND multi-factor forgetting (API-free)",
+  "ran_at": "2026-05-28T14:19:07.383421",
+  "cache": "results/lme_factor_cache.jsonl",
+  "n_cases_used": 479,
+  "reps": 20,
+  "iters": 120,
+  "regime": "blind",
+  "live_factors": [
+    "emotion",
+    "goal_relevance",
+    "self_relevance",
+    "reliability"
+  ],
+  "policies": [
+    "learned_V",
+    "uniform_V",
+    "reliability_only",
+    "recency_only"
+  ],
+  "keep_fracs": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+  ],
+  "protocol": "20 resampled 50/50 splits, random.Random(100+rep) shuffle, learn_weights(blind obj, LIVE_FACTORS, seed=1, iters=120); reliability_only = best single factor",
+  "retention_mean_std": {
+    "0.1": {
+      "learned_V": [
+        0.2924,
+        0.0222
+      ],
+      "uniform_V": [
+        0.2338,
+        0.013
+      ],
+      "reliability_only": [
+        0.1787,
+        0.016
+      ],
+      "recency_only": [
+        0.1264,
+        0.0148
+      ]
+    },
+    "0.2": {
+      "learned_V": [
+        0.6321,
+        0.0144
+      ],
+      "uniform_V": [
+        0.4748,
+        0.0129
+      ],
+      "reliability_only": [
+        0.3505,
+        0.0193
+      ],
+      "recency_only": [
+        0.2577,
+        0.0206
+      ]
+    },
+    "0.3": {
+      "learned_V": [
+        0.7698,
+        0.0114
+      ],
+      "uniform_V": [
+        0.6575,
+        0.0108
+      ],
+      "reliability_only": [
+        0.4974,
+        0.0201
+      ],
+      "recency_only": [
+        0.3676,
+        0.0207
+      ]
+    },
+    "0.4": {
+      "learned_V": [
+        0.8386,
+        0.0204
+      ],
+      "uniform_V": [
+        0.7951,
+        0.0131
+      ],
+      "reliability_only": [
+        0.6815,
+        0.0208
+      ],
+      "recency_only": [
+        0.4623,
+        0.0176
+      ]
+    },
+    "0.5": {
+      "learned_V": [
+        0.8958,
+        0.0119
+      ],
+      "uniform_V": [
+        0.8745,
+        0.0119
+      ],
+      "reliability_only": [
+        0.8976,
+        0.0111
+      ],
+      "recency_only": [
+        0.5409,
+        0.0174
+      ]
+    }
+  }
+}
