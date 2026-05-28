@@ -155,11 +155,15 @@ def build(
     embedder and a synthetic dataset path. The CLI wraps this with an
     SBert embedder.
     """
+    if cases is None:
+        # Validate the input BEFORE truncating the output, so a bad --data
+        # path can't clobber an existing (slow-to-regenerate) cache.
+        if not Path(data_path).exists():
+            raise FileNotFoundError(f"data file not found: {data_path}")
+        cases = load_longmemeval(data_path)
+
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-
-    if cases is None:
-        cases = load_longmemeval(data_path)
 
     n_written = 0
     n_seen = 0
