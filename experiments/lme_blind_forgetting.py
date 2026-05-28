@@ -46,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from borge.affective.signal_extractor import EmotionalSignalExtractor  # noqa: E402
 from borge.eval.longmemeval import load_longmemeval, flatten_to_messages  # noqa: E402
 from borge.memory.value import MemoryValue, learn_weights  # noqa: E402
+from borge.memory.value_net import FACTORS as MLP_FACTORS, train_value_net  # noqa: E402
 from borge.values.self_model import SBertEmbedder, cosine  # noqa: E402
 
 FACTORS = MemoryValue.FACTORS
@@ -192,6 +193,34 @@ def gold_retention(annotated, weights, *, regime: str, keep_frac: float):
     return sum(1 for a in kept if a["has_answer"]) / total
 
 
+def net_gold_retention(annotated, net, *, regime: str, keep_frac: float):
+    """gold_retention but ranked by a MemoryValueNet's scalar `value`
+    instead of linear weights. Same keep-top-κ metric → comparable to
+    the linear `gold_retention` numbers. The net reads the live FACTORS
+    straight out of the regime's factor dict (it `.get`s by key)."""
+    key = f"factors_{regime}"
+    scored = [(net.value(a[key]), a) for a in annotated]
+    scored.sort(key=lambda x: -x[0])
+    k = max(1, int(len(scored) * keep_frac))
+    kept = [a for _, a in scored[:k]]
+    total = sum(1 for a in annotated if a["has_answer"])
+    if total == 0:
+        return None
+    return sum(1 for a in kept if a["has_answer"]) / total
+
+
+def _train_turns(case):
+    """Flatten one annotated case into the per-turn dicts train_value_net
+    consumes: the BLIND live-factor values alongside `has_answer`. (The
+    MLP ablation operates in the blind regime — consolidation can't peek
+    at the eval question.)"""
+    return [
+        {**{f: t["factors_blind"][f] for f in MLP_FACTORS},
+         "has_answer": t["has_answer"]}
+        for t in case
+    ]
+
+
 def recency_retention(annotated, *, keep_frac: float):
     ordered = sorted(annotated, key=lambda a: -a["timestamp_idx"])
     k = max(1, int(len(ordered) * keep_frac))
@@ -218,6 +247,13 @@ def main():
     ap.add_argument("--keep-frac", type=float, default=0.3)
     ap.add_argument("--iters", type=int, default=120)
     ap.add_argument("--reps", type=int, default=20, help="resampled train/test splits for CI")
+    ap.add_argument("--model", choices=("linear", "mlp"), default="linear",
+                    help="scoring fn for learned_V: linear=interpretable "
+                         "headline (default); mlp=neural interaction ablation "
+                         "(blind regime). mlp ADDS an mlp_blind retention "
+                         "number for comparison; the linear path is unchanged.")
+    ap.add_argument("--epochs", type=int, default=200,
+                    help="MLP training epochs (only used with --model mlp)")
     ap.add_argument("--cache", default=None,
                     help="read pre-computed factors from this JSONL cache "
                          "(skips SBert); falls back to live SBert annotation if unset")
@@ -288,12 +324,26 @@ def main():
         # Learn over LIVE factors only (dead factors would get vacuous weights).
         lo, _ = learn_weights(obj("oracle"), LIVE_FACTORS, seed=1, iters=args.iters)
         lb, _ = learn_weights(obj("blind"), LIVE_FACTORS, seed=1, iters=args.iters)
-        rows.append({
+        row = {
             "oracle":  eval_on(te, "oracle", lo),
             "blind":   eval_on(te, "blind", lb),
             "recency": mean(recency_retention(a, keep_frac=kf) for a in te),
             "w_blind": lb,
-        })
+        }
+        if args.model == "mlp":
+            # Neural interaction ablation (blind regime only): train g_θ on
+            # the train split's blind live factors with the pairwise ranking
+            # loss, then score the test split by net.value(factors_blind) and
+            # keep top-κ — the SAME metric as linear learned_V, so the two
+            # numbers are directly comparable.
+            net = train_value_net([_train_turns(c) for c in tr],
+                                   factors=MLP_FACTORS, epochs=args.epochs,
+                                   seed=1)
+            row["mlp_blind"] = mean(
+                net_gold_retention(a, net, regime="blind", keep_frac=kf)
+                for a in te
+            )
+        rows.append(row)
 
     def agg(vals):
         m = sum(vals) / len(vals)
@@ -323,6 +373,30 @@ def main():
         "learned_minus_reliability_only": paired("reliability_only"),
     }
 
+    # ── Neural interaction ablation (only when --model mlp) ─────────────
+    # The MLP NEVER replaces the linear headline; this block ADDS a blind
+    # retention number for g_θ and the paired mlp−linear gap on the SAME
+    # test splits. mlp≈linear → factors additive; mlp>linear → interaction.
+    mlp_block = None
+    if args.model == "mlp":
+        ci_mlp_blind = agg([row["mlp_blind"] for row in rows])
+        mlp_minus_linear_diffs = [row["mlp_blind"] - row["blind"]["learned_V"]
+                                  for row in rows]
+        mm, ms = agg(mlp_minus_linear_diffs)
+        mlp_block = {
+            "note": ("INTERACTION ABLATION ONLY — the interpretable linear "
+                     "value remains the headline; the MLP is a comparison."),
+            "epochs": args.epochs,
+            "mlp_factors": list(MLP_FACTORS),
+            "mlp_blind_retention_mean_std": ci_mlp_blind,
+            "linear_blind_learned_V_mean_std": ci["blind"]["learned_V"],
+            "paired_mlp_minus_linear": {
+                "mean": mm, "std": ms,
+                "win_frac": round(
+                    sum(1 for d in mlp_minus_linear_diffs if d > 0) / reps, 3),
+            },
+        }
+
     payload = {
         "experiment": "REAL LongMemEval — BLIND vs ORACLE forgetting (API-free)",
         "ran_at": datetime.now().isoformat(),
@@ -346,7 +420,10 @@ def main():
         "random_keep": round(kf, 4),
         "learned_weights_blind_mean": avg_w_blind,
         "paired_blind_diffs": paired_blind,
+        "model": args.model,
     }
+    if mlp_block is not None:
+        payload["mlp_ablation"] = mlp_block
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2))
@@ -369,6 +446,17 @@ def main():
     print("  paired blind diffs (learned − X; mean ± std, win-frac):")
     for k, d in paired_blind.items():
         print(f"    {k:32s}: {d['mean']:+.3f} ± {d['std']:.3f}  ({d['win_frac']:.0%} of splits)")
+    if mlp_block is not None:
+        mb_m, mb_s = mlp_block["mlp_blind_retention_mean_std"]
+        lb_m, lb_s = mlp_block["linear_blind_learned_V_mean_std"]
+        d = mlp_block["paired_mlp_minus_linear"]
+        print("  " + "-" * 40)
+        print("  NEURAL INTERACTION ABLATION (blind; MLP is a comparison, "
+              "NOT the headline):")
+        print(f"    BLIND   {'mlp_blind':14s}: {mb_m:.3f} ± {mb_s:.3f}")
+        print(f"    BLIND   {'linear_learned':14s}: {lb_m:.3f} ± {lb_s:.3f}")
+        print(f"    paired mlp − linear            : {d['mean']:+.3f} ± "
+              f"{d['std']:.3f}  ({d['win_frac']:.0%} of splits)")
     print(f"  → wrote {out}")
 
 
