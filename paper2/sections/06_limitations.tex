@@ -25,7 +25,7 @@ we do not claim the full function is strictly better --- only that a
 useful value signal is already recoverable with no API budget.
 
 \paragraph{L3 --- Single benchmark and modality.}
-We evaluate on LongMemEval-S ($74$ usable cases of the first $80$),
+We evaluate on LongMemEval-S (all $479$ usable cases of the $500$),
 English multi-session chat. Other agentic workloads --- tool use, coding,
 web navigation --- have different gold structure and may favour different
 factors; we do not yet test them. The synthetic study controls confounds
@@ -39,21 +39,16 @@ goal-relevance term. We claim the \emph{regime distinction} is essential,
 not that the session centroid is optimal.
 
 \paragraph{L5 --- Linear value and a simple optimiser.}
-\Cref{eq:value} is linear, so it cannot represent factor interactions
-(e.g.\ emotion mattering only for self-relevant items). The learner is a
-random-restart hill-climb, not CMA-ES; although the blind result is
-stable across $20$ resampled splits, a stronger optimiser or a nonlinear
-value could shift the fitted weights. The reported standard deviations
-reflect split variance over a fixed $74$-case pool, not i.i.d.\ sampling
-from the full $500$-question benchmark. The natural next step is to
-replace the linear form with a neural $g_\theta$ (\cref{sec:method:value})
---- e.g.\ a small multi-layer perceptron over the factor vector --- and
-train it with a differentiable learning-to-rank loss (gold turns ranked
-above distractors within a case), since the discrete keep/drop objective
-itself is non-differentiable. This would let the value capture the factor
-interactions the linear form misses, at the cost of the per-factor
-interpretability that is currently a feature; on a $74$-case pilot it
-would also overfit, so it should accompany the full $500$-case run.
-Because every downstream operation consumes the value only through the
-scalar $V(m)$, this swap is contained to the scoring function and leaves
-the encoding/forgetting/retrieval machinery unchanged.
+\Cref{eq:value} is linear. We tested whether this costs accuracy by
+running a neural $g_\theta$ ablation (\cref{sec:exp:blind}): a small MLP
+over the same factors, trained with a learning-to-rank loss, ties the
+linear model ($+0.003\pm0.013$), so on these factors linearity is not a
+compromise --- though a different factor set or workload could expose
+interactions the linear form cannot represent (e.g.\ emotion mattering
+only for self-relevant items). The learner is a random-restart hill-climb,
+not CMA-ES; a stronger optimiser could shift the fitted weights, though
+the blind result is stable across $20$ resampled splits and a per-case
+bootstrap (\cref{sec:exp:blind}) places every key gap's $95\%$ CI above
+zero. Because every downstream operation consumes the value only through
+the scalar $V(m)$, swapping the scoring function --- linear or neural ---
+leaves the encoding/forgetting/retrieval machinery unchanged.

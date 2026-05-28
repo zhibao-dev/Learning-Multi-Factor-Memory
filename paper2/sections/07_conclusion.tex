@@ -8,12 +8,13 @@ the forgetting decision is made before the future query is known. We
 proposed a multi-factor memory value $V(m)=\sum_i w_i f_i(m)$ whose
 weights are learned from a downstream objective (gold-evidence retention
 here; task-QA return in general) and whose single scalar uniformly
-governs all three operations. On a real LongMemEval-S pilot, a learned
-multi-factor value retains $0.811\pm0.047$ of gold evidence in the
-realistic blind-forgetting regime, versus $0.634$ for uniform weighting,
-$0.541$ for the best single factor, and $0.380$ for recency --- winning
-on every resampled split, with interpretable weights that recover the
-workload's true signal. We also showed why this advantage is invisible to a query-defined
+governs all three operations. On all $479$ usable LongMemEval-S cases, a
+learned multi-factor value retains $0.770\pm0.011$ of gold evidence in the
+realistic blind-forgetting regime, versus $0.657$ for uniform weighting,
+$0.518$ for the best single factor, and $0.368$ for recency --- every
+per-case bootstrap gap excludes zero, and a neural MLP over the same
+factors ties the linear model, so the interpretable linear value is not a
+compromise. The learned weights recover the workload's true signal. We also showed why this advantage is invisible to a query-defined
 retention metric: under an oracle that peeks at the evaluation question,
 similarity alone saturates retention and the multi-factor gap vanishes
 --- a distinction any honest evaluation of forgetting must draw.

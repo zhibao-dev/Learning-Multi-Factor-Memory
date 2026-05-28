@@ -80,14 +80,16 @@ and retrieval rank.
 We make a methodological point that reframes how memory retention is
 measured: on the LongMemEval benchmark, scoring goal relevance against
 the held-out evaluation question (an \emph{oracle} that peeks at the
-future query) saturates gold-evidence retention at $\approx\!0.96$ for
+future query) saturates gold-evidence retention at $\approx\!0.98$ for
 similarity alone --- this measures \emph{retrieval}, not forgetting.
 In the realistic \emph{blind} regime, where the consolidation policy
 never sees the evaluation question, a learned multi-factor value retains
-$\mathbf{0.811 \pm 0.047}$ of gold evidence, versus $0.634$ for uniform
-weights, $0.541$ for the best single factor (reliability), and $0.380$
-for recency --- winning on every one of $20$ resampled splits (paired
-gaps $+0.18$ to $+0.43$).
+$\mathbf{0.770 \pm 0.011}$ of gold evidence across all $479$ usable
+cases, versus $0.657$ for uniform weights, $0.518$ for the best single
+factor, and $0.368$ for recency --- a per-case bootstrap places every
+paired gap's $95\%$ confidence interval above zero, and a neural network
+over the same factors ties the linear model, so the interpretable value
+is not a compromise.
 The learned blind weights are interpretable --- reliability, emotional
 intensity, and self/user relevance dominate, while query-time goal
 similarity is correctly down-weighted for the forgetting decision.

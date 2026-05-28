@@ -69,7 +69,7 @@ contrast. On the LongMemEval benchmark \citep{wu2025longmemeval}, the
 goal relevance as the cosine similarity between a stored turn and the
 held-out evaluation question --- an \emph{oracle} that peeks at the
 future query --- then similarity alone retains essentially all gold
-evidence ($\approx\!0.96$), and no multi-factor advantage is possible.
+evidence ($\approx\!0.98$), and no multi-factor advantage is possible.
 But this measures \emph{retrieval}, not forgetting: a real agent has not
 seen the evaluation question at consolidation time. In the realistic
 \emph{blind} regime, where goal relevance is computed only against
@@ -94,13 +94,13 @@ credit-assigned weights (\cref{sec:method:learn}).
 \emph{blind} forgetting --- that separates retrieval from retention and
 shows why query-defined retention benchmarks cannot, on their own,
 demonstrate a forgetting advantage (\cref{sec:exp:blind}).
-\item \textbf{Empirical results} on a real LongMemEval-S pilot: in the
-blind regime, learned multi-factor value retains $0.811\pm0.047$ of gold
-evidence versus $0.634$ (uniform), $0.541$ (best single factor,
-reliability), and $0.380$ (recency), winning on every one of $20$
-resampled splits, with interpretable learned weights
-(\cref{sec:exp:blind}); a synthetic confound study validates the learner
-(\cref{sec:exp:synth}).
+\item \textbf{Empirical results} on all $479$ usable LongMemEval-S cases:
+in the blind regime, learned multi-factor value retains $0.770\pm0.011$ of
+gold evidence versus $0.657$ (uniform), $0.518$ (best single factor), and
+$0.368$ (recency), with every per-case bootstrap gap above zero; a neural
+MLP over the same factors ties the linear model ($+0.003$), so the
+interpretable linear value suffices (\cref{sec:exp:blind}). A synthetic
+confound study validates the learner (\cref{sec:exp:synth}).
 \item An \textbf{open-source, CPU-only} substrate and evaluation harness;
 every reported number reproduces with no API calls.
 \end{enumerate}

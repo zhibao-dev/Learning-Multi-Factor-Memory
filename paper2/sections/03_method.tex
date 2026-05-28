@@ -32,9 +32,10 @@ Decision-theoretic reading}: \cref{eq:value} is the first-order
 return --- the principled starting point before modelling factor
 interactions. More generally the value is any learned scoring function
 $V(m)=g_\theta(\fvec(m))$, and \cref{eq:value} is its interpretable linear
-instance; we treat a neural $g_\theta$ as a nonlinear extension to be
-validated as an \emph{interaction ablation} (\cref{sec:limitations}), not
-as the default.
+instance; a neural $g_\theta$ is validated as an \emph{interaction
+ablation} in \cref{sec:exp:blind} --- an MLP over the same factors ties
+the linear model, confirming they combine near-additively, so the linear
+value stays the default.
 
 \begin{table}[ht!]
 \centering\small

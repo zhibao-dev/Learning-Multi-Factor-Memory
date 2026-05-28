@@ -21,7 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))  # repo root
 
 
 def load():
-    with open(os.path.join(ROOT, "results", "lme_blind_forgetting.json")) as f:
+    with open(os.path.join(ROOT, "results", "lme_blind_forgetting_full.json")) as f:
         return json.load(f)
 
 
@@ -73,7 +73,7 @@ def fig_blind_oracle(d):
     ax.set_ylim(0, 1.08)
     ax.legend(fontsize=8, loc="upper right", framealpha=0.92)
     ax.set_title("Blind vs. oracle forgetting "
-                 "(keep 30%, 74-case pilot, 20 splits; mean " r"$\pm$ 1 std)",
+                 "(keep 30%, 479 cases, 20 splits; mean " r"$\pm$ 1 std)",
                  fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     plt.tight_layout()

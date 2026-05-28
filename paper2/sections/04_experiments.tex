@@ -66,21 +66,22 @@ recency\_only       & $0.00$ \\
 \paragraph{Setup.}
 We use LongMemEval-S \citep{wu2025longmemeval}: questions over long
 multi-session chat histories ($\sim\!500$ turns per case) with
-gold-evidence turns flagged inside a haystack of distractor sessions. We
-keep the $74$ cases (of the first $80$) that carry at least one flagged
-gold turn. For each case we annotate every turn with the four API-free
+gold-evidence turns flagged inside a haystack of distractor sessions. Of
+the $500$ questions, $479$ carry at least one flagged gold turn; we use
+all $479$. For each case we annotate every turn with the four API-free
 factors (emotional intensity, goal relevance, self/user relevance,
 reliability; \cref{tab:factors}), rank turns by $V(m)$, keep the top
 $\keepfrac=30\%$, and measure the fraction of flagged gold turns
 retained. Weights are learned over the live factors on a training split
 and evaluated on a disjoint test split; we report mean $\pm$ standard
-deviation over $20$ resampled $50/50$ splits ($37$ test cases per rep).
-This isolates the budgeted keep/drop (retention) decision: we do not run
-an answerer or the full encode/forget/retrieve loop here, and we report
-gold-evidence retention rather than QA accuracy (\cref{sec:limitations}).
-We treat these first $80$ cases as a \emph{pilot} subset of
-LongMemEval-S; scaling to all $500$ questions is API-free and a natural
-extension.
+deviation over $20$ resampled $50/50$ splits ($240$ test cases per rep),
+and confirm significance with a per-case bootstrap below. This isolates
+the budgeted keep/drop (retention) decision: we do not run an answerer or
+the full encode/forget/retrieve loop here, and we report gold-evidence
+retention rather than QA accuracy (\cref{sec:limitations}). To pre-compute
+the factor annotations once and reuse them across all configurations, we
+cache the per-turn factors; every number below is API-free and reproduces
+on a single CPU.
 
 \paragraph{The oracle/blind distinction.}
 Gold in LongMemEval is defined relative to the evaluation question, so
@@ -99,73 +100,107 @@ measuring forgetting.
 
 \paragraph{Result.}
 \Cref{tab:blind} and \cref{fig:blind} report both regimes. In the \textbf{oracle} regime,
-goal relevance alone retains $0.966$ of gold and learned/uniform value
-match it ($\approx\!0.96$): once you can score similarity to the
-question, similarity is all you need, and there is no room for a
-multi-factor advantage. This is the honest negative that a query-defined
-retention metric produces, and it is why such metrics cannot, by
-themselves, evaluate a forgetting policy.
+goal relevance alone retains $0.979$ of gold and the learned value reaches
+$0.993$ (uniform $0.939$) --- all near the ceiling: once you can score
+similarity to the question, similarity is all you need, and there is no
+room for a multi-factor advantage. This is the honest negative that a
+query-defined retention metric produces, and it is why such metrics
+cannot, by themselves, evaluate a forgetting policy.
 
 In the realistic \textbf{blind} regime the ordering inverts.
-Goal-relevance-to-session collapses to $0.291$ (near the $0.30$ chance
-floor), recency to $0.380$, self to $0.388$, and emotion to $0.271$; the
-strongest single factor, reliability, reaches $0.541$ --- clearly above
-chance, but far short of a multi-factor policy. The \emph{learned
-multi-factor value} retains $\mathbf{0.811\pm0.047}$, beating uniform
-weighting ($0.634$) by $+0.18$, the best single factor (reliability) by
-$+0.27$, and recency by $+0.43$. These gaps are \emph{paired} across the
-$20$ resampled splits --- the same test split scored by both policies ---
-and the learned policy wins on \textbf{every} split: paired differences
-of $+0.18\pm0.05$ (vs.\ uniform), $+0.27\pm0.06$ (vs.\ reliability-only),
-and $+0.43\pm0.07$ (vs.\ recency), each with a $100\%$ win rate.
+Goal-relevance-to-session collapses to $0.286$ (near the $0.30$ chance
+floor), emotion to $0.201$, recency to $0.368$, reliability to $0.497$,
+and self-relevance --- the strongest single factor --- to $0.518$: no
+single cue identifies the future needle without the question. The
+\emph{learned multi-factor value} retains $\mathbf{0.770\pm0.011}$,
+beating uniform weighting ($0.657$), the best single factor (self,
+$0.518$), and recency ($0.368$). A per-case bootstrap ($B{=}10^3$,
+resampling the $479$ cases) puts the paired gaps at $+0.120$ vs.\ uniform
+($95\%$ CI $[0.091,0.149]$), $+0.402$ vs.\ recency ($[0.350,0.452]$), and
+$+0.277$ vs.\ reliability-only ($[0.235,0.319]$); every interval excludes
+zero, and the learned policy wins on all $20$ resampled splits.
 Multi-factor value's advantage is thus precisely where it should be: in
 the query-agnostic forgetting decision, not in query-defined retrieval.
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.82\linewidth]{figures/fig_blind_oracle.pdf}
-\caption{\textbf{Blind vs.\ oracle gold retention} (keep $30\%$; $74$-case
-LongMemEval-S pilot; $20$ resampled splits, mean $\pm 1$ std). Under the
-\emph{oracle} goal anchor (cosine to the held-out question), similarity
+\caption{\textbf{Blind vs.\ oracle gold retention} (keep $30\%$; all $479$
+usable LongMemEval-S cases; $20$ resampled splits, mean $\pm 1$ std). Under
+the \emph{oracle} goal anchor (cosine to the held-out question), similarity
 alone saturates retention --- a retrieval ceiling. Under the realistic
 \emph{blind} anchor (session topic only), every single-factor and recency
 baseline collapses toward the chance floor, while the learned multi-factor
-value retains $0.81$. Recency has no oracle variant.}
+value retains $0.77$. Recency has no oracle variant.}
 \label{fig:blind}
 \end{figure}
 
 \begin{table}[ht!]
 \centering\small
-\caption{LongMemEval gold retention (keep $30\%$; $74$ cases; mean $\pm$
-std over $20$ resampled test splits, $37$ cases each). \emph{Oracle}
-scores goal relevance against the held-out question (retrieval ceiling);
-\emph{blind} scores it against the session topic (realistic forgetting).
-Self-, emotion-, and reliability-only are regime-invariant by
-construction (only the goal anchor moves between regimes).}
+\caption{LongMemEval gold retention (keep $30\%$; all $479$ usable cases;
+mean $\pm$ std over $20$ resampled test splits, $240$ cases each).
+\emph{Oracle} scores goal relevance against the held-out question
+(retrieval ceiling); \emph{blind} scores it against the session topic
+(realistic forgetting). Self-, emotion-, and reliability-only are
+regime-invariant by construction (only the goal anchor moves).}
 \label{tab:blind}
 \begin{tabular}{lcc}
 \toprule
 Policy & Oracle (peeks at $Q$) & Blind (realistic) \\
 \midrule
-\textbf{learned\_V}  & $0.959 \pm 0.017$ & $\mathbf{0.811 \pm 0.047}$ \\
-uniform\_V           & $0.962 \pm 0.019$ & $0.634 \pm 0.046$ \\
-goal\_only           & $0.966 \pm 0.019$ & $0.291 \pm 0.038$ \\
-reliability\_only    & $0.541 \pm 0.051$ & $0.541 \pm 0.051$ \\
-self\_only           & $0.388 \pm 0.050$ & $0.388 \pm 0.050$ \\
-emotion\_only        & $0.271 \pm 0.047$ & $0.271 \pm 0.047$ \\
-recency\_only        & ---               & $0.380 \pm 0.051$ \\
+\textbf{learned\_V}  & $0.993 \pm 0.005$ & $\mathbf{0.770 \pm 0.011}$ \\
+uniform\_V           & $0.939 \pm 0.011$ & $0.657 \pm 0.011$ \\
+self\_only           & $0.518 \pm 0.017$ & $0.518 \pm 0.017$ \\
+reliability\_only    & $0.497 \pm 0.020$ & $0.497 \pm 0.020$ \\
+goal\_only           & $0.979 \pm 0.006$ & $0.286 \pm 0.021$ \\
+emotion\_only        & $0.201 \pm 0.017$ & $0.201 \pm 0.017$ \\
+recency\_only        & ---               & $0.368 \pm 0.021$ \\
 random (keep $30\%$) & ---               & $0.300$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Learned weights are interpretable.}
-The mean learned blind weights are reliability $0.95$, emotional
-intensity $0.60$, self/user relevance $0.22$, and goal relevance $0.03$.
+The mean learned blind weights are reliability $0.64$, emotional
+intensity $0.55$, self/user relevance $0.23$, and goal relevance $0.00$.
 The policy discovered, from retention alone, that LongMemEval gold is
 dominated by \emph{reliable, user-stated, often self-relevant} facts ---
-and that session-topic similarity (the blind goal anchor) is nearly
-useless for predicting the future needle, so it is down-weighted almost
-to zero. This is the value-directed signal a recency or similarity
-policy structurally cannot represent, and it accounts for the
-$+0.18$ to $+0.43$ retention gap.
+and that session-topic similarity (the blind goal anchor) is useless for
+predicting the future needle, so it is driven to zero. This is the
+value-directed signal a recency or similarity policy structurally cannot
+represent, and it accounts for the $+0.11$ to $+0.40$ retention gap.
+
+\paragraph{Does a neural value help? A nonlinear ablation.}
+Our value is linear by design (\cref{sec:method:value}); a natural worry
+is that it leaves performance on the table by ignoring factor
+interactions (e.g.\ emotion mattering only for self-relevant turns). We
+test this directly: we replace the linear value with a small MLP
+$g_\theta$ over the same four live factors ($[16,16]$ hidden units),
+trained by a pairwise logistic ranking loss (gold ranked above non-gold
+within each case), and evaluate it under the identical blind protocol.
+The MLP retains $0.773\pm0.011$ versus the linear model's
+$0.770\pm0.011$ --- a paired difference of $+0.003\pm0.013$, winning on
+only $55\%$ of splits, i.e.\ a statistical tie. On these seven factors the
+nonlinear capacity buys nothing: the factors combine near-additively, so
+the interpretable linear model is not a compromise but the right choice.
+The MLP is an ablation, not a replacement.
+
+\paragraph{The advantage is not budget-specific.}
+\Cref{fig:keepfrac} sweeps the keep fraction $\keepfrac \in
+\{0.1,\dots,0.5\}$. The learned value leads at every realistic forgetting
+budget ($\keepfrac \le 0.4$); only at $\keepfrac{=}0.5$ --- a near-trivial
+$50\%$ keep, where all factor-based policies saturate at $0.87$--$0.90$
+--- does the best single factor draw level. The multi-factor advantage is
+thus largest exactly where forgetting is aggressive and the decision
+matters most.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=0.74\linewidth]{figures/fig_keepfrac.pdf}
+\caption{\textbf{Keep-fraction sweep} (blind regime, $479$ cases, $20$
+splits, mean $\pm 1$ std). The learned multi-factor value dominates uniform,
+reliability-only, and recency at every aggressive budget
+($\keepfrac \le 0.4$); the gap closes only at the near-trivial
+$\keepfrac{=}0.5$ where the benchmark saturates.}
+\label{fig:keepfrac}
+\end{figure}
