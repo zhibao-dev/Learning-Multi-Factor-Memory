@@ -1,0 +1,104 @@
+{
+  "experiment": "REAL LongMemEval \u2014 BLIND vs ORACLE forgetting (API-free)",
+  "ran_at": "2026-05-28T11:39:22.875290",
+  "data": "data/longmemeval_s_cleaned.json",
+  "n_cases_used": 479,
+  "reps": 20,
+  "n_test_per_rep": 240,
+  "keep_frac": 0.3,
+  "live_factors": [
+    "emotion",
+    "goal_relevance",
+    "self_relevance",
+    "reliability"
+  ],
+  "regimes": {
+    "oracle": {
+      "goal_relevance": "cos(turn, eval question) \u2014 peeks (retrieval ceiling)",
+      "retention_mean_std": {
+        "learned_V": [
+          0.9926,
+          0.0047
+        ],
+        "uniform_V": [
+          0.939,
+          0.0109
+        ],
+        "goal_only": [
+          0.9788,
+          0.0056
+        ],
+        "self_only": [
+          0.5176,
+          0.0172
+        ],
+        "emotion_only": [
+          0.2011,
+          0.0165
+        ],
+        "reliability_only": [
+          0.4974,
+          0.0201
+        ]
+      }
+    },
+    "blind": {
+      "goal_relevance": "cos(turn, session-topic centroid) \u2014 realistic forgetting",
+      "retention_mean_std": {
+        "learned_V": [
+          0.7698,
+          0.0114
+        ],
+        "uniform_V": [
+          0.6575,
+          0.0108
+        ],
+        "goal_only": [
+          0.286,
+          0.0214
+        ],
+        "self_only": [
+          0.5176,
+          0.0172
+        ],
+        "emotion_only": [
+          0.2011,
+          0.0165
+        ],
+        "reliability_only": [
+          0.4974,
+          0.0201
+        ]
+      }
+    }
+  },
+  "recency_only_mean_std": [
+    0.3676,
+    0.0207
+  ],
+  "random_keep": 0.3,
+  "learned_weights_blind_mean": {
+    "emotion": 0.5543,
+    "goal_relevance": 0.0,
+    "self_relevance": 0.2289,
+    "reliability": 0.6391
+  },
+  "paired_blind_diffs": {
+    "learned_minus_uniform": {
+      "mean": 0.1124,
+      "std": 0.0113,
+      "win_frac": 1.0
+    },
+    "learned_minus_recency": {
+      "mean": 0.4022,
+      "std": 0.0282,
+      "win_frac": 1.0
+    },
+    "learned_minus_reliability_only": {
+      "mean": 0.2725,
+      "std": 0.0164,
+      "win_frac": 1.0
+    }
+  },
+  "model": "linear"
+}

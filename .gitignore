@@ -47,3 +47,6 @@ paper*/.aris/
 
 # LongMemEval dataset (277MB, download separately)
 data/
+
+# Derived factor cache (41MB; regenerate: python experiments/build_factor_cache.py)
+results/lme_factor_cache.jsonl
