@@ -27,7 +27,7 @@ from .cognitive_memory import EncodingDepth, MemoryEntry
 from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
 from .store import MemoryStore
-from ..values.self_model import SelfModel, has_self_reference
+from ..values.self_model import SelfModel, cosine, has_self_reference
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ class MemoryConsolidationPipeline:
         forgetting_engine: Optional[ForgettingEngine] = None,
         memory_store: Optional[MemoryStore] = None,
         self_model: Optional[SelfModel] = None,
+        value_centroid: Optional[list[float]] = None,
     ):
         self.db_path = db_path
         self.kg = knowledge_graph
@@ -72,6 +73,11 @@ class MemoryConsolidationPipeline:
         # self_relevance per message and updates μ_self / π_self from the
         # session's user content.
         self.self_model = self_model
+        # Sister paper (multi-factor value): centroid of the agent's value
+        # embeddings (e.g. mean of SOUL value-descriptor embeddings). When
+        # provided, Step 3 computes value_alignment = cos(content, centroid);
+        # otherwise value_alignment degrades to 0.0.
+        self.value_centroid = value_centroid
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -237,6 +243,24 @@ Return JSON:
         if not emotional_history:
             return
 
+        # Pre-pass — session topic centroid for goal_relevance. The session's
+        # "goal" is approximated by the mean embedding of its USER turns; each
+        # memory's goal_relevance is its similarity to that centroid. hash_embed
+        # is deterministic, so re-embedding here costs nothing semantically.
+        session_topic_centroid: Optional[list[float]] = None
+        if self.self_model is not None:
+            user_embeddings = [
+                self.self_model._embed(self._content_text(m))
+                for m in messages
+                if (m.get("role") or "").lower() == "user"
+            ]
+            if user_embeddings:
+                n = len(user_embeddings)
+                dim = len(user_embeddings[0])
+                session_topic_centroid = [
+                    sum(e[i] for e in user_embeddings) / n for i in range(dim)
+                ]
+
         emo_idx = -1     # advances on each USER message
         prev_f: Optional[float] = None
         persisted = 0
@@ -304,6 +328,24 @@ Return JSON:
             if self.self_model is not None and self_relevance > 0.65:
                 depth = EncodingDepth(min(int(depth) + 1, int(EncodingDepth.META)))
 
+            # Sister paper (multi-factor value): LIVE value factors computed at
+            # encode time, where session + SOUL context exists. usage=0 (count
+            # starts 0) and task_utility=0 (LLM-gated) need no work here.
+            #   reliability      role heuristic (user content is first-hand)
+            #   goal_relevance   similarity to this session's topic centroid
+            #   value_alignment  similarity to the agent's value centroid
+            reliability = 0.7 if role == "user" else 0.4
+            if embedding is not None and session_topic_centroid:
+                goal_relevance = 0.5 + 0.5 * cosine(embedding, session_topic_centroid)
+            else:
+                goal_relevance = 0.5
+            if embedding is not None and self.value_centroid:
+                value_alignment = 0.5 + 0.5 * cosine(embedding, self.value_centroid)
+            else:
+                value_alignment = 0.0
+            goal_relevance = max(0.0, min(1.0, goal_relevance))
+            value_alignment = max(0.0, min(1.0, value_alignment))
+
             memory_id = msg.get("id") or msg.get("_borge_id") or str(uuid.uuid4())
             self.store.insert({
                 "id":                     memory_id,
@@ -320,6 +362,10 @@ Return JSON:
                 "self_relevance_score":   round(self_relevance, 4),
                 "embedding":              embedding,
                 "mu_self_at_encoding":    mu_self_snapshot,
+                "reliability":            round(reliability, 4),
+                "goal_relevance":         round(goal_relevance, 4),
+                "value_alignment":        round(value_alignment, 4),
+                "task_utility":           0.0,
             })
             persisted += 1
 
@@ -374,6 +420,16 @@ Otherwise: {{"worth_saving": false}}"""
         report.entries_compressed = stats.get("compressed", 0)
 
     # ── Helpers ───────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _content_text(msg: dict) -> str:
+        """Flatten a message's content (str or list-of-blocks) to plain text."""
+        content = msg.get("content")
+        if isinstance(content, list):
+            content = " ".join(
+                c.get("text", "") for c in content if isinstance(c, dict)
+            )
+        return str(content or "")
 
     @staticmethod
     def _messages_to_text(messages: list[dict]) -> str:
