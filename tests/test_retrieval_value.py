@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -49,24 +49,32 @@ def test_recall_orders_equally_recent_relevant_rows_by_value(tmpdb):
     read `self_relevance_score`), the low-V row is given the HIGHER
     self_relevance_score: under the old formula that pulls the low-V row to the
     top (wrong); under V, reliability dominates and the high-V row wins.
+
+    To keep V *load-bearing* (so the test FAILS if V were ever dropped, e.g.
+    w_v=0), the high-V row is also made the OLDER of the two: recency now
+    actively FAVORS the low-V row, so only the V term can overcome that and
+    rank the high-V row first. (With w_v=0 the order flips to low-first.)
     """
     store = MemoryStore(tmpdb)
-    ts = datetime.now().isoformat()
+    now = datetime.now()
     shared = "shared overlap tokens"  # both rows match the query equally
     # Equal (V,A) → equal mood term AND equal emotion factor; differ in
     # reliability (new in V) and an inverted self_relevance to force the RED.
     base = {
-        "session_id": "s", "role": "user", "content": shared, "timestamp": ts,
+        "session_id": "s", "role": "user", "content": shared,
         "emotional_valence": 0.3, "emotional_arousal": 0.5,
     }
-    high = {**base, "id": "m-high", "reliability": 0.9, "self_relevance_score": 0.1}
-    low  = {**base, "id": "m-low",  "reliability": 0.1, "self_relevance_score": 0.8}
+    # High-V row is OLDER → recency opposes V (low-V row is the more recent).
+    high = {**base, "id": "m-high", "reliability": 0.9, "self_relevance_score": 0.1,
+            "timestamp": (now - timedelta(days=2)).isoformat()}
+    low  = {**base, "id": "m-low",  "reliability": 0.1, "self_relevance_score": 0.8,
+            "timestamp": now.isoformat()}
     store.insert(high)
     store.insert(low)
 
     ret = MemoryRetrieval(tmpdb, store=store)
-    # current mood == both rows' (V,A) → identical mood term; recency +
-    # relevance also identical, so ONLY V orders the two rows.
+    # current mood == both rows' (V,A) → identical mood term; relevance also
+    # identical. Recency now favors the low-V row, so ONLY V can rank high first.
     results = ret.recall(
         query=shared,
         current_valence=0.3, current_arousal=0.5,
