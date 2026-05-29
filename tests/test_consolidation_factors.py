@@ -24,7 +24,23 @@ import pytest
 from borge.memory.consolidation import MemoryConsolidationPipeline
 from borge.memory.knowledge_graph import KnowledgeGraph
 from borge.memory.store import MemoryStore
+from borge.memory.value import default_memory_value, value_encoding_depth
 from borge.values.self_model import SelfModel
+
+
+def _factors_from_row(r: dict) -> dict:
+    """Reconstruct the 6-factor dict from a persisted borge_memories row
+    (mirrors borge.memory.value.memory_factors)."""
+    rcount = float(r["retrieval_count"])
+    return {
+        "emotion":         abs(float(r["emotional_valence"])) * float(r["emotional_arousal"]),
+        "self_relevance":  float(r["self_relevance_score"]),
+        "usage":           rcount / (1.0 + rcount),
+        "reliability":     float(r["reliability"]),
+        "value_alignment": float(r["value_alignment"]),
+        "goal_relevance":  float(r["goal_relevance"]),
+        "task_utility":    float(r["task_utility"]),
+    }
 
 
 @pytest.fixture()
@@ -134,3 +150,49 @@ def test_goal_relevance_fallback_when_no_self_model(tmpdb):
     assert rows[0]["value_alignment"] == pytest.approx(0.0)
     # reliability heuristic still applies even without self_model
     assert rows[0]["reliability"] == pytest.approx(0.7)
+
+
+def test_encoding_depth_driven_by_memory_value(tmpdb):
+    """paper2: encoding depth is value_encoding_depth(6-factor dict, MemoryValue),
+    NOT the old significance-threshold ladder. A high-value turn (vivid +
+    self-referential) must encode deeper than a low-value neutral turn, and the
+    persisted depth must equal value_encoding_depth applied to the row's own
+    reconstructed factors under the shipped default weights."""
+    self_model = SelfModel.from_seed("research curiosity learning my project")
+    value_centroid = [1.0] * 64
+
+    store = MemoryStore(tmpdb)
+    kg = KnowledgeGraph(tmpdb)
+    pipeline = MemoryConsolidationPipeline(
+        db_path=tmpdb,
+        knowledge_graph=kg,
+        memory_store=store,
+        self_model=self_model,
+        value_centroid=value_centroid,
+    )
+
+    high_id, low_id = "hi", "lo"
+    messages = [
+        {"id": high_id, "role": "user", "content": "I love my project deeply"},
+        {"id": low_id, "role": "user", "content": "ok sure"},
+    ]
+    # turn 0 = high value (vivid), turn 1 = low value (flat)
+    emotional_history = [(0.9, 0.9), (0.0, 0.1)]
+
+    pipeline.run("depth", messages, emotional_history)
+
+    rows = {r["id"]: r for r in store.by_session("depth")}
+    assert set(rows) == {high_id, low_id}
+
+    high_depth = rows[high_id]["encoding_depth"]
+    low_depth = rows[low_id]["encoding_depth"]
+
+    # High-value content encodes deeper than low-value content.
+    assert high_depth > low_depth, (
+        f"high-value depth {high_depth} should exceed low-value depth {low_depth}"
+    )
+
+    # The persisted depth is exactly value_encoding_depth over the row's factors.
+    mv = default_memory_value()
+    assert high_depth == value_encoding_depth(_factors_from_row(rows[high_id]), mv)
+    assert low_depth == value_encoding_depth(_factors_from_row(rows[low_id]), mv)

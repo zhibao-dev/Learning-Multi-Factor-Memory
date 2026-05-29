@@ -23,10 +23,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional
 
-from .cognitive_memory import EncodingDepth, MemoryEntry
+from .cognitive_memory import MemoryEntry
 from .forgetting import ForgettingEngine, apply_importance_from_delta_f
 from .knowledge_graph import KnowledgeGraph
 from .store import MemoryStore
+from .value import MemoryValue, default_memory_value, value_encoding_depth
 from ..values.self_model import SelfModel, cosine, has_self_reference
 
 log = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ class MemoryConsolidationPipeline:
         memory_store: Optional[MemoryStore] = None,
         self_model: Optional[SelfModel] = None,
         value_centroid: Optional[list[float]] = None,
+        memory_value: Optional[MemoryValue] = None,
     ):
         self.db_path = db_path
         self.kg = knowledge_graph
@@ -78,6 +80,10 @@ class MemoryConsolidationPipeline:
         # provided, Step 3 computes value_alignment = cos(content, centroid);
         # otherwise value_alignment degrades to 0.0.
         self.value_centroid = value_centroid
+        # Sister paper (multi-factor value): the single MemoryValue that maps
+        # the 6 live factors → encoding depth in Step 3 (and forget/retrieve
+        # elsewhere). Defaults to the shipped learned-default weights.
+        self.memory_value = memory_value or default_memory_value()
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -236,7 +242,8 @@ Return JSON:
           1. Pair with the (V, A) of the user-turn that produced it
              (assistant/tool messages inherit the most recent user emotion).
           2. Compute emotional significance = |V| · A.
-          3. Map significance → EncodingDepth (Craik & Lockhart).
+          3. Map the 6 live value factors → EncodingDepth via the MemoryValue
+             (Craik & Lockhart depth driven by value, not a fixed ladder).
           4. Compute delta_f_total vs. previous turn (progress signal).
           5. Persist row to borge_memories so Forgetting + Retrieval can see it.
         """
@@ -275,12 +282,6 @@ Return JSON:
 
             v, a = emotional_history[emo_idx]
             significance = abs(v) * a
-            depth = (
-                EncodingDepth.META       if significance >= 0.7 else
-                EncodingDepth.SCHEMATIC  if significance >= 0.4 else
-                EncodingDepth.SEMANTIC   if significance >= 0.2 else
-                EncodingDepth.SHALLOW
-            )
 
             f_total: Optional[float] = None
             delta_f: Optional[float] = None
@@ -323,11 +324,6 @@ Return JSON:
                 # this memory was formed (Tulving encoding specificity).
                 mu_self_snapshot = list(self.self_model.mu_self) if self.self_model.mu_self else None
 
-            # Self-modulated encoding depth — vivid AND self-relevant content
-            # gets bumped one tier higher (capped at META).
-            if self.self_model is not None and self_relevance > 0.65:
-                depth = EncodingDepth(min(int(depth) + 1, int(EncodingDepth.META)))
-
             # Sister paper (multi-factor value): LIVE value factors computed at
             # encode time, where session + SOUL context exists. usage=0 (count
             # starts 0) and task_utility=0 (LLM-gated) need no work here.
@@ -345,6 +341,24 @@ Return JSON:
                 value_alignment = 0.0
             goal_relevance = max(0.0, min(1.0, goal_relevance))
             value_alignment = max(0.0, min(1.0, value_alignment))
+
+            # Sister paper: ONE MemoryValue drives encoding depth. The old
+            # paper1 significance-threshold ladder + self-relevance bump are
+            # replaced by value_encoding_depth over the 6 live factors (value
+            # already includes self_relevance, so no separate bump). usage=0
+            # (retrieval_count starts 0) and task_utility=0 (LLM-gated) at
+            # encode time. Factors are built from the same rounded values that
+            # get persisted, so retrieval can reproduce this depth exactly.
+            depth_factors = {
+                "emotion":         significance,
+                "self_relevance":  round(self_relevance, 4),
+                "usage":           0.0,
+                "reliability":     round(reliability, 4),
+                "value_alignment": round(value_alignment, 4),
+                "goal_relevance":  round(goal_relevance, 4),
+                "task_utility":    0.0,
+            }
+            depth = value_encoding_depth(depth_factors, self.memory_value)
 
             memory_id = msg.get("id") or msg.get("_borge_id") or str(uuid.uuid4())
             self.store.insert({
