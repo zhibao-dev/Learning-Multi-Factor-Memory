@@ -120,14 +120,16 @@ class MemoryStore:
                         encoding_depth, importance_score, retrieval_count,
                         last_retrieved, forget_score, f_total_at_encoding,
                         delta_f_total, entity_tags, graph_node_ids,
-                        self_relevance_score, embedding, mu_self_at_encoding
+                        self_relevance_score, embedding, mu_self_at_encoding,
+                        goal_relevance, value_alignment, task_utility, reliability
                     ) VALUES (
                         :id, :session_id, :role, :content, :timestamp,
                         :emotional_valence, :emotional_arousal, :emotional_significance,
                         :encoding_depth, :importance_score, :retrieval_count,
                         :last_retrieved, :forget_score, :f_total_at_encoding,
                         :delta_f_total, :entity_tags, :graph_node_ids,
-                        :self_relevance_score, :embedding, :mu_self_at_encoding
+                        :self_relevance_score, :embedding, :mu_self_at_encoding,
+                        :goal_relevance, :value_alignment, :task_utility, :reliability
                     )""",
                     self._normalize(entry),
                 )
@@ -266,4 +268,8 @@ class MemoryStore:
             "self_relevance_score":   float(entry.get("self_relevance_score", 0.5)),
             "embedding":              emb_json,
             "mu_self_at_encoding":    mu_snap_json,
+            "goal_relevance":         float(entry.get("goal_relevance", 0.0)),
+            "value_alignment":        float(entry.get("value_alignment", 0.0)),
+            "task_utility":           float(entry.get("task_utility", 0.0)),
+            "reliability":            float(entry.get("reliability", 0.0)),
         }
