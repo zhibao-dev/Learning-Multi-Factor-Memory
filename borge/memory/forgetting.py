@@ -30,10 +30,12 @@ log = logging.getLogger(__name__)
 PRUNE_THRESHOLD    = 2.0   # SHALLOW entries above this are deleted
 COMPRESS_THRESHOLD = 3.0   # SEMANTIC entries above this are compressed
 
-# Paper1 self-FEP resistance gains. No longer used by the value-driven
-# forget score on this branch, but kept as module attributes because the
-# paper1 ablation script experiments/e3_pi_self_ablation.py monkeypatches
-# SELF_RESISTANCE_LAMBDA on this module.
+# Paper1 self-FEP resistance gains. Retained only for the paper1/self-FEP
+# branch, where forget_score = product-of-resistances reads them. UNUSED on
+# this (paper2/multi-factor-eval) branch — the value-driven forget score
+# replaces the product entirely. (experiments/e3_pi_self_ablation.py is a
+# paper1 ablation that belongs to the self-FEP branch and is expected-broken
+# here; do not re-wire these constants into the value path to "fix" it.)
 EMOTION_RESISTANCE_ALPHA = 2.0  # how strongly |V|·A resisted forgetting (paper1)
 SELF_RESISTANCE_LAMBDA   = 2.0  # how strongly self-relevance resisted forgetting (paper1)
 
@@ -183,8 +185,15 @@ def apply_importance_from_delta_f(db_path: str, gain: float = 0.3) -> int:
 
     For each memory row with `delta_f_total > 0` (the agent made cognitive
     progress on that turn), bump `importance_score` by `delta_f * gain`,
-    clipped to [0, 1]. Importance enters forget_score via 1/(1+importance),
-    so progress-bearing memories become harder to forget.
+    clipped to [0, 1].
+
+    NOTE (paper2/multi-factor-eval branch): `importance_score` is retained
+    as inspectable metadata but is NOT one of the seven MemoryValue factors,
+    so it no longer feeds the value-driven forget score. The paper1
+    self-FEP branch (where forget_score = product-of-resistances including
+    1/(1+importance)) is where this ΔF→forgetting leg is live. On this
+    branch, ΔF influences forgetting only if `importance`/progress is added
+    as a MemoryValue factor.
 
     Returns the number of rows updated.
     """

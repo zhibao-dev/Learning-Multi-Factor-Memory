@@ -3,8 +3,8 @@ Borge Memory Store — persistent storage for cognitive memory entries.
 
 Standalone Borge needs its own table for memory persistence because in
 standalone mode there is no Hermes `messages` table. This module owns the
-`borge_memories` table where consolidation Step 5 writes emotional /
-encoding-depth / free-energy decisions, and from which Forgetting and
+`borge_memories` table where consolidation Step 3 writes emotional /
+encoding-depth / value-factor decisions, and from which Forgetting and
 Retrieval read.
 
 Schema is intentionally a superset of the Hermes `messages` columns added

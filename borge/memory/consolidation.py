@@ -389,7 +389,7 @@ Return JSON:
             msg["_borge_self_relevance"] = round(self_relevance, 4)
             msg["_borge_id"]              = memory_id
 
-        log.debug(f"[Step5] persisted {persisted} memory rows")
+        log.debug(f"[Step3] persisted {persisted} memory rows")
 
     # ── Step 5: Skill Candidate Detection ────────────────────────────────
 
