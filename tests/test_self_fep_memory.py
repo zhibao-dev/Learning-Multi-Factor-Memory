@@ -155,22 +155,23 @@ def test_forget_score_lower_for_self_relevant_memory(tmpdb):
 
 
 # ────────────────────────────────────────────────────────────────────────
-# D. Retrieval ranking uses self_similarity
+# D. Retrieval ranking rewards self-relevant memories (via MemoryValue)
 # ────────────────────────────────────────────────────────────────────────
 
 def test_retrieval_ranks_self_consistent_memory_higher(tmpdb):
-    """With same mood + recency + content overlap, the row whose stored
-    embedding matches the agent's current μ_self should rank higher."""
+    """Self-relevant memories rank higher.
+
+    paper2 (multi-factor-eval branch): retrieval no longer scores the
+    embedding↔μ_self cosine directly; the self signal is carried by the
+    shared MemoryValue's `self_relevance` factor (the stored
+    `self_relevance_score`). With mood / recency / content overlap held
+    equal, the higher-self-relevance row must rank first under a pure-V
+    weighting.
+    """
     from borge.memory.store import MemoryStore
     from borge.memory.retrieval import MemoryRetrieval
-    from borge.values.self_model import SelfModel, embed
 
     store = MemoryStore(tmpdb)
-    # Build a stable self model around "research learning curiosity"
-    self_model = SelfModel.from_seed("research learning curiosity science")
-    for _ in range(15):
-        self_model.update_from_text("research learning and curiosity drive me")
-
     base = {
         "session_id": "s",
         "role": "user",
@@ -179,28 +180,22 @@ def test_retrieval_ranks_self_consistent_memory_higher(tmpdb):
         "emotional_valence": 0.0,
         "emotional_arousal": 0.5,
         "importance_score": 0.5,
-        "self_relevance_score": 0.5,
     }
-    # Self-aligned memory
-    aligned = {**base, "id": "m-aligned",
-               "embedding": embed("research and learning is what i live for")}
-    # Self-distant memory
-    distant = {**base, "id": "m-distant",
-               "embedding": embed("pickles in the refrigerator")}
+    # Self-relevant vs. self-distant — differ only in self_relevance_score.
+    aligned = {**base, "id": "m-aligned", "self_relevance_score": 0.9}
+    distant = {**base, "id": "m-distant", "self_relevance_score": 0.1}
     store.insert(aligned)
     store.insert(distant)
 
-    ret = MemoryRetrieval(tmpdb, store=store, self_model=self_model)
+    ret = MemoryRetrieval(tmpdb, store=store)
     results = ret.recall(
         query="",
         current_valence=0.0, current_arousal=0.5,
         k=2,
-        mood_weight=0.0, recency_weight=0.0,
-        relevance_weight=0.0, f_weight=0.0,
-        self_weight=1.0,
+        w_v=1.0, w_rel=0.0, w_mood=0.0, w_rec=0.0,
     )
     assert results[0]["id"] == "m-aligned", (
-        f"self-aligned memory should rank first; got {[r['id'] for r in results]}"
+        f"self-relevant memory should rank first; got {[r['id'] for r in results]}"
     )
 
 

@@ -238,14 +238,15 @@ class BorgeAgent:
 
     def recall(self, query: str = "", k: int = 5) -> list[dict]:
         """
-        Mood-congruent recall against persisted memories.
+        Value-driven, mood-congruent recall against persisted memories.
 
         Ranks every row in `borge_memories` by a weighted combination of:
+          • the shared MemoryValue over the row's stored factors
+            (query-agnostic durable worth: self/emotion/usage/reliability)
+          • token-overlap relevance to `query` (query-dependent signal)
           • Gaussian similarity between (V, A) at encoding vs. the agent's
             current emotional state
           • recency (~weekly soft half-life)
-          • token-overlap relevance to `query`
-          • positive delta_f bonus (memories formed during progress)
 
         Each returned memory's `retrieval_count` is bumped, so frequent
         recall makes a memory harder to forget (closes the retrieval ↔

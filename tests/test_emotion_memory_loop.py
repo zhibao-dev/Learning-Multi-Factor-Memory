@@ -194,9 +194,10 @@ def test_mood_congruent_retrieval_ranks_near_current_emotion_first(tmpdb):
         current_valence=-0.65,
         current_arousal=0.78,
         k=3,
-        mood_weight=1.0,
-        recency_weight=0.0,
-        relevance_weight=0.0,
+        w_mood=1.0,
+        w_v=0.0,
+        w_rel=0.0,
+        w_rec=0.0,
     )
     assert len(results) == 3
     assert results[0]["id"] == "m-frustrated", (
