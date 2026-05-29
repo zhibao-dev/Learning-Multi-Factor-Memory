@@ -73,6 +73,27 @@ class MemoryValue:
                                     for f in self.FACTORS})
 
 
+# Out-of-box weights: the full-479 LongMemEval blind fit
+# (results/lme_blind_forgetting_full.json -> learned_weights_blind_mean),
+# extended to all 7 factors. goal/value_alignment/task_utility were inert
+# (0) in that fit; usage gets a small positive prior so frequent recall
+# still resists forgetting. Override via config 'borge.memory.value.weights'.
+SHIPPED_DEFAULT = {
+    "emotion":         0.55,
+    "goal_relevance":  0.00,
+    "value_alignment": 0.00,
+    "self_relevance":  0.23,
+    "task_utility":    0.00,
+    "reliability":     0.64,
+    "usage":           0.10,
+}
+
+
+def default_memory_value(override: dict | None = None) -> "MemoryValue":
+    """MemoryValue with shipped learned-default weights, merged over by `override`."""
+    return MemoryValue(weights={**SHIPPED_DEFAULT, **(override or {})})
+
+
 # ── Factor extraction + value-driven memory dynamics ─────────────────────
 
 def memory_factors(row: dict[str, Any]) -> dict[str, float]:
