@@ -36,6 +36,7 @@ from .memory.forgetting import ForgettingEngine
 from .memory.knowledge_graph import KnowledgeGraph
 from .memory.retrieval import MemoryRetrieval
 from .memory.store import MemoryStore
+from .memory.value import default_memory_value
 from .meta.free_energy import ExtendedFreeEnergy
 from .meta.meta_agent import MetaAgent
 from .values.self_model import SelfModel
@@ -100,9 +101,22 @@ class BorgeAgent:
         self._afe = ActiveInferenceEngine(self.beliefs, self.emotion)
 
         # ── Memory infrastructure ─────────────────────────────────────────
+        # paper2: ONE learned MemoryValue drives encode + forget + retrieve.
+        # Built once here (shipped defaults, optionally overridden via config)
+        # and injected — same instance — into all three memory engines.
+        self._memory_value = default_memory_value(
+            self._cfg("memory.value.weights", None)
+        )
+        # Value centroid for the consolidation pipeline's value_alignment
+        # factor: mean of the SOUL value-descriptor embeddings. Reuses the
+        # same descriptor text the self-model seed uses (id + description)
+        # and the SelfModel's embedder so it shares the embedding space.
+        value_centroid = self._compute_value_centroid()
+
         self._kg = KnowledgeGraph(self._db_path)
         self._forgetting = ForgettingEngine(
             prune_threshold=self._cfg("memory.forgetting.prune_threshold", 2.0),
+            memory_value=self._memory_value,
         )
         self._memory_store = MemoryStore(self._db_path)
         self._consolidation = MemoryConsolidationPipeline(
@@ -112,11 +126,14 @@ class BorgeAgent:
             forgetting_engine=self._forgetting,
             memory_store=self._memory_store,
             self_model=self.self_model,
+            value_centroid=value_centroid,
+            memory_value=self._memory_value,
         )
         self._retrieval = MemoryRetrieval(
             self._db_path,
             store=self._memory_store,
             self_model=self.self_model,
+            memory_value=self._memory_value,
         )
 
         # ── Session state ─────────────────────────────────────────────────
@@ -277,6 +294,30 @@ class BorgeAgent:
                 return default
             node = node.get(p, default)
         return node if node is not None else default
+
+    def _compute_value_centroid(self) -> Optional[list[float]]:
+        """
+        Element-wise mean of the SOUL value-descriptor embeddings, computed
+        once for the consolidation pipeline's value_alignment factor.
+
+        Each descriptor is embedded via the SelfModel's embedder (same space
+        as memory content), using the same `id + description` text the
+        self-model seed uses. Returns None when there's no self model or no
+        value descriptors to embed.
+        """
+        if self.self_model is None:
+            return None
+        descriptors = [
+            f"{v.id} {v.description}".strip()
+            for v in (self.values.primary_values or [])
+        ]
+        descriptors = [d for d in descriptors if d]
+        if not descriptors:
+            return None
+        embeddings = [self.self_model._embed(d) for d in descriptors]
+        n = len(embeddings)
+        dim = len(embeddings[0])
+        return [sum(e[i] for e in embeddings) / n for i in range(dim)]
 
     def _resolve_db_path(self) -> str:
         home = os.path.expanduser(os.environ.get("BORGE_HOME", "~/.borge"))
