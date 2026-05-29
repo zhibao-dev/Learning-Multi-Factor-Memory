@@ -9,13 +9,12 @@ Forgetting is tiered by encoding depth:
   SEMANTIC + forget_score > COMPRESS_THRESHOLD → compress to entity tag only
   SCHEMATIC / META                            → never delete, only compress
 
-The score formula factors emotion AND self-relevance explicitly:
-  score = recency_decay
-        × usage_penalty
-        × importance_resistance
-        × emotion_resistance     ← vivid memories resist forgetting
-        × self_resistance        ← self-relevant memories resist forgetting
-                                   (gated by self-precision π_self at encoding)
+The score is driven by the single multi-factor MemoryValue (paper2):
+  score = recency_decay × usage_penalty × 1/(1 + β·V(m))
+where V(m) = Σ wᵢ·factorᵢ over the seven memory factors (emotion,
+goal/value/self relevance, task utility, reliability, usage). High-value
+memories resist forgetting. This replaces paper1's hand-tuned
+product-of-resistances; see borge/memory/value.py::value_forget_score.
 """
 
 from __future__ import annotations
@@ -24,13 +23,19 @@ import logging
 import sqlite3
 from datetime import datetime
 
+from .value import MemoryValue, default_memory_value, value_forget_score
+
 log = logging.getLogger(__name__)
 
 PRUNE_THRESHOLD    = 2.0   # SHALLOW entries above this are deleted
 COMPRESS_THRESHOLD = 3.0   # SEMANTIC entries above this are compressed
 
-EMOTION_RESISTANCE_ALPHA = 2.0  # how strongly |V|·A resists forgetting
-SELF_RESISTANCE_LAMBDA   = 2.0  # how strongly self-relevance resists forgetting
+# Paper1 self-FEP resistance gains. No longer used by the value-driven
+# forget score on this branch, but kept as module attributes because the
+# paper1 ablation script experiments/e3_pi_self_ablation.py monkeypatches
+# SELF_RESISTANCE_LAMBDA on this module.
+EMOTION_RESISTANCE_ALPHA = 2.0  # how strongly |V|·A resisted forgetting (paper1)
+SELF_RESISTANCE_LAMBDA   = 2.0  # how strongly self-relevance resisted forgetting (paper1)
 
 # Borge DB columns added to existing Hermes messages table
 BORGE_COLUMNS_SQL = """
@@ -57,9 +62,13 @@ class ForgettingEngine:
         self,
         prune_threshold: float = PRUNE_THRESHOLD,
         compress_threshold: float = COMPRESS_THRESHOLD,
+        memory_value: MemoryValue | None = None,
+        beta: float = 8.0,
     ):
         self.prune_threshold = prune_threshold
         self.compress_threshold = compress_threshold
+        self.memory_value = memory_value or default_memory_value()
+        self.beta = beta
 
     def run_forgetting_pass(self, db_path: str) -> dict:
         """
@@ -89,17 +98,27 @@ class ForgettingEngine:
                 else:
                     where_clause = ""
 
-                # Probe whether self_relevance_score column exists on this
-                # table (Hermes `messages` won't have it; standalone
-                # `borge_memories` will).
+                # Probe which value-factor columns exist on this table.
+                # Hermes `messages` has none of them; standalone
+                # `borge_memories` has them all. value_forget_score reads
+                # each via dict.get, so absent columns degrade gracefully.
                 cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
-                has_sr = "self_relevance_score" in cols
-                sr_select = ", self_relevance_score" if has_sr else ""
+                factor_cols = [
+                    c for c in (
+                        "self_relevance_score",
+                        "goal_relevance",
+                        "value_alignment",
+                        "task_utility",
+                        "reliability",
+                    )
+                    if c in cols
+                ]
+                factor_select = (", " + ", ".join(factor_cols)) if factor_cols else ""
 
                 select_sql = f"""
                     SELECT id, timestamp, last_retrieved, retrieval_count,
                            importance_score, encoding_depth, content,
-                           emotional_valence, emotional_arousal{sr_select}
+                           emotional_valence, emotional_arousal{factor_select}
                     FROM {table}
                     {where_clause}
                 """
@@ -108,7 +127,7 @@ class ForgettingEngine:
                 now = datetime.now()
 
                 for row in rows:
-                    score = self._compute_score(row, now)
+                    score = self._compute_score(dict(row), now)
                     depth = row["encoding_depth"] or 1
 
                     if depth <= 1 and score > self.prune_threshold:
@@ -133,51 +152,18 @@ class ForgettingEngine:
 
         return {"deleted": deleted, "compressed": compressed}
 
-    @staticmethod
-    def _compute_score(row: sqlite3.Row, now: datetime) -> float:
+    def _compute_score(self, row: dict, now: datetime) -> float:
         """
-        Ebbinghaus-inspired forget score WITH emotion factor.
+        Value-driven forget score (higher = more likely forgotten).
 
-        Higher = more likely to be forgotten.
-        Resisted by: recent retrieval, high importance, and emotional
-        intensity (|V|·A).
+            score = recency_decay × usage_penalty × 1/(1 + β·V(m))
+
+        V(m) is the single multi-factor MemoryValue; high-value memories
+        (vivid, self-relevant, reliable, frequently used, …) resist
+        forgetting. Rows missing factor columns (Hermes `messages`)
+        degrade gracefully — memory_factors reads each via dict.get.
         """
-        ts_str = row["last_retrieved"] or row["timestamp"]
-        try:
-            ts = datetime.fromisoformat(ts_str)
-        except (ValueError, TypeError):
-            ts = now
-
-        days_since    = max(0.0, (now - ts).total_seconds() / 86400.0)
-        retrieval_cnt = row["retrieval_count"] or 0
-        importance    = row["importance_score"] or 0.5
-
-        # Emotion: |V| · A. Range [0, 1]. Vivid memories → strong resistance.
-        try:
-            valence = float(row["emotional_valence"] or 0.0)
-            arousal = float(row["emotional_arousal"] or 0.5)
-        except (TypeError, ValueError, KeyError):
-            valence, arousal = 0.0, 0.5
-        emotion_intensity  = abs(valence) * arousal
-        emotion_resistance = 1.0 / (1.0 + EMOTION_RESISTANCE_ALPHA * emotion_intensity)
-
-        # Self-relevance: sr ∈ [0, 1]. Self-relevant memories resist forgetting.
-        # Hermes `messages` table has no such column → defaults to neutral 0.5.
-        try:
-            self_relevance = float(row["self_relevance_score"])
-        except (IndexError, KeyError, TypeError, ValueError):
-            self_relevance = 0.5
-        self_resistance = 1.0 / (1.0 + SELF_RESISTANCE_LAMBDA * self_relevance)
-
-        recency_decay    = days_since ** 0.7
-        usage_penalty    = 1.0 / (1.0 + retrieval_cnt)
-        importance_res   = 1.0 / (1.0 + importance)
-
-        return (recency_decay
-                * usage_penalty
-                * importance_res
-                * emotion_resistance
-                * self_resistance)
+        return value_forget_score(row, self.memory_value, now, beta=self.beta)
 
     @staticmethod
     def _ensure_columns(conn: sqlite3.Connection) -> None:
