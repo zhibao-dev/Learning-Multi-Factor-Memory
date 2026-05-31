@@ -36,6 +36,12 @@ from .ingest import MemoryRecord
 
 _NLI_MODEL_NAME = "cross-encoder/nli-deberta-v3-small"
 
+# Records with fewer whitespace tokens than this are dropped before pairing:
+# ultra-short chatter ("ok", "haha") can't carry a contradiction and only
+# floods the candidate list. Raw token count, NOT a value score — the value
+# score does not separate bloat ("haha" scores higher than real content).
+MIN_TOKENS = 4
+
 # Module-level cache so the cross-encoder loads its weights only once across
 # repeated find_contradictions calls (e.g. per-tier audit runs, tests).
 _nli_model = None
@@ -102,6 +108,9 @@ def find_contradictions(
     *older* timestamp. These are CANDIDATES for human review — a product
     feature, not a paper2-backed result; nothing is auto-resolved or deleted.
 
+    Only same-role pairs are compared (assertions, not responses); ultra-short
+    memories (<MIN_TOKENS tokens) are skipped.
+
     ``embedder`` defaults to a fresh ``SBertEmbedder``. ``sim_threshold`` gates
     the same-topic embedding prefilter; ``nli_threshold`` gates the local NLI
     contradiction probability; ``max_pairs`` caps how many prefiltered pairs
@@ -109,15 +118,22 @@ def find_contradictions(
     """
     if embedder is None:
         embedder = SBertEmbedder()
+
+    # ── Drop ultra-short records before pairing (raw token count) ──
+    records = [r for r in records if len(r.text.split()) >= MIN_TOKENS]
     if len(records) < 2:
         return []
 
     embs = [embedder(r.text) for r in records]
 
     # ── Prefilter: same-topic i<j pairs by cosine, sorted desc, capped ──
+    # Same-role only: a contradiction is conflicting *assertions*, so an
+    # assistant turn responding to a topic is not a counter-assertion.
     prefiltered: list[tuple[float, int, int]] = []
     for i in range(len(records)):
         for j in range(i + 1, len(records)):
+            if records[i].role != records[j].role:
+                continue
             sim = cosine(embs[i], embs[j])
             if sim >= sim_threshold:
                 prefiltered.append((sim, i, j))
