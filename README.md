@@ -125,6 +125,102 @@ Done. The cognitive layer is live. No config required to start.
 
 ---
 
+## 🧹 borge-audit — Memory Hygiene Audit (CLI)
+
+> **Available on the `multi-factor-eval-business` branch.** A self-hosted CLI that audits an agent's memory store for **bloat**, **contradictions / pollution**, **duplicates**, and **stale** entries, then estimates the tokens/$ you'd save by forgetting the dead weight. It **runs entirely in your own infrastructure, makes no external API calls, and never deletes anything** — it is read-only and dry-run, emitting recommendations plus a reversible forget-list you apply at your discretion.
+
+### Why it exists
+
+Long-running agents hit two failure modes:
+
+- **Memory explosion** — the store grows unbounded → token cost, latency, and retrieval quality all degrade.
+- **Memory pollution** — a wrong / stale / contradictory memory poisons every subsequent turn.
+
+`borge-audit` finds both and tells you what to forget. You decide.
+
+### Install (audit extras)
+
+The audit needs a local sentence embedder + a local NLI model. Both run **offline after first download** — no memory data ever leaves your machine.
+
+```bash
+pip install -e ".[anthropic]"                 # base install
+pip install sentence-transformers tiktoken    # audit: local SBert + NLI + token counting
+```
+
+### 1. Prepare your memory dump (canonical JSON)
+
+Export your agent's memories to a JSON list; each record:
+
+```json
+[
+  {"id": "m-001", "text": "I'm allergic to penicillin.",
+   "timestamp": "2026-03-04T10:00:00Z", "role": "user",
+   "metadata": {"retrieval_count": 6}}
+]
+```
+
+| field | required | notes |
+|-------|----------|-------|
+| `id` | yes | unique id |
+| `text` | yes | the memory content |
+| `timestamp` | yes | ISO-8601; drives stale + likely-stale detection |
+| `role` | no (default `user`) | `user` / `assistant` / `system`; user-stated facts score more reliable |
+| `metadata.retrieval_count` | no | how often recalled — **the strongest bloat signal** (never-recalled ≈ bloat) |
+
+> Every store (Mem0 / Zep / pgvector / custom) has its own schema — write a ~20-line adapter to map your export to this canonical shape.
+
+### 2. Run
+
+```bash
+borge-audit memories.json                     # → memories.json.audit.md  +  memories.json.audit.md.forget.json
+borge-audit memories.json -o report.md        # custom report path
+borge-audit memories.json --budget 0.3        # keep ~30% (more aggressive forgetting)
+borge-audit memories.json --soul SOUL.md      # also score value-alignment vs your SOUL values
+borge-audit memories.json --retrieval-freq 30 # assumed re-injections/month for the $ estimate
+python -m borge.audit memories.json           # equivalent if the console script isn't on PATH
+```
+
+| flag | default | meaning |
+|------|---------|---------|
+| `--budget` | `0.5` | target keep-fraction for the headline forget set (lower = forget more) |
+| `--soul` | – | SOUL/values file; enables the value-alignment factor |
+| `--retrieval-freq` | `30` | assumed re-injections/month (drives the $ savings estimate) |
+| `-o`, `--output` | `<dump>.audit.md` | report path; the forget list goes to `<output>.forget.json` |
+
+### 3. Read the report
+
+The markdown report has five sections:
+
+1. **Executive Summary** — store-reduction %, estimated tokens/$ saved per month, # contradiction candidates, # duplicate clusters / stale entries.
+2. **Bloat / Forget Candidates** — memories ranked low→high value, in safe / moderate / aggressive tiers; each row tagged with its `role`.
+3. **Pollution** — contradiction candidate pairs (for human review), near-duplicate clusters, stale-by-age list.
+4. **Safety** — confirms the run was read-only / dry-run and explains the reversible `*.forget.json`.
+5. **Methodology** — how every number was computed, plus honest caveats and the savings assumptions.
+
+Alongside it, `<output>.forget.json` is a **dry-run, reversible** list of forget-candidate ids. Nothing is deleted — you apply it (or not) yourself.
+
+### Honest scope — read before you trust a number
+
+- **Dry-run only.** `borge-audit` never modifies or deletes your dump or your store. It recommends; you act.
+- **Bloat ranking is driven by usage + provenance, not deep semantics.** Never-retrieved, low-reliability memories rank as bloat. On dumps mixing user + assistant turns, **authorship strongly drives the order** (assistant content gets a lower reliability prior) — review assistant rows on their own merits, not by rank alone.
+- **Contradiction detection is a product feature for human review, not a proven result.** A local NLI model flags *candidate* conflicts and can over-fire on name/entity slots; a human resolves each. Nothing is auto-resolved, and ids in a contradiction pair are deferred out of the forget list.
+- **Forgetting is informed by the BorgeAgent multi-factor value model** (validated on LongMemEval), **not guaranteed** on your data — treat the tiers as a prioritised review queue.
+- **Savings are an estimate** under an explicit assumed retrieval frequency (shown in the report). Calibrate with your real query log.
+- **First run downloads two local models** (a few hundred MB) to your Hugging Face cache. After that, run fully offline and faster:
+  ```bash
+  HF_HUB_OFFLINE=1 borge-audit memories.json
+  ```
+
+### Try it on the bundled fixture
+
+```bash
+borge-audit tests/fixtures/audit_dump.json -o /tmp/demo.audit.md
+```
+
+A synthetic 19-record dump (mixed user + assistant turns) with planted bloat / a contradiction / a duplicate / stale entries — run it to see exactly what each section surfaces.
+
+---
+
 ## ✨ Why Borge?
 
 <table>
