@@ -1,0 +1,120 @@
+[
+  {
+    "id": "bloat-1",
+    "text": "ok",
+    "timestamp": "2026-05-28T09:14:02Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "bloat-2",
+    "text": "thanks",
+    "timestamp": "2026-05-28T09:15:40Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "bloat-3",
+    "text": "sounds good",
+    "timestamp": "2026-05-29T18:02:11Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "bloat-4",
+    "text": "haha",
+    "timestamp": "2026-05-30T11:47:55Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "contra-A",
+    "text": "I'm a strict vegetarian, I never eat meat.",
+    "timestamp": "2026-03-04T13:22:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "contra-B",
+    "text": "I had an amazing steak last night, so good.",
+    "timestamp": "2026-04-19T21:08:30Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "dup-A",
+    "text": "My project deadline is March 15.",
+    "timestamp": "2026-02-20T10:00:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "dup-B",
+    "text": "The project deadline is March 15th.",
+    "timestamp": "2026-02-21T16:33:12Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "stale-1",
+    "text": "I'm using Django 3.2 for the backend on this project.",
+    "timestamp": "2025-04-12T08:45:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "stale-2",
+    "text": "My current phone number is 555-0142.",
+    "timestamp": "2025-04-26T14:19:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-1",
+    "text": "I prefer Python over Java for most of my work.",
+    "timestamp": "2026-05-10T09:30:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-2",
+    "text": "My daughter's name is Mia.",
+    "timestamp": "2026-04-02T19:12:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-3",
+    "text": "I work in the Nanjing office.",
+    "timestamp": "2026-05-21T11:05:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-4",
+    "text": "I'm allergic to penicillin.",
+    "timestamp": "2026-03-30T08:00:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-5",
+    "text": "My manager's name is Sarah and we meet on Mondays.",
+    "timestamp": "2026-05-04T15:45:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "keep-6",
+    "text": "I'm learning to play the cello this year.",
+    "timestamp": "2026-04-15T20:30:00Z",
+    "role": "user",
+    "metadata": {}
+  },
+  {
+    "id": "malformed-1",
+    "timestamp": "2026-05-01T12:00:00Z",
+    "role": "user",
+    "metadata": {}
+  }
+]
