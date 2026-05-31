@@ -66,7 +66,18 @@ def build_audit(
 
     chosen_name = _pick_tier(ranking["tiers"], budget)
     chosen_tier = ranking["tiers"][chosen_name]
-    forget_ids = chosen_tier["forget_ids"]
+
+    # Defer any id that is also a contradiction candidate to human review
+    # (the Pollution section already flags it). Otherwise the report could
+    # recommend forgetting one member of a pair while flagging the other as
+    # likely-stale — contradictory advice on the same pair.
+    contradiction_ids = {
+        cid for p in contradictions for cid in (p.a_id, p.b_id)
+    }
+    forget_ids = [
+        i for i in chosen_tier["forget_ids"] if i not in contradiction_ids
+    ]
+    n_deferred = len(chosen_tier["forget_ids"]) - len(forget_ids)
     forget_texts = [by_id[i].text for i in forget_ids]
 
     savings = estimate_savings(
@@ -84,6 +95,7 @@ def build_audit(
         chosen_name=chosen_name,
         chosen_tier=chosen_tier,
         forget_ids=forget_ids,
+        n_deferred=n_deferred,
         contradictions=contradictions,
         duplicates=duplicates,
         stale_ids=stale_ids,
@@ -114,6 +126,7 @@ def _render_markdown(
     chosen_name,
     chosen_tier,
     forget_ids,
+    n_deferred,
     contradictions,
     duplicates,
     stale_ids,
@@ -165,19 +178,28 @@ def _render_markdown(
         lines.append(
             f"| {name}{marker} | {tier['keep_frac']:.0%} | {len(tier['forget_ids'])} |"
         )
+    lines.append("")
+    if n_deferred:
+        lines.append(
+            f"{n_deferred} memory(ies) that appear as contradiction candidates "
+            "were excluded from this forget list and deferred to the Pollution "
+            "review below."
+        )
+        lines.append("")
     lines += [
-        "",
         f"Top forget candidates in the chosen `{chosen_name}` tier (lowest value first):",
         "",
-        "| Memory id | Value | Text |",
-        "| --- | --- | --- |",
+        "| Memory id | Role | Value | Text |",
+        "| --- | --- | --- | --- |",
     ]
     value_by_id = ranking["value_by_id"]
     for mid in forget_ids[:10]:
         rec = by_id[mid]
-        lines.append(f"| `{mid}` | {value_by_id[mid]:.3f} | {_trunc(rec.text)} |")
+        lines.append(
+            f"| `{mid}` | {rec.role} | {value_by_id[mid]:.3f} | {_trunc(rec.text)} |"
+        )
     if not forget_ids:
-        lines.append("| _(none)_ | | |")
+        lines.append("| _(none)_ | | | |")
     lines.append("")
 
     # ── 3. Pollution ──
@@ -207,6 +229,10 @@ def _render_markdown(
     else:
         lines.append("_No candidate contradictions surfaced._")
     lines += [
+        "",
+        "Note: the NLI detector can over-fire on entity/name slots (e.g. two "
+        "different names in the same role) — verify each candidate; a high score "
+        "is not proof of a real conflict.",
         "",
         "### Near-duplicate clusters",
         "",
@@ -250,6 +276,12 @@ def _render_markdown(
         "(seven interpretable factors; weights from the LongMemEval blind fit). The "
         "model is validated on LongMemEval but its ranking is **not guaranteed** on "
         "your specific data — use the tiers as a prioritised review queue.",
+        "",
+        "Assistant-authored memories receive a lower reliability prior (0.4 vs 0.7 "
+        "for user-authored), and reliability is the most heavily weighted value "
+        "factor — so on dumps mixing user and assistant turns, authorship is a "
+        "strong driver of the forget order. Review assistant-authored rows on their "
+        "own merits rather than by rank alone.",
         "",
         "**Contradictions.** A local NLI cross-encoder flags conflicting assertions. "
         "This is a **product feature for human review**, not a paper2-proven result; "
