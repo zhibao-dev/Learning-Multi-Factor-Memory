@@ -47,6 +47,7 @@ dev = [
 
 [project.scripts]
 borge = "borge.cli:main"
+borge-audit = "borge.audit.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/zhibao-dev/BorgeAgent"
