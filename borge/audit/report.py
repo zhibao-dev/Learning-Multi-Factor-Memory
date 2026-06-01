@@ -44,6 +44,7 @@ def build_audit(
     retrieval_freq: float = 30.0,
     price_per_1k: float = 0.003,
     md_split: str = "auto",
+    weights: dict | None = None,
 ) -> dict:
     """Run the full audit pipeline and render a markdown report + forget script.
 
@@ -62,7 +63,7 @@ def build_audit(
     embedder = SBertEmbedder()
 
     factors = annotate_dump(records, embedder=embedder, soul_centroid=soul_centroid)
-    mv = default_memory_value()
+    mv = default_memory_value(weights)
     ranking = forget_ranking(records, factors, mv)
 
     contradictions = find_contradictions(records, embedder=embedder)
@@ -105,6 +106,7 @@ def build_audit(
         duplicates=duplicates,
         stale_ids=stale_ids,
         savings=savings,
+        weights_used=mv.weights,
     )
 
     forget_script = {
@@ -136,6 +138,7 @@ def _render_markdown(
     duplicates,
     stale_ids,
     savings,
+    weights_used,
 ) -> str:
     n = len(records)
     n_forget = len(forget_ids)
@@ -281,6 +284,13 @@ def _render_markdown(
         "(seven interpretable factors; weights from the LongMemEval blind fit). The "
         "model is validated on LongMemEval but its ranking is **not guaranteed** on "
         "your specific data — use the tiers as a prioritised review queue.",
+        "",
+        "Weights used: "
+        + ", ".join(f"{f}={w:g}" for f, w in weights_used.items())
+        + ".",
+        "",
+        "Weights are tunable per your business — the defaults are fit to a general "
+        "benchmark and may not match your scenario.",
         "",
         "Assistant-authored memories receive a lower reliability prior (0.4 vs 0.7 "
         "for user-authored), and reliability is the most heavily weighted value "

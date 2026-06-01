@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="target keep-fraction for the headline forget set (default 0.5)")
     parser.add_argument("--retrieval-freq", type=float, default=30.0,
                         help="assumed re-injections/month for the savings estimate (default 30)")
+    parser.add_argument("--weights", help="path to a JSON file of factor weights to override the defaults")
     parser.add_argument("-o", "--output", help="report markdown path (default <dump>.audit.md)")
     args = parser.parse_args(argv)
 
@@ -49,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     soul_centroid = _load_soul_centroid(args.soul) if args.soul else None
+    weights = json.loads(Path(args.weights).read_text(encoding="utf-8")) if args.weights else None
 
     result = build_audit(
         args.dump,
@@ -57,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         budget=args.budget,
         retrieval_freq=args.retrieval_freq,
         md_split=args.md_split,
+        weights=weights,
     )
 
     out_md = Path(args.output) if args.output else Path(str(args.dump) + ".audit.md")
