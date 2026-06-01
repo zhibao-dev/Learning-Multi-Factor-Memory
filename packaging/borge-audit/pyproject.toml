@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "borge-audit"
+version = "0.1.0"
+description = "Self-hosted memory-hygiene audit for LLM agents — bloat / contradiction / duplicate / stale detection, dry-run, runs in your own infra."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [{name = "Zhibao Chen"}]
+dependencies = [
+  "sentence-transformers>=3.0",
+  "tiktoken>=0.5",
+]
+
+[project.scripts]
+borge-audit = "borge.audit.__main__:main"
+
+# src/ is STAGED by build_wheel.sh (copied fresh from the research source each
+# build) and contains ONLY the thin audit slice — value model + embedder +
+# signal extractor + audit/. The full agent and paper1 runtime are never staged,
+# so they cannot ship in the wheel. src/ + dist/ are gitignored.
+[tool.setuptools.packages.find]
+where = ["src"]

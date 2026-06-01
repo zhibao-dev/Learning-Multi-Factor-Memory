@@ -53,3 +53,9 @@ results/lme_factor_cache.jsonl
 
 # QA task prompts (contain LongMemEval turn text; derived, regenerable)
 results/lme_qa_tasks.jsonl
+
+# borge-audit standalone wheel build (staged fresh each build; wheel is private)
+packaging/borge-audit/src/
+packaging/borge-audit/dist/
+packaging/borge-audit/build/
+packaging/borge-audit/*.egg-info/
