@@ -53,7 +53,8 @@ def build_audit(
     deletes or modifies anything. ``budget`` selects the headline forget set by
     picking the tier whose keep-fraction is closest to it.
     """
-    if str(dump_path).lower().endswith(".md"):
+    is_markdown = str(dump_path).lower().endswith(".md")
+    if is_markdown:
         records = load_markdown_dump(dump_path, split=md_split)
     else:
         records = load_dump(dump_path)
@@ -107,6 +108,7 @@ def build_audit(
         stale_ids=stale_ids,
         savings=savings,
         weights_used=mv.weights,
+        is_markdown=is_markdown,
     )
 
     forget_script = {
@@ -139,6 +141,7 @@ def _render_markdown(
     stale_ids,
     savings,
     weights_used,
+    is_markdown=False,
 ) -> str:
     n = len(records)
     n_forget = len(forget_ids)
@@ -285,6 +288,15 @@ def _render_markdown(
         "model is validated on LongMemEval but its ranking is **not guaranteed** on "
         "your specific data — use the tiers as a prioritised review queue.",
         "",
+    ]
+    if is_markdown:
+        lines += [
+            "Note: markdown sources usually lack per-item usage counts, so the bloat "
+            "ranking is best-effort; contradiction, duplicate, and stale detection are "
+            "unaffected.",
+            "",
+        ]
+    lines += [
         "Weights used: "
         + ", ".join(f"{f}={w:g}" for f, w in weights_used.items())
         + ".",
