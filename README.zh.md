@@ -17,7 +17,7 @@
 <p>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License: MIT"></a>
-  <a href="#-生产级工程"><img src="https://img.shields.io/badge/tests-11%2F11_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
+  <a href="#-生产级工程"><img src="https://img.shields.io/badge/tests-98%2F98_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
   <a href="https://en.wikipedia.org/wiki/Free_energy_principle"><img src="https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6" alt="Theory: Friston FEP"></a>
   <br>
   <a href="#接入任意模型"><img src="https://img.shields.io/badge/Models-Anthropic_%7C_OpenAI_%7C_Kimi_%7C_MiniMax_%7C_DeepSeek_%7C_Zhipu_%7C_Ollama_%7C_vLLM-f59e0b" alt="Multi-model"></a>
@@ -122,6 +122,102 @@ hermes
 > ```bash
 > python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('你好', []))"
 > ```
+
+---
+
+## 🧹 borge-audit —— 记忆卫生审计（CLI）
+
+> **在 `multi-factor-eval-business` 分支提供。** 一个自托管 CLI，审计 agent 的记忆库,找出**臃肿**、**矛盾/污染**、**重复**、**过期**条目,并估算遗忘冗余能省的 token/$。它**完全在你自己的基础设施里运行、不调任何外部 API、绝不删除任何东西** —— 只读、dry-run,只产出建议 + 一份可回滚的遗忘清单,删不删你自己定。
+
+### 为什么需要它
+
+长期运行的 agent 撞上两个失效模式:
+
+- **记忆爆炸** —— 记忆库无界增长 → token 成本、延迟、检索质量全面下降。
+- **记忆污染** —— 一条错误/过期/矛盾的记忆毒化之后每一轮。
+
+`borge-audit` 把两者都找出来,告诉你该忘什么。你来决定。
+
+### 安装(审计附加依赖)
+
+审计需要一个本地句向量器 + 一个本地 NLI 模型。两者**首次下载后离线运行** —— 记忆数据永不离开你的机器。
+
+```bash
+pip install -e ".[anthropic]"                 # 基础安装
+pip install sentence-transformers tiktoken    # 审计:本地 SBert + NLI + token 计数
+```
+
+### 1. 准备记忆 dump(标准 JSON)
+
+把 agent 的记忆导出成一个 JSON 列表,每条:
+
+```json
+[
+  {"id": "m-001", "text": "我对青霉素过敏。",
+   "timestamp": "2026-03-04T10:00:00Z", "role": "user",
+   "metadata": {"retrieval_count": 6}}
+]
+```
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `id` | 是 | 唯一 id |
+| `text` | 是 | 记忆内容 |
+| `timestamp` | 是 | ISO-8601;驱动过期 + likely-stale 判定 |
+| `role` | 否(默认 `user`) | `user` / `assistant` / `system`;用户陈述的事实 reliability 更高 |
+| `metadata.retrieval_count` | 否 | 被召回次数 —— **最强的臃肿信号**(从不召回 ≈ 臃肿) |
+
+> 每家存储(Mem0 / Zep / pgvector / 自研)schema 都不同 —— 写一个 ~20 行 adapter 把你的导出映射成这个标准结构。
+
+### 2. 运行
+
+```bash
+borge-audit memories.json                     # → memories.json.audit.md  +  memories.json.audit.md.forget.json
+borge-audit memories.json -o report.md        # 自定义报告路径
+borge-audit memories.json --budget 0.3        # 保留约 30%(更激进的遗忘)
+borge-audit memories.json --soul SOUL.md      # 额外按你的 SOUL 价值观打 value-alignment 分
+borge-audit memories.json --retrieval-freq 30 # $ 估算假定的每月重注入次数
+python -m borge.audit memories.json           # console script 不在 PATH 时的等价入口
+```
+
+| flag | 默认 | 含义 |
+|------|------|------|
+| `--budget` | `0.5` | headline 遗忘集的目标保留比例(越低=忘得越多) |
+| `--soul` | – | SOUL/价值观文件;启用 value-alignment 因子 |
+| `--retrieval-freq` | `30` | 假定每月重注入次数(驱动 $ 估算) |
+| `-o`, `--output` | `<dump>.audit.md` | 报告路径;遗忘清单写到 `<output>.forget.json` |
+
+### 3. 读报告
+
+markdown 报告含 5 段:
+
+1. **执行摘要** —— 存储缩减 %、预计每月省 token/$、矛盾候选数、重复簇/过期数。
+2. **臃肿/遗忘候选** —— 记忆按价值 低→高 排序,分 安全/中等/激进 档;每行标注 `role`。
+3. **污染** —— 矛盾候选对(供人工复核)、近重复簇、按龄过期列表。
+4. **安全** —— 确认本次只读/dry-run,并解释可回滚的 `*.forget.json`。
+5. **方法论** —— 每个数字怎么算的,加诚实 caveat 和省 $ 假设。
+
+外加 `<output>.forget.json` —— 一份 **dry-run、可回滚**的遗忘候选 id 列表。什么都没删 —— 你自己决定要不要 apply。
+
+### 诚实边界 —— 信任数字前先读
+
+- **只 dry-run。** `borge-audit` 绝不修改或删除你的 dump 或存储。它给建议,你来动手。
+- **臃肿排序靠 usage + 出处,不是深度语义。** 从不召回、低可靠的记忆排为臃肿。混合 user+assistant 的 dump 上,**作者身份强烈主导排序**(assistant 内容 reliability 先验更低)—— assistant 行要按内容本身复核,别只看排名。
+- **矛盾检测是供人工复核的产品功能,不是已证明的结论。** 本地 NLI 模型标*候选*冲突,可能在姓名/实体槽上误报;由人来裁决。没有任何东西被自动消解,且矛盾对里的 id 会从遗忘清单中剔除。
+- **遗忘由 BorgeAgent 多因子价值模型驱动**(在 LongMemEval 上验证过),**在你的数据上不保证** —— 把档位当成"优先复核队列"。
+- **省 $ 是估算**,基于一个显式假定的检索频率(报告里写明)。用你真实的 query 日志校准。
+- **首次运行会下载两个本地模型**(几百 MB)到 Hugging Face 缓存。之后可完全离线、更快运行:
+  ```bash
+  HF_HUB_OFFLINE=1 borge-audit memories.json
+  ```
+
+### 拿内置 fixture 试跑
+
+```bash
+borge-audit tests/fixtures/audit_dump.json -o /tmp/demo.audit.md
+```
+
+一个 19 条记录的合成 dump(混合 user + assistant),植入了臃肿/一个矛盾/一个重复/过期条目 —— 跑一下就能看到每一段具体输出什么。
 
 ---
 
@@ -634,7 +730,7 @@ Borge 不是研究玩具 —— 它的工程目标是以最小代价接入真实
 认知层仅依赖 `pyyaml`。LLM SDK 是可选 extras（`[anthropic]`、`[hermes]` 或自带）。
 
 **🧪 有测试**
-每次 push 跑 11/11 单元 + 集成测试。整个会话生命周期在临时 SQLite 上端到端验证过。
+每次 push 跑 98/98 单元 + 集成测试（含 `borge-audit` 记忆卫生流水线）。整个会话生命周期在临时 SQLite 上端到端验证过。
 
 **🏠 本地优先**
 所有认知状态存在 `~/.borge/borge.db`（SQLite）。无云依赖。无用户数据外发。
@@ -760,7 +856,7 @@ Borge 不是研究玩具 —— 它的工程目标是以最小代价接入真实
 
 <br>
 
-认知核心、插件生命周期、独立 CLI 已稳定。每次 push 跑 pytest（11/11 通过），插件层吞掉所有异常，整个状态在版本化 SQLite 里。
+认知核心、插件生命周期、独立 CLI 已稳定。每次 push 跑 pytest（98/98 通过），插件层吞掉所有异常，整个状态在版本化 SQLite 里。
 
 仍在成熟的部分：
 - LLM 驱动的贝叶斯更新（v0.1 默认是启发式）
@@ -820,7 +916,7 @@ v0.5  ░░░░░░░░░░          100 轮长任务的认知一致性
 git clone https://github.com/zhibao-dev/BorgeAgent
 cd BorgeAgent && pip install -e ".[dev]"
 python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('你好', []))"
-pytest  # 应该 11/11 通过
+pytest  # 应该 98/98 通过
 ```
 
 ---

@@ -17,7 +17,7 @@
 <p>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License: MIT"></a>
-  <a href="#-production-ready-engineering"><img src="https://img.shields.io/badge/tests-11%2F11_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
+  <a href="#-production-ready-engineering"><img src="https://img.shields.io/badge/tests-98%2F98_passing-22c55e?logo=pytest&logoColor=white" alt="tests passing"></a>
   <a href="https://en.wikipedia.org/wiki/Free_energy_principle"><img src="https://img.shields.io/badge/Theory-Free_Energy_Principle-8b5cf6" alt="Theory: Friston FEP"></a>
   <br>
   <a href="#-bring-your-own-model"><img src="https://img.shields.io/badge/Models-Anthropic_%7C_OpenAI_%7C_Kimi_%7C_MiniMax_%7C_DeepSeek_%7C_Zhipu_%7C_Ollama_%7C_vLLM-f59e0b" alt="Multi-model"></a>
@@ -730,7 +730,7 @@ Plugin model touches **zero** host-agent files. Remove the plugin → Hermes rev
 Only `pyyaml` required for the cognitive layer. LLM SDKs are optional extras (`[anthropic]`, `[hermes]`, or BYO).
 
 **🧪 Tested**
-11/11 unit + integration tests passing on every push. End-to-end session lifecycle verified against tmp SQLite.
+98/98 unit + integration tests passing on every push (includes the `borge-audit` memory-hygiene pipeline). End-to-end session lifecycle verified against tmp SQLite.
 
 **🏠 Local-first state**
 All cognitive state lives in `~/.borge/borge.db` (SQLite). No cloud dependency. No user data exfiltration.
@@ -856,7 +856,7 @@ We removed the dead `enabled` flags in a clean-code pass: they all defaulted to 
 
 <br>
 
-The cognitive core, plugin lifecycle, and standalone CLI are stable. We run pytest on every push (11/11 passing), the plugin layer swallows all exceptions, and the entire state is in versioned SQLite.
+The cognitive core, plugin lifecycle, and standalone CLI are stable. We run pytest on every push (98/98 passing), the plugin layer swallows all exceptions, and the entire state is in versioned SQLite.
 
 What's still maturing:
 - LLM-backed Bayesian updates (heuristic-only by default in v0.1)
@@ -916,7 +916,7 @@ The best contributions right now:
 git clone https://github.com/zhibao-dev/BorgeAgent
 cd BorgeAgent && pip install -e ".[dev]"
 python -c "from borge.agent import BorgeAgent; a = BorgeAgent(None); print(a.pre_turn('hello', []))"
-pytest  # 11/11 should pass
+pytest  # 98/98 should pass
 ```
 
 ---
