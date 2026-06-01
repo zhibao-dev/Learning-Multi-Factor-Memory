@@ -5,10 +5,18 @@ not canonical JSON. This module reads such a dump into the SAME
 ``MemoryRecord`` objects that :mod:`borge.audit.ingest` produces, so the
 downstream value pipeline is untouched.
 
-This slice implements ``split="heading"`` (one record per ``##``+ section),
-YAML-frontmatter parsing (hand-rolled, no pyyaml dependency) and a
-timestamp-recovery chain (inline date → frontmatter → file mtime).
-Bullet/dated splitting and real ``auto`` detection arrive in a later task.
+Splitting modes:
+
+* ``"heading"`` — one record per ``##``..``######`` section.
+* ``"bullet"`` — one record per top-level list item (``- ``/``* ``).
+* ``"dated"`` — one record per dated entry (a ``# YYYY-MM-DD`` heading or a
+  ``- [YYYY-MM-DD]`` bullet), with each entry's own date recovered as its
+  timestamp.
+* ``"auto"`` — detects the shape (dated entries → ``dated``; more top-level
+  bullets than ``##`` headings → ``bullet``; otherwise ``heading``).
+
+YAML-frontmatter parsing is hand-rolled (no pyyaml dependency); timestamps
+follow a recovery chain (inline date → frontmatter → file mtime).
 """
 
 from __future__ import annotations
@@ -22,6 +30,9 @@ from borge.audit.ingest import MemoryRecord
 
 _HEADING_RE = re.compile(r"^#{2,6}\s+")
 _DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+_BULLET_RE = re.compile(r"^[-*]\s+")
+_DATED_HEADING_RE = re.compile(r"^#{1,6}\s*(\d{4}-\d{2}-\d{2})")
+_DATED_BULLET_RE = re.compile(r"^[-*]\s*\[?(\d{4}-\d{2}-\d{2})")
 
 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -134,20 +145,131 @@ def _heading_split(body: str, meta: dict, path: str | Path) -> list[MemoryRecord
     return records
 
 
+def _dated_marker(line: str) -> str | None:
+    """Return the ISO date if ``line`` starts a dated entry, else ``None``."""
+    m = _DATED_HEADING_RE.match(line) or _DATED_BULLET_RE.match(line)
+    return m.group(1) if m else None
+
+
+def _bullet_split(body: str, meta: dict, path: str | Path) -> list[MemoryRecord]:
+    """Split ``body`` into one ``MemoryRecord`` per top-level list item.
+
+    A top-level item is a line matching ``^[-*]\\s+``; it absorbs any
+    following indented/blank continuation lines until the next top-level
+    bullet or heading.
+    """
+    lines = body.split("\n")
+    starts = [
+        i
+        for i, ln in enumerate(lines)
+        if _BULLET_RE.match(ln) and not ln[:1].isspace()
+    ]
+
+    stem = Path(path).stem
+    role = meta.get("role", "user")
+    tags = meta.get("tags", [])
+    records: list[MemoryRecord] = []
+
+    for n, start in enumerate(starts):
+        # Absorb continuation lines until the next top-level bullet or heading.
+        end = start + 1
+        next_start = starts[n + 1] if n + 1 < len(starts) else len(lines)
+        while end < next_start and not _HEADING_RE.match(lines[end]):
+            end += 1
+        text = "\n".join(lines[start:end]).strip()
+        if not text:
+            continue
+
+        m = _DATE_RE.search(text)
+        inline = m.group(1) if m else None
+
+        records.append(
+            MemoryRecord(
+                id=f"{stem}#b{n}",
+                text=text,
+                timestamp=_recover_ts(inline, meta, path),
+                role=role,
+                metadata={
+                    "source_file": str(path),
+                    "tags": tags,
+                },
+            )
+        )
+    return records
+
+
+def _dated_split(body: str, meta: dict, path: str | Path) -> list[MemoryRecord]:
+    """Split ``body`` into one ``MemoryRecord`` per dated entry.
+
+    A dated marker is a ``# YYYY-MM-DD`` heading or a ``- [YYYY-MM-DD]``
+    bullet. Each marker starts a record spanning until the next marker; the
+    captured date becomes THAT record's timestamp (so per-entry dates differ).
+    """
+    lines = body.split("\n")
+    markers = [(i, d) for i, ln in enumerate(lines) if (d := _dated_marker(ln))]
+
+    stem = Path(path).stem
+    role = meta.get("role", "user")
+    tags = meta.get("tags", [])
+    records: list[MemoryRecord] = []
+
+    for n, (start, date) in enumerate(markers):
+        end = markers[n + 1][0] if n + 1 < len(markers) else len(lines)
+        text = "\n".join(lines[start:end]).strip()
+        if not text:
+            continue
+
+        records.append(
+            MemoryRecord(
+                id=f"{stem}#{date}-{n}",
+                text=text,
+                timestamp=_recover_ts(date, meta, path),
+                role=role,
+                metadata={
+                    "source_file": str(path),
+                    "entry_date": date,
+                    "tags": tags,
+                },
+            )
+        )
+    return records
+
+
+def _detect_split(body: str) -> str:
+    """Detect the best split mode for ``body``: dated / bullet / heading."""
+    lines = body.split("\n")
+    dated = sum(1 for ln in lines if _dated_marker(ln))
+    if dated >= 2:
+        return "dated"
+    bullets = sum(
+        1 for ln in lines if _BULLET_RE.match(ln) and not ln[:1].isspace()
+    )
+    headings = sum(1 for ln in lines if _HEADING_RE.match(ln))
+    if bullets > headings:
+        return "bullet"
+    return "heading"
+
+
 def load_markdown_dump(path: str | Path, *, split: str = "auto") -> list[MemoryRecord]:
     """Load a Markdown memory dump into ``MemoryRecord`` objects.
 
-    ``split="heading"`` produces one record per ``##``..``######`` section.
-    ``split="auto"`` falls back to heading for now. ``"bullet"`` / ``"dated"``
-    are reserved for a later task and raise :class:`NotImplementedError`.
+    * ``"heading"`` — one record per ``##``..``######`` section.
+    * ``"bullet"`` — one record per top-level list item.
+    * ``"dated"`` — one record per dated entry, each keeping its own date.
+    * ``"auto"`` — detect the shape (see :func:`_detect_split`).
     """
     with open(path, encoding="utf-8") as fh:
         raw = fh.read()
 
     meta, body = _parse_frontmatter(raw)
 
-    if split in ("heading", "auto"):
+    if split == "auto":
+        split = _detect_split(body)
+
+    if split == "heading":
         return _heading_split(body, meta, path)
-    if split in ("bullet", "dated"):
-        raise NotImplementedError(f"split={split!r} is not implemented yet")
+    if split == "bullet":
+        return _bullet_split(body, meta, path)
+    if split == "dated":
+        return _dated_split(body, meta, path)
     raise ValueError(f"unknown split mode: {split!r}")
