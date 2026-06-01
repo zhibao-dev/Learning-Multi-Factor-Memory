@@ -37,8 +37,12 @@ hermes = ["hermes-agent>=0.7.0"]
 # sentence-transformers pulls torch + huggingface tokenizers; cost ~500 MB.
 sbert = ["sentence-transformers>=3.0", "scipy>=1.10"]
 
+# borge-audit memory-hygiene CLI: local SBert + NLI cross-encoder + token counting.
+# Everything runs locally (models cached after first download); no external API.
+audit = ["sentence-transformers>=3.0", "tiktoken>=0.5"]
+
 # All
-all = ["borge-agent[anthropic,sbert]"]
+all = ["borge-agent[anthropic,sbert,audit]"]
 
 dev = [
   "pytest>=9.0",

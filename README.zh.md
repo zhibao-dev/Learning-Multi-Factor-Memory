@@ -138,14 +138,15 @@ hermes
 
 `borge-audit` 把两者都找出来,告诉你该忘什么。你来决定。
 
-### 安装(审计附加依赖)
+### 安装(一条命令)
 
-审计需要一个本地句向量器 + 一个本地 NLI 模型。两者**首次下载后离线运行** —— 记忆数据永不离开你的机器。
+它是 CLI —— 没有服务要部署,没有东西要起。装一次,然后跑:
 
 ```bash
-pip install -e ".[anthropic]"                 # 基础安装
-pip install sentence-transformers tiktoken    # 审计:本地 SBert + NLI + token 计数
+pip install -e ".[audit]"     # 本地 SBert + NLI + token 计数
 ```
+
+模型(句向量器 + 一个小 NLI cross-encoder)首次下载到你的 Hugging Face 缓存,之后全部**离线运行 —— 记忆数据永不离开你的机器**。
 
 ### 1. 准备记忆 dump(标准 JSON)
 

@@ -138,14 +138,15 @@ Long-running agents hit two failure modes:
 
 `borge-audit` finds both and tells you what to forget. You decide.
 
-### Install (audit extras)
+### Install (one command)
 
-The audit needs a local sentence embedder + a local NLI model. Both run **offline after first download** — no memory data ever leaves your machine.
+It's a CLI — no server to deploy, nothing to stand up. One install, then run:
 
 ```bash
-pip install -e ".[anthropic]"                 # base install
-pip install sentence-transformers tiktoken    # audit: local SBert + NLI + token counting
+pip install -e ".[audit]"     # local SBert + NLI + token counting
 ```
+
+Models (sentence embedder + a small NLI cross-encoder) download once to your Hugging Face cache, then everything runs **offline — no memory data ever leaves your machine**.
 
 ### 1. Prepare your memory dump (canonical JSON)
 
