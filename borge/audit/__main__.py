@@ -34,8 +34,10 @@ def main(argv: list[str] | None = None) -> int:
         prog="borge-audit",
         description="Audit a memory dump: bloat / contradiction / hygiene report (dry-run only).",
     )
-    parser.add_argument("dump", help="path to the JSON memory dump")
+    parser.add_argument("dump", help="path to the memory dump (.json or .md)")
     parser.add_argument("--soul", help="path to a SOUL.md / values file for value-alignment scoring")
+    parser.add_argument("--md-split", choices=["heading", "bullet", "dated", "auto"], default="auto",
+                        help="how to split a Markdown dump into memories (default auto; ignored for .json)")
     parser.add_argument("--budget", type=float, default=0.5,
                         help="target keep-fraction for the headline forget set (default 0.5)")
     parser.add_argument("--retrieval-freq", type=float, default=30.0,
@@ -54,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         soul_centroid=soul_centroid,
         budget=args.budget,
         retrieval_freq=args.retrieval_freq,
+        md_split=args.md_split,
     )
 
     out_md = Path(args.output) if args.output else Path(str(args.dump) + ".audit.md")

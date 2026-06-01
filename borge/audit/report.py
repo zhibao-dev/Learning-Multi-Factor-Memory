@@ -26,6 +26,7 @@ from .contradiction import find_contradictions
 from .factors import annotate_dump
 from .hygiene import find_duplicates, find_stale
 from .ingest import load_dump
+from .ingest_md import load_markdown_dump
 from .savings import estimate_savings
 
 
@@ -42,6 +43,7 @@ def build_audit(
     budget: float = 0.5,
     retrieval_freq: float = 30.0,
     price_per_1k: float = 0.003,
+    md_split: str = "auto",
 ) -> dict:
     """Run the full audit pipeline and render a markdown report + forget script.
 
@@ -50,7 +52,10 @@ def build_audit(
     deletes or modifies anything. ``budget`` selects the headline forget set by
     picking the tier whose keep-fraction is closest to it.
     """
-    records = load_dump(dump_path)
+    if str(dump_path).lower().endswith(".md"):
+        records = load_markdown_dump(dump_path, split=md_split)
+    else:
+        records = load_dump(dump_path)
     by_id = {r.id: r for r in records}
 
     # One embedder, shared across all three SBert-backed passes.
