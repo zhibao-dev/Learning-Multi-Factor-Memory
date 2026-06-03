@@ -30,6 +30,7 @@ older is the superseded one). A reviewer decides.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Callable
 
 from ..values.self_model import SBertEmbedder, cosine
 from .ingest import MemoryRecord
@@ -118,7 +119,7 @@ def find_contradictions(
     nli_threshold: float = 0.5,
     max_pairs: int = 200,
     skip_ids: set[str] | None = None,
-    judge: "callable | None" = None,
+    judge: "Callable | None" = None,
 ) -> list[CandidatePair]:
     """Flag candidate contradictions between memories for human review.
 
