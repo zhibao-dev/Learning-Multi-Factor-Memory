@@ -1,0 +1,14 @@
+{
+  "forget_ids": [
+    "sample_agent_memory#database",
+    "sample_agent_memory#_preamble",
+    "sample_agent_memory#ci",
+    "sample_agent_memory#old-sprint-plan-2025-02-10",
+    "sample_agent_memory#testing",
+    "sample_agent_memory#auth",
+    "sample_agent_memory#secrets",
+    "sample_agent_memory#code-style"
+  ],
+  "generated_from": "packaging/borge-audit/demo/sample_agent_memory.md",
+  "note": "dry-run; apply at your own discretion, reversible"
+}
