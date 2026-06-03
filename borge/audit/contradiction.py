@@ -75,6 +75,23 @@ def _contradiction_label_index(model) -> int:
     )
 
 
+def _body(text: str) -> str:
+    """Return the record body with leading markdown heading lines dropped.
+
+    Strips only the LEADING ``#``-prefixed heading line(s); keeps the rest of
+    the text. Records with no heading are returned unchanged. Used to count
+    body tokens (not the heading) for the ultra-short chatter filter, so a
+    one-word reply like ``"## Reply 1\nok"`` is correctly skipped.
+    """
+    import re
+
+    lines = text.splitlines()
+    idx = 0
+    while idx < len(lines) and re.match(r"^#{1,6}\s", lines[idx]):
+        idx += 1
+    return "\n".join(lines[idx:]).strip()
+
+
 def _softmax_contradiction_prob(logits, contra_idx: int) -> float:
     """Softmax a 3-logit row and return the contradiction-class probability."""
     import math
@@ -100,6 +117,7 @@ def find_contradictions(
     sim_threshold: float = 0.3,
     nli_threshold: float = 0.5,
     max_pairs: int = 200,
+    skip_ids: set[str] | None = None,
 ) -> list[CandidatePair]:
     """Flag candidate contradictions between memories for human review.
 
@@ -115,12 +133,18 @@ def find_contradictions(
     the same-topic embedding prefilter; ``nli_threshold`` gates the local NLI
     contradiction probability; ``max_pairs`` caps how many prefiltered pairs
     reach the cross-encoder (bounds cost / avoids unbounded N² NLI).
+    ``skip_ids`` excludes known low-value / bloat records by id from checking.
     """
     if embedder is None:
         embedder = SBertEmbedder()
 
-    # ── Drop ultra-short records before pairing (raw token count) ──
-    records = [r for r in records if len(r.text.split()) >= MIN_TOKENS]
+    # ── Drop ultra-short records before pairing (body token count) ──
+    # Count BODY tokens (heading lines dropped) so heading + 1-word chatter
+    # ("## Reply 1\nok") is correctly skipped.
+    records = [r for r in records if len(_body(r.text).split()) >= MIN_TOKENS]
+    # ── Caller-supplied exclusions (known low-value / bloat records) ──
+    if skip_ids:
+        records = [r for r in records if r.id not in skip_ids]
     if len(records) < 2:
         return []
 
