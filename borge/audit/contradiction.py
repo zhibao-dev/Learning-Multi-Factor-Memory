@@ -118,6 +118,7 @@ def find_contradictions(
     nli_threshold: float = 0.5,
     max_pairs: int = 200,
     skip_ids: set[str] | None = None,
+    judge: "callable | None" = None,
 ) -> list[CandidatePair]:
     """Flag candidate contradictions between memories for human review.
 
@@ -134,6 +135,17 @@ def find_contradictions(
     contradiction probability; ``max_pairs`` caps how many prefiltered pairs
     reach the cross-encoder (bounds cost / avoids unbounded N² NLI).
     ``skip_ids`` excludes known low-value / bloat records by id from checking.
+
+    ``judge`` is an OPTIONAL precision filter. When ``None`` (default) the
+    behavior is byte-identical to before — no external call, NLI survivors are
+    returned as-is. When provided, ``judge(text_a, text_b)`` is called on each
+    NLI survivor (after ``nli_threshold``) and must return a dict; the pair is
+    kept only if ``v.get("contradict")`` is truthy. This lets an LLM strip
+    same-topic-but-not-conflicting false positives the local NLI conflates.
+    ``v.get("stale_id")`` (``"a"``/``"b"`` mapping to the respective record id)
+    overrides ``likely_stale_id`` when given; anything else (incl. ``None``)
+    falls back to the older-timestamp hint. A judge returning ``None`` (abstain)
+    drops the pair — precision-first.
     """
     if embedder is None:
         embedder = SBertEmbedder()
@@ -188,6 +200,17 @@ def find_contradictions(
             stale_id = records[i].id
         else:
             stale_id = records[j].id
+        # ── Optional LLM-judge precision filter (survivors only) ──
+        if judge is not None:
+            v = judge(records[i].text, records[j].text)
+            if not (v and v.get("contradict")):
+                continue  # abstain / not-confirmed → drop (precision-first)
+            judged_stale = v.get("stale_id")
+            if judged_stale == "a":
+                stale_id = records[i].id
+            elif judged_stale == "b":
+                stale_id = records[j].id
+            # else (None / anything else) → keep older-timestamp fallback
         results.append(
             CandidatePair(
                 a_id=records[i].id,
