@@ -34,7 +34,7 @@ cp "$ROOT"/borge/audit/*.py                    "$SRC/borge/audit/"
 echo "== staged thin slice =="
 find "$SRC" -name '*.py' | sed "s|$SRC/||" | sort
 
-"$PY" -m pip wheel "$HERE" -w "$HERE/dist" --no-deps -q
+"$PY" -m pip wheel "$HERE" -w "$HERE/dist" --no-deps --no-build-isolation -q
 
 WHL="$(ls -1 "$HERE/dist"/*.whl | sort | tail -1)"
 echo "== wheel built: $(basename "$WHL") =="
