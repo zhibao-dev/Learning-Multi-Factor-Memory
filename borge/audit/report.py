@@ -370,8 +370,15 @@ def _render_markdown(
         f"- Tokenizer: **{assumptions['tokenizer']}**.",
         f"- {assumptions['note']}",
         "",
-        "All memory processing is local; your memory data is not sent to any "
-        "external API by this audit.",
+        (
+            "Bloat, duplicate, and stale detection run 100% locally. The "
+            "LLM-judge step sent the text of the contradiction *candidate* pairs "
+            "above (NLI survivors only, not your whole dump) to the LLM endpoint "
+            "you configured — your own/local model, never a Borge-hosted API."
+            if judge_used
+            else "All memory processing is local; your memory data is not sent "
+            "to any external API by this audit."
+        ),
         "",
     ]
 

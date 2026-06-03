@@ -60,6 +60,12 @@ def test_llm_judge_yields_clean_contradiction_report():
     # The judge path is labelled "LLM-verified".
     assert "LLM-verified" in md
 
+    # Honesty: when the judge ran, the footer must NOT claim "no external API"
+    # (the candidate-pair text was sent to the configured LLM endpoint).
+    assert "not sent to any external API" not in md
+    assert "sent the text of the contradiction" in md
+    assert "never a Borge-hosted API" in md
+
     # Both REAL contradiction pairs surface, by their rendered heading-slug ids.
     for pair in (REAL_TS_GO, REAL_VERCEL_K8):
         for mem_id in pair:

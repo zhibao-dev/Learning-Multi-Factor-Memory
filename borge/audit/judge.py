@@ -26,7 +26,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-def _post_json(url: str, payload: dict, headers: dict, timeout: int = 30) -> dict:
+def _post_json(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
     """Thin ``urllib`` JSON POST. Isolated so tests monkeypatch it."""
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST")
@@ -41,12 +41,17 @@ def make_openai_judge(
     base_url: str,
     model: str,
     api_key: Optional[str] = None,
-    timeout: int = 30,
+    timeout: int = 120,
 ) -> Callable[[str, str], Optional[dict]]:
     """Build a ``judge(text_a, text_b)`` backed by an OpenAI-compatible endpoint.
 
     ``api_key`` is optional — a local Ollama needs none, so the Authorization
     header is only sent when a key is given.
+
+    ``timeout`` defaults to 120s: a local Ollama model can take 60-90s to load
+    on the FIRST request (cold start). A shorter timeout made the first judged
+    pair silently abstain (see ``judge`` below), dropping a real contradiction
+    from the report on the user's first run.
     """
     url = f"{base_url.rstrip('/')}/chat/completions"
 
