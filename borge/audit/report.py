@@ -22,6 +22,8 @@ from __future__ import annotations
 from ..memory.value import default_memory_value
 from ..values.self_model import SBertEmbedder
 from .bloat import forget_ranking
+from .contradiction import MIN_TOKENS as _CONTRA_MIN_TOKENS
+from .contradiction import _body as _contra_body
 from .contradiction import find_contradictions
 from .factors import annotate_dump
 from .hygiene import find_duplicates, find_stale
@@ -45,6 +47,10 @@ def build_audit(
     price_per_1k: float = 0.003,
     md_split: str = "auto",
     weights: dict | None = None,
+    judge=None,
+    llm_endpoint: str | None = None,
+    llm_model: str | None = None,
+    llm_key: str | None = None,
 ) -> dict:
     """Run the full audit pipeline and render a markdown report + forget script.
 
@@ -52,7 +58,19 @@ def build_audit(
     is a dry-run dict (chosen-tier forget ids + provenance note); it never
     deletes or modifies anything. ``budget`` selects the headline forget set by
     picking the tier whose keep-fraction is closest to it.
+
+    ``judge`` is an OPTIONAL contradiction precision filter (see
+    :func:`borge.audit.contradiction.find_contradictions`). When omitted but
+    ``llm_endpoint`` is given, an OpenAI-compatible judge is built from
+    ``llm_endpoint`` / ``llm_model`` / ``llm_key`` (the customer's own LLM or a
+    local Ollama). With a judge active the contradiction section is relabelled
+    "LLM-verified"; without one the NLI-only "candidates for human review"
+    wording is preserved verbatim.
     """
+    if judge is None and llm_endpoint:
+        from .judge import make_openai_judge
+
+        judge = make_openai_judge(llm_endpoint, llm_model, llm_key)
     is_markdown = str(dump_path).lower().endswith(".md")
     if is_markdown:
         records = load_markdown_dump(dump_path, split=md_split)
@@ -67,7 +85,23 @@ def build_audit(
     mv = default_memory_value(weights)
     ranking = forget_ranking(records, factors, mv)
 
-    contradictions = find_contradictions(records, embedder=embedder)
+    # Keep bloat out of contradiction NLI (cheaper, fewer false positives for
+    # the judge). Skip = SAFE-tier bloat (highest-confidence, bottom ~30% by
+    # value) that is EITHER ultra-short chatter OR assistant-authored
+    # boilerplate. Crucially we never skip a substantive USER assertion just
+    # because it scored low-value: contradictions here are conflicting user
+    # facts, and on usage-count-free dumps a real assertion can rank low —
+    # skipping it would suppress a genuine contradiction pair (breaking the
+    # planted-pair / forget-disjointness contracts).
+    safe_forget = set(ranking["tiers"]["safe"]["forget_ids"])
+    skip_ids = {
+        i for i in safe_forget
+        if by_id[i].role != "user"
+        or len(_contra_body(by_id[i].text).split()) < _CONTRA_MIN_TOKENS
+    }
+    contradictions = find_contradictions(
+        records, embedder=embedder, judge=judge, skip_ids=skip_ids
+    )
     duplicates = find_duplicates(records, embedder=embedder)
     stale_ids = find_stale(records, now_iso)
 
@@ -109,6 +143,7 @@ def build_audit(
         savings=savings,
         weights_used=mv.weights,
         is_markdown=is_markdown,
+        judge_used=judge is not None,
     )
 
     forget_script = {
@@ -142,6 +177,7 @@ def _render_markdown(
     savings,
     weights_used,
     is_markdown=False,
+    judge_used: bool = False,
 ) -> str:
     n = len(records)
     n_forget = len(forget_ids)
@@ -217,14 +253,28 @@ def _render_markdown(
     lines += [
         "## Pollution (Contradictions, Duplicates, Stale)",
         "",
-        "### Candidate contradictions",
-        "",
-        "**These are candidates for human review — a product feature, NOT a "
-        "paper2-proven result.** Nothing here is auto-resolved, merged, or forgotten; "
-        "`likely stale` is only a hint (the older of the two timestamps). A human "
-        "decides.",
-        "",
     ]
+    if judge_used:
+        lines += [
+            "### LLM-verified contradictions",
+            "",
+            "**These pairs survived a local NLI prefilter AND an LLM-judge "
+            "confirmation step.** Nothing here is auto-resolved, merged, or "
+            "forgotten; `likely stale` is only a hint (the older of the two "
+            "timestamps, unless the judge says otherwise). LLM-verified; review "
+            "still recommended — a human decides.",
+            "",
+        ]
+    else:
+        lines += [
+            "### Candidate contradictions",
+            "",
+            "**These are candidates for human review — a product feature, NOT a "
+            "paper2-proven result.** Nothing here is auto-resolved, merged, or forgotten; "
+            "`likely stale` is only a hint (the older of the two timestamps). A human "
+            "decides.",
+            "",
+        ]
     if contradictions:
         lines += [
             "| Memory A | Memory B | Score | Likely stale | Texts |",

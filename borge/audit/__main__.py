@@ -43,6 +43,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--retrieval-freq", type=float, default=30.0,
                         help="assumed re-injections/month for the savings estimate (default 30)")
     parser.add_argument("--weights", help="path to a JSON file of factor weights to override the defaults")
+    parser.add_argument("--llm-endpoint",
+                        help="OpenAI-compatible base URL of YOUR OWN LLM / local Ollama "
+                             "(e.g. http://localhost:11434/v1) to LLM-verify contradiction "
+                             "candidates; off by default (NLI-only, local)")
+    parser.add_argument("--llm-model",
+                        help="model name passed to --llm-endpoint (e.g. llama3, gpt-4o-mini)")
+    parser.add_argument("--llm-key",
+                        help="API key for --llm-endpoint (optional; a local Ollama needs none)")
     parser.add_argument("-o", "--output", help="report markdown path (default <dump>.audit.md)")
     args = parser.parse_args(argv)
 
@@ -60,6 +68,9 @@ def main(argv: list[str] | None = None) -> int:
         retrieval_freq=args.retrieval_freq,
         md_split=args.md_split,
         weights=weights,
+        llm_endpoint=args.llm_endpoint,
+        llm_model=args.llm_model,
+        llm_key=args.llm_key,
     )
 
     out_md = Path(args.output) if args.output else Path(str(args.dump) + ".audit.md")
