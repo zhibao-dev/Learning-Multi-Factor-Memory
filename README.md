@@ -870,6 +870,14 @@ See the [Roadmap](#roadmap) for what's coming.
 
 ---
 
+## Papers
+
+| Title | Venue | Link |
+|-------|-------|------|
+| Learning What to Remember: A Cognitively Grounded Multi-Factor Value Model for Agentic Memory | arXiv 2026 | [arXiv:2606.12945](https://arxiv.org/pdf/2606.12945) |
+
+---
+
 ## Theoretical Foundations
 
 Borge is grounded in peer-reviewed cognitive science — not intuition.
