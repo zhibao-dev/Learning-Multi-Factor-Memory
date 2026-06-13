@@ -1,0 +1,29 @@
+<svg width="900" height="110" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#ff3cac"/>
+      <stop offset="25%"  stop-color="#ff8c00"/>
+      <stop offset="50%"  stop-color="#ffd700"/>
+      <stop offset="75%"  stop-color="#00d4aa"/>
+      <stop offset="100%" stop-color="#784ba0"/>
+    </linearGradient>
+    <linearGradient id="sub" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#a0c4ff"/>
+      <stop offset="100%" stop-color="#c0f0c0"/>
+    </linearGradient>
+  </defs>
+  <text x="450" y="62"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="54"
+        font-weight="900"
+        letter-spacing="2"
+        text-anchor="middle"
+        fill="url(#rainbow)">Learning Multi-Factor Memory</text>
+  <text x="450" y="96"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="18"
+        font-weight="400"
+        letter-spacing="1"
+        text-anchor="middle"
+        fill="url(#sub)">A cognitively grounded value model for agentic memory</text>
+</svg>
