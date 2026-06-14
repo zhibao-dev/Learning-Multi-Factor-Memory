@@ -81,14 +81,14 @@ blind  regime (honest):  goal-only → 0.286   ← actual forgetting quality
 |--------|:--------------:|:-----------:|
 | **Learned multi-factor (ours)** | **0.770 ± 0.011** | — |
 | Uniform weights | 0.657 | −0.113 |
-| Best single factor (reliability) | 0.518 | −0.252 |
+| Best single factor (self-relevance) | 0.518 | −0.252 |
 | Recency baseline | 0.368 | −0.402 |
 
 *Every gap's 95 % bootstrap CI is strictly above zero (20 resampled 50/50 splits).*
 
 </div>
 
-**Learned weights are interpretable** — reliability (0.89), emotional intensity (0.74), and self/user relevance (0.61) dominate; query-time goal similarity is correctly down-weighted (0.12) because it is unavailable at consolidation time.
+**Learned weights are interpretable** — reliability (0.64), emotional intensity (0.55), and self/user relevance (0.23) dominate; query-time goal similarity is correctly down-weighted (0.00) because it is unavailable at consolidation time.
 
 **A neural MLP over the same factors ties the linear model (+0.003 ± 0.013)** — confirming factors combine near-additively and the interpretable linear value is not a compromise.
 
@@ -178,19 +178,24 @@ Output: `memories.audit.md` (human-readable report) + `memories.audit.forget.jso
 ## Use the Value Function Directly
 
 ```python
-from borge.memory.value import default_memory_value, MemoryRecord
+from borge.memory.value import default_memory_value, memory_factors
 
-mv = default_memory_value()          # learned weights from LongMemEval fit
+mv = default_memory_value()          # learned weights from the LongMemEval blind fit
 
-records = [
-    MemoryRecord(id="m1", text="User is allergic to penicillin.",
-                 role="user", timestamp="2026-01-10T09:00:00Z"),
-    MemoryRecord(id="m2", text="Ok, noted.",
-                 role="assistant", timestamp="2026-01-10T09:00:01Z"),
-]
+# A memory row carries the factor inputs (valence/arousal → emotion,
+# reliability, self-relevance, retrieval_count → usage, ...).
+reliable_fact = {
+    "emotional_valence": 0.3, "emotional_arousal": 0.6,
+    "reliability": 1.0, "self_relevance_score": 0.8, "retrieval_count": 4,
+}
+chatter = {
+    "emotional_valence": 0.0, "emotional_arousal": 0.1,
+    "reliability": 0.4, "self_relevance_score": 0.1, "retrieval_count": 0,
+}
 
-scores = {r.id: mv.score(r) for r in records}
-# → {"m1": 0.71, "m2": 0.09}  — keep m1, forget m2
+v_fact    = mv.value(memory_factors(reliable_fact))   # high  → keep
+v_chatter = mv.value(memory_factors(chatter))         # low   → forget candidate
+print(round(v_fact, 3), round(v_chatter, 3))
 ```
 
 ---
