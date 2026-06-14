@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .io.markdown import load_markdown
@@ -14,12 +15,16 @@ from .export import build_matrix
 def _embedder(use_hash: bool):
     from .factors.embedder import SBertEmbedder, hash_embed
     if use_hash:
-        return lambda t: hash_embed(t)
+        return hash_embed
     return SBertEmbedder()
 
 
 def _cmd_export(args) -> int:
-    recs = load_markdown(args.dump, split=args.md_split)
+    try:
+        recs = load_markdown(args.dump, split=args.md_split)
+    except FileNotFoundError:
+        print(f"error: input dump not found: {args.dump}", file=sys.stderr)
+        return 1
     gold = set()
     if args.gold:
         gold = {ln.strip() for ln in Path(args.gold).read_text().splitlines() if ln.strip()}
