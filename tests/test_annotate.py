@@ -1,3 +1,5 @@
+import json
+
 from lmfm.io.markdown import MemoryRecord
 from lmfm.factors.annotate import annotate_memories
 
@@ -25,3 +27,19 @@ def test_annotate_emits_seven_factor_dict_and_gold():
     for a in ann:
         for v in a["factors"].values():
             assert 0.0 <= v <= 1.0
+
+
+def test_no_raw_text_leaks():
+    from lmfm.io.markdown import MemoryRecord
+    recs = [
+        MemoryRecord(id="m1", text="User is allergic to penicillin.",
+                     timestamp="t", role="user"),
+        MemoryRecord(id="m2", text="secret project codename Falcon",
+                     timestamp="t", role="assistant"),
+    ]
+    ann = annotate_memories(recs, embedder=FakeEmbedder())
+    blob = json.dumps(ann)
+    for r in recs:
+        assert r.text not in blob
+    for a in ann:
+        assert set(a) == {"id", "ts", "gold", "factors"}
