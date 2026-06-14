@@ -1,7 +1,7 @@
 from lmfm.value import MemoryValue, memory_factors, default_memory_value
 
 
-def test_default_weights_match_paper():
+def test_default_weights_match_shipped_defaults():
     mv = default_memory_value()
     assert round(mv.weights["reliability"], 2) == 0.64
     assert round(mv.weights["emotion"], 2) == 0.55

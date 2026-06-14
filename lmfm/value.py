@@ -33,7 +33,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass
@@ -72,10 +72,10 @@ class MemoryValue:
                                     for f in self.FACTORS})
 
 
-# Out-of-box weights: a blind retention fit extended to all 7 factors.
-# goal/value_alignment/task_utility were inert (0) in that fit; usage gets
-# a small positive prior so frequent recall still resists forgetting.
-# Override via config 'lmfm.memory.value.weights'.
+# Out-of-box weights: tuned on retention data; the goal/value-alignment/
+# task-utility factors were inert (0) in that fit, and usage gets a small
+# positive prior so frequent recall still resists forgetting.
+# Override via `default_memory_value(override=...)`.
 DEFAULT_WEIGHTS = {
     "emotion":         0.55,
     "goal_relevance":  0.00,
@@ -166,7 +166,7 @@ def value_encoding_depth(factors: dict[str, float], mv: "MemoryValue") -> int:
     """
     Map memory value → Craik-Lockhart encoding tier ∈ {1,2,3,4}.
 
-    Thresholds on V normalised by the (uniform) max possible value so
+    Thresholds on V normalised by the max possible value (Σ|wᵢ|) so
     the tiers are scale-stable regardless of learned weight magnitude.
     """
     v = mv.value(factors)
@@ -182,7 +182,7 @@ def value_encoding_depth(factors: dict[str, float], mv: "MemoryValue") -> int:
 
 
 def learn_weights(
-    task_return,
+    task_return: Callable[[dict[str, float]], float],
     factors: tuple[str, ...] | list[str],
     *,
     seed: int = 0,
@@ -191,7 +191,7 @@ def learn_weights(
     decay: float = 0.92,
 ) -> tuple[dict[str, float], list[dict]]:
     """
-    Gradient-free coordinate-ascent + random-restart-perturbation learner.
+    Gradient-free stochastic hill-climb with annealed perturbations.
 
     Maximises `task_return(weights: dict) -> float`. Non-differentiable
     objective (the encode→forget→retrieve→answer pipeline), so we use a
