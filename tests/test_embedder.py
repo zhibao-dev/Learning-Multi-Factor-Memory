@@ -1,4 +1,3 @@
-import pytest
 from lmfm.factors.embedder import cosine
 
 

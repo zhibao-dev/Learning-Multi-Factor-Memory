@@ -12,3 +12,4 @@ def test_neutral_text_low_signal():
     ex = EmotionSignalExtractor()
     dv, da = ex.extract("The file is at path x.", [])
     assert abs(dv) < 0.2
+    assert abs(da) < 0.2

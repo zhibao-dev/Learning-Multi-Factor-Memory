@@ -214,13 +214,6 @@ class EmotionSignalExtractor:
         prev_lengths = [len(m["content"]) for m in user_msgs[-5:]]
         cur_len = len(message)
 
-        length_increasing = (
-            len(prev_lengths) >= 2 and cur_len > prev_lengths[-1] * 1.3
-        )
-        length_decreasing = (
-            len(prev_lengths) >= 2 and cur_len < prev_lengths[-1] * 0.5
-        )
-
         recent_user_texts = [m["content"].strip().lower() for m in user_msgs[-4:]]
         msg_lower = message.strip().lower()
         repeated = sum(1 for t in recent_user_texts if self._similar(t, msg_lower)) >= 1
