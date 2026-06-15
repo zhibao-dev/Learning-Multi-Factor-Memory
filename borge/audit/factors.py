@@ -6,7 +6,7 @@ using *blind* anchors derived from the dump itself:
 
   emotion         signal_extractor rules on the text       → |ΔV|·(0.5+arousal)
   self_relevance  SBert cos(text, μ_user)  (μ_user = centroid of user rows)
-  goal_relevance  SBert cos(text, topic centroid)  (centroid of ALL rows)
+  goal_relevance  SBert cos(text, μ_goal)  (μ_goal = centroid of non-user rows; fallback to all)
   value_alignment SBert cos(text, soul_centroid) if given, else 0
   reliability     role heuristic: user-stated facts > assistant text
   usage           metadata retrieval_count, saturating in [0,1]
@@ -60,7 +60,12 @@ def annotate_dump(
 
     user_embs = [e for e, r in zip(embs, records) if r.role == "user"]
     mu_user = _centroid(user_embs) or _centroid(embs)
-    topic_centroid = _centroid(embs)
+    # goal anchor: non-user rows (goal / assistant / agent content).
+    # Falls back to all rows when no non-user rows exist so the
+    # centroid is never empty.  This keeps goal_relevance independent
+    # of self_relevance even in mixed-role markdown dumps.
+    non_user_embs = [e for e, r in zip(embs, records) if r.role != "user"]
+    topic_centroid = _centroid(non_user_embs) or _centroid(embs)
 
     out: list[dict] = []
     for rec, emb in zip(records, embs):
