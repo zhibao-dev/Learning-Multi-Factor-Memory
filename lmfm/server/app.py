@@ -25,7 +25,10 @@ def create_app(valid_keys: dict) -> FastAPI:
             raise HTTPException(status_code=401, detail="invalid or missing API key")
         if status == "exhausted":
             raise HTTPException(status_code=429, detail="quota exhausted")
+        assert key is not None  # authorize() rejected None as 'unauthorized'
         matrix = await request.json()
+        if not isinstance(matrix, dict) or "keep_frac" not in matrix or "cases" not in matrix:
+            raise HTTPException(status_code=422, detail="matrix requires 'keep_frac' and 'cases'")
         result = learn_from_matrix(matrix)
         store.consume(key)
         return result
