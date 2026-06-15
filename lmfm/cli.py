@@ -64,7 +64,8 @@ def main(argv=None) -> int:
     l = sub.add_parser("learn", help="upload a factor matrix → learned weights")
     l.add_argument("matrix", help="factors.json from export-factors")
     l.add_argument("--endpoint", required=True)
-    l.add_argument("--key", required=True)
+    l.add_argument("--key", default=None,
+                   help="API key (optional — omit for free rate-limited access)")
     l.add_argument("-o", "--out", default="weights.json")
     l.set_defaults(func=_cmd_learn)
 
