@@ -36,6 +36,15 @@ def _cmd_export(args) -> int:
     return 0
 
 
+def _cmd_learn(args) -> int:
+    from . import client
+    payload = json.loads(Path(args.matrix).read_text())
+    result = client.post_learn(args.endpoint, payload, args.key)
+    Path(args.out).write_text(json.dumps(result, indent=2))
+    print(f"learned weights → {args.out}  (train_retention={result.get('train_retention')})")
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="lmfm")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -51,6 +60,13 @@ def main(argv=None) -> int:
     e.add_argument("--hash-embed", action="store_true",
                    help="use deterministic hash embedding (no model download)")
     e.set_defaults(func=_cmd_export)
+
+    l = sub.add_parser("learn", help="upload a factor matrix → learned weights")
+    l.add_argument("matrix", help="factors.json from export-factors")
+    l.add_argument("--endpoint", required=True)
+    l.add_argument("--key", required=True)
+    l.add_argument("-o", "--out", default="weights.json")
+    l.set_defaults(func=_cmd_learn)
 
     args = p.parse_args(argv)
     return args.func(args)
