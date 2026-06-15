@@ -14,6 +14,8 @@
 
 *What should an AI agent remember — and what should it forget?*
 
+[English](README.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [Português](README.pt.md)
+
 </div>
 
 ---
