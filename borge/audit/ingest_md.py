@@ -33,6 +33,10 @@ _DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 _BULLET_RE = re.compile(r"^[-*]\s+")
 _DATED_HEADING_RE = re.compile(r"^#{1,6}\s*(\d{4}-\d{2}-\d{2})")
 _DATED_BULLET_RE = re.compile(r"^[-*]\s*\[?(\d{4}-\d{2}-\d{2})")
+_GOAL_HEADING_RE = re.compile(
+    r"\b(goal|task|objective|project|deadline|plan|agenda|todo|milestone|work)\b",
+    re.IGNORECASE,
+)
 
 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -118,9 +122,11 @@ def _heading_split(body: str, meta: dict, path: str | Path) -> list[MemoryRecord
         if heading_line is None:
             slug = "_preamble"
             heading_text = "_preamble"
+            sec_role = role
         else:
             heading_text = _HEADING_RE.sub("", heading_line).strip()
             slug = _slug(heading_text) or "section"
+            sec_role = "goal" if _GOAL_HEADING_RE.search(heading_text) else role
 
         seen[slug] = seen.get(slug, 0) + 1
         if seen[slug] > 1:
@@ -134,7 +140,7 @@ def _heading_split(body: str, meta: dict, path: str | Path) -> list[MemoryRecord
                 id=f"{stem}#{slug}",
                 text=text,
                 timestamp=_recover_ts(inline, meta, path),
-                role=role,
+                role=sec_role,
                 metadata={
                     "source_file": str(path),
                     "heading_path": heading_text,
