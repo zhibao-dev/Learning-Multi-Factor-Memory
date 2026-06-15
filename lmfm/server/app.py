@@ -13,9 +13,44 @@ def _bearer(request: Request) -> str | None:
     return auth[7:] if auth.startswith("Bearer ") else None
 
 
-def create_app(valid_keys: dict) -> FastAPI:
+def create_app(
+    valid_keys: dict | None = None,
+    db_path: str = ":memory:",
+) -> FastAPI:
+    """Create the lmfm FastAPI application.
+
+    Parameters
+    ----------
+    valid_keys:
+        Dict ``{key: {"quota": int}}`` — seeds an in-memory SQLite store.
+        Intended for tests and single-process dev.  If ``None``, the store
+        is opened from ``db_path`` with no pre-seeding.
+    db_path:
+        Path to the SQLite database file.  Defaults to ``":memory:"``.
+        In production, pass an absolute path such as
+        ``"/var/lib/lmfm/keys.db"``.
+    """
+    if valid_keys is not None:
+        store = KeyStore.from_dict(valid_keys, db_path=db_path)
+    else:
+        store = KeyStore(db_path)
+
     app = FastAPI(title="lmfm learn service")
-    store = KeyStore(valid_keys)
+
+    @app.get("/health")
+    async def health():
+        return {"status": "ok"}
+
+    @app.get("/quota")
+    async def quota(request: Request):
+        """Return remaining quota for the authenticated key."""
+        key = _bearer(request)
+        if key is None:
+            raise HTTPException(status_code=401, detail="invalid or missing API key")
+        remaining = store.remaining(key)
+        if remaining is None:
+            raise HTTPException(status_code=401, detail="invalid or missing API key")
+        return {"quota_remaining": remaining}
 
     @app.post("/learn")
     async def learn(request: Request):
@@ -24,8 +59,11 @@ def create_app(valid_keys: dict) -> FastAPI:
         if status == "unauthorized":
             raise HTTPException(status_code=401, detail="invalid or missing API key")
         if status == "exhausted":
-            raise HTTPException(status_code=429, detail="quota exhausted")
-        assert key is not None  # authorize() rejected None as 'unauthorized'
+            raise HTTPException(
+                status_code=429,
+                detail="quota exhausted — contact support to top up your quota",
+            )
+        assert key is not None
         matrix = await request.json()
         if not isinstance(matrix, dict) or "keep_frac" not in matrix or "cases" not in matrix:
             raise HTTPException(status_code=422, detail="matrix requires 'keep_frac' and 'cases'")
